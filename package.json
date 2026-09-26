@@ -9,6 +9,8 @@
   "scripts": {
     "clean": "rm -rf node_modules buildinfo.json dist build",
     "start": "react-native start",
+    "dev": "bash scripts/dev.sh",
+    "dev:build": "bash scripts/dev.sh --build",
     "test": "jest --colors ",
     "test:snapshot": "jest --colors --updateSnapshot",
     "lint": "eslint src test package.json --ext .ts,.tsx",

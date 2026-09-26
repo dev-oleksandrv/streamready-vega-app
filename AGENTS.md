@@ -10,6 +10,7 @@ The package manager is pnpm (`pnpm-lock.yaml`).
 - `pnpm lint` runs ESLint on `src` and `test`. `pnpm lint:fix` also fixes what it can.
 - `pnpm build:debug` or `pnpm build:release` builds with `react-native build-vega`.
 - `pnpm start` starts Metro.
+- `pnpm dev` (`scripts/dev.sh`) starts a Fast Refresh session. It starts the Virtual Device if no device is connected, builds and installs Debug if needed, sets up port forwarding, then runs Metro and launches the app. `pnpm dev:build` forces a rebuild first.
 - `pnpm release` runs lint, test and a release build.
 
 ## Structure
