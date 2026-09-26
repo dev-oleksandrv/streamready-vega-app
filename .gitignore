@@ -11,3 +11,7 @@ node_modules
 CMakeUserPresets.json
 npm-debug.log
 buildinfo.json
+# Environment (keep .env.example committed)
+.env
+.env.*
+!.env.example

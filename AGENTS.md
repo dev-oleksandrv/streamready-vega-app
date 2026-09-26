@@ -20,6 +20,7 @@ The package manager is pnpm (`pnpm-lock.yaml`).
 - `src/components/Tile.tsx` is a focusable `Pressable` tile.
 - `src/data/tiles.tsx` holds the tile definitions (id, label, icon, description).
 - `src/assets/` holds the images.
+- `src/config/env.ts` exports the typed, frozen `env` object. Read config from it, not from `@env` directly. Values come from `.env` (gitignored; template in `.env.example`) and `react-native-dotenv` inlines them into the bundle at build time, so never put real secrets there. To add a variable, update `.env.example`, `src/types/env.d.ts` and `src/config/env.ts`, then restart Metro with `--reset-cache`.
 - `test/*.spec.tsx` uses `@testing-library/react-native`.
 
 ## Conventions
