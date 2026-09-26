@@ -1,8 +1,8 @@
-import React, {useState} from 'react';
-import {StyleSheet, Text, ImageBackground, View, Image} from 'react-native';
-import {TVFocusGuideView} from '@amazon-devices/react-native-kepler';
-import {Tile} from './components/Tile';
-import {tiles} from './data/tiles';
+import React, { useState } from 'react';
+import { StyleSheet, Text, ImageBackground, View, Image } from 'react-native';
+import { TVFocusGuideView } from '@amazon-devices/react-native-kepler';
+import { Tile } from './components/Tile';
+import { tiles } from './data/tiles';
 
 export const App = () => {
   const [focusedTileId, setFocusedTileId] = useState<string>('home');

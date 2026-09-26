@@ -1,5 +1,5 @@
 import React from 'react';
-import {ImageSourcePropType, StyleSheet, Text} from 'react-native';
+import { ImageSourcePropType, StyleSheet, Text } from 'react-native';
 
 export interface TileData {
   id: string;

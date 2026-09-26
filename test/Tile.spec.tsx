@@ -1,12 +1,12 @@
 import 'react-native';
-import {render} from '@testing-library/react-native';
+import { render } from '@testing-library/react-native';
 import * as React from 'react';
 
-import {Tile} from '../src/components/Tile';
+import { Tile } from '../src/components/Tile';
 
 const defaultProps = {
   label: 'Test Tile',
-  icon: {uri: 'mock-icon'},
+  icon: { uri: 'mock-icon' },
   isFocused: false,
   onFocus: jest.fn(),
   testID: 'test-tile',

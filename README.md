@@ -20,16 +20,16 @@ To install and launch the built package on a Vega device or the Vega Virtual Dev
 
 ## Scripts
 
-| Command | Description |
-| --- | --- |
-| `pnpm start` | Start Metro |
-| `pnpm test` | Run the Jest tests |
-| `pnpm test:snapshot` | Run tests and update snapshots |
-| `pnpm lint` / `pnpm lint:fix` | Lint `src` and `test` |
-| `pnpm build:debug` | Debug build (`react-native build-vega`) |
-| `pnpm build:release` | Release build |
-| `pnpm release` | Lint, test and release build |
-| `pnpm clean` | Remove `node_modules` and build output |
+| Command                       | Description                             |
+| ----------------------------- | --------------------------------------- |
+| `pnpm start`                  | Start Metro                             |
+| `pnpm test`                   | Run the Jest tests                      |
+| `pnpm test:snapshot`          | Run tests and update snapshots          |
+| `pnpm lint` / `pnpm lint:fix` | Lint `src` and `test`                   |
+| `pnpm build:debug`            | Debug build (`react-native build-vega`) |
+| `pnpm build:release`          | Release build                           |
+| `pnpm release`                | Lint, test and release build            |
+| `pnpm clean`                  | Remove `node_modules` and build output  |
 
 ## Project structure
 

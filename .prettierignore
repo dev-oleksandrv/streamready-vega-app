@@ -1,0 +1,8 @@
+node_modules
+build
+dist
+generated
+buildinfo.json
+pnpm-lock.yaml
+test/__snapshots__
+.claude

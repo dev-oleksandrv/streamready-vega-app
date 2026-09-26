@@ -8,11 +8,7 @@
     "^~/(.*)$": "<rootDir>/src/$1"
   },
   "modulePaths": ["<rootDir>/src"],
-  "roots": [
-    "<rootDir>/src/",
-    "<rootDir>/test/",
-    "<rootDir>/node_modules/"
-  ],
+  "roots": ["<rootDir>/src/", "<rootDir>/test/", "<rootDir>/node_modules/"],
   "transformIgnorePatterns": [
     "node_modules/(?!(\\.pnpm|react-native|@react-native|@amazon-devices/react-native-kepler|@amazon-devices)/)"
   ],

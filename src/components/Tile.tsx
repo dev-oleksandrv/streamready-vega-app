@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   },
   focused: {
     backgroundColor: '#FF6200',
-    transform: [{scale: 1.1}],
+    transform: [{ scale: 1.1 }],
     opacity: 1,
   },
   icon: {
