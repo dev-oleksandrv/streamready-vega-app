@@ -1,0 +1,8 @@
+{
+  "project": {
+    "identifier": "dev.voronkov.speedtest"
+  },
+  "platform": {
+    "default": "vega_os"
+  }
+}
