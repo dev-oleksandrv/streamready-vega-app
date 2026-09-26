@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "clean": "rm -rf node_modules buildinfo.json dist build",
     "start": "react-native start",
@@ -16,9 +18,10 @@
     "build:app": "npm-run-all build:release",
     "build": "npm-run-all build:release",
     "release": "npm-run-all lint test build:app"
-    },
+  },
   "dependencies": {
     "@amazon-devices/react-native-kepler": "~4.0.0",
+    "@babel/runtime": "^7.29.7",
     "react": "19.2.0",
     "react-native": "0.83.0"
   },
@@ -26,8 +29,8 @@
     "node": ">=20"
   },
   "devDependencies": {
-    "@amazon-devices/kepler-cli-platform": "^0",
     "@amazon-devices/eslint-plugin-kepler": "^0.1.4",
+    "@amazon-devices/kepler-cli-platform": "^0",
     "@react-native-community/cli": "20.0.0",
     "@react-native/babel-preset": "0.83.0",
     "@react-native/eslint-config": "0.83.0",
@@ -52,6 +55,8 @@
   "kepler": {
     "projectType": "application",
     "appName": "streamready",
-    "targets": ["tv"]
+    "targets": [
+      "tv"
+    ]
   }
 }

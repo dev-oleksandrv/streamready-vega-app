@@ -11,6 +11,9 @@ importers:
       '@amazon-devices/react-native-kepler':
         specifier: ~4.0.0
         version: 4.0.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/node@26.6.2)(@types/react@19.3.0)(react-native@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1))(react@19.2.0)(supports-color@8.1.1)
+      '@babel/runtime':
+        specifier: ^7.29.7
+        version: 7.29.7
       react:
         specifier: 19.2.0
         version: 19.2.0

@@ -14,7 +14,7 @@
     "<rootDir>/node_modules/"
   ],
   "transformIgnorePatterns": [
-    "node_modules/(?!(react-native|@react-native|@amazon-devices/react-native-kepler|@amazon-devices)/)"
+    "node_modules/(?!(\\.pnpm|react-native|@react-native|@amazon-devices/react-native-kepler|@amazon-devices)/)"
   ],
   "collectCoverage": false,
   "collectCoverageFrom": [
