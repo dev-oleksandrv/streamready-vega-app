@@ -9,13 +9,13 @@ import { IpInfoLiteInsightsAdapter } from './IpInfoLiteInsightsAdapter.ts';
 const loader = (() => {
   const providers: InsightsProvider[] = [];
 
+  providers.push(new IpInfoInsightsAdapter());
+
   if (envVars.ipInfoToken) {
     providers.push(
       new IpInfoLiteInsightsAdapter({ ipInfoLiteToken: envVars.ipInfoToken }),
     );
   }
-
-  providers.push(new IpInfoInsightsAdapter());
 
   return new InsightsLoader(providers);
 })();
