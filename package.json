@@ -1,7 +1,8 @@
 {
-  "name": "@amazon-devices/streamready",
+  "name": "@voronkov/streamready",
   "version": "0.0.1",
   "private": true,
+  "license": "Apache-2.0",
   "files": ["dist"],
   "scripts": {
     "clean": "rm -rf node_modules buildinfo.json dist build",
