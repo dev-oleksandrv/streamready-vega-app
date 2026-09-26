@@ -20,6 +20,9 @@ importers:
       react-native:
         specifier: 0.83.0
         version: 0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1)
+      zustand:
+        specifier: ^5.0.15
+        version: 5.0.15(@types/react@19.3.0)(react@19.2.0)
     devDependencies:
       '@amazon-devices/eslint-plugin-kepler':
         specifier: ^0.1.4
@@ -3939,6 +3942,24 @@ packages:
 
   zod@4.6.5:
     resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
+
+  zustand@5.0.15:
+    resolution: {integrity: sha512-MpSEjRiBkA9crSYeOUH32rJC7SVqAbm0Fqcqge/bUi2PPoLcBWKOsG+C8mevmpr8TwXHBVkChbbJiyvkE+i/3A==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=18.0.0'
+      immer: '>=9.0.6'
+      react: '>=18.0.0'
+      use-sync-external-store: '>=1.2.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
+      use-sync-external-store:
+        optional: true
 
 snapshots:
 
@@ -8932,3 +8953,8 @@ snapshots:
       zod: 4.6.5
 
   zod@4.6.5: {}
+
+  zustand@5.0.15(@types/react@19.3.0)(react@19.2.0):
+    optionalDependencies:
+      '@types/react': 19.3.0
+      react: 19.2.0
