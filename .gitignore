@@ -21,3 +21,6 @@ docs/superpowers/
 
 # Kepler ESLint plugin cache
 generated/
+
+# Vega build output
+buildinfo.json
