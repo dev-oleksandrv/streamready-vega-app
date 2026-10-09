@@ -73,4 +73,5 @@ Other focus checks:
 - [ ] Withdraw changes the status to "Consent withdrawn · speed tests are off"; Give consent restores "Consent given".
 - [ ] Consent state survives killing and relaunching the app.
 - [ ] Back on Privacy (view) returns Home.
+- [ ] After returning Home from Privacy, focus lands on the Privacy Policy card (not lost).
 - [ ] Geist and Geist Mono render (compare the policy numbers and headlines with the design). If the system font shows, fix the family names in `src/shared/ui/fonts.ts`.
