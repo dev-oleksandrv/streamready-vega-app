@@ -58,6 +58,9 @@ Other focus checks:
 - [ ] Run 3 tests on the stick and 3 tests of the M-Lab web speed test on a phone on the same network.
   - [ ] Record download, upload and ping for each.
   - [ ] The stick's results are in the same range as the phone's, or close to the device's Wi‑Fi limit, where the "Near your stick's Wi‑Fi limit" note shows.
+- [ ] Debug screen (dev builds): run 3 tests with download mode `arraybuffer` and 3 with `blob`. Record download, upload and ping for each and compare with the phone.
+- [ ] Debug screen: Stop mid-download and mid-upload shows `aborted`, and a new run starts cleanly.
+- [ ] Debug screen: 3 back-to-back runs complete without a crash or growing memory.
 
 ## Performance
 

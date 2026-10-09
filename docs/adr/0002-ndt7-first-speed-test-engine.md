@@ -32,3 +32,16 @@ The app needs free, globally available test servers from day one. M-Lab runs ndt
 - Results are comparable with M-Lab's own clients.
 - Other backends (self-hosted LibreSpeed, a commercial provider) can be added behind the same interface without UI changes.
 - Upload accuracy is limited by how fast the stick's JS thread can send data. This is checked against a phone on the same network (see `docs/qa-checklist.md`).
+
+## Amendment (2026-10-09): Vega WebSocket constraints
+
+Reading Vega's `WebSocket` implementation (kepler 4) showed:
+
+- `bufferedAmount` is declared but never updated, so it cannot gate upload sends.
+- Binary `send()` base64-encodes every message on the JS thread before handing it to native code.
+- Binary receive with `binaryType = 'arraybuffer'` base64-decodes every message on the JS thread. With `'blob'`, payloads stay native-side.
+
+Changes:
+
+- Upload pacing tracks in-flight bytes as bytes sent minus the server's latest `TCPInfo.BytesReceived`, capped at 8 MiB. A numeric `bufferedAmount` is also honored, so the cap keeps working if the platform starts reporting it. The send loop sends at most 4 messages per tick and yields to the event loop between ticks.
+- Download receive mode is an engine option (`downloadMode: 'arraybuffer' | 'blob'`, default `'arraybuffer'`). The temporary debug screen switches it so both can be compared on the stick; the better one becomes the only mode.
