@@ -1,5 +1,8 @@
 {
-  "plugins": ["@typescript-eslint", "@amazon-devices/eslint-plugin-kepler"],
+  "plugins": [
+    "@typescript-eslint",
+    "@amazon-devices/eslint-plugin-kepler"
+  ],
   "extends": [
     "@react-native",
     "eslint:recommended",
@@ -11,7 +14,10 @@
       {
         "patterns": [
           {
-            "group": ["**/modules/*/**"],
+            "group": [
+              "~/modules/*/**",
+              "../**/modules/*/**"
+            ],
             "message": "Import other modules only via their public index: '~/modules/<name>'."
           }
         ]
@@ -20,29 +26,46 @@
   },
   "overrides": [
     {
-      "files": ["**/*.ts", "**/*.tsx"],
+      "files": [
+        "**/*.ts",
+        "**/*.tsx"
+      ],
       "parser": "@typescript-eslint/parser",
       "parserOptions": {
         "project": "./tsconfig.json"
       }
     },
     {
-      "files": ["src/modules/*/domain/**", "src/modules/verdict/**"],
+      "files": [
+        "src/modules/*/domain/**",
+        "src/modules/verdict/**"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "paths": [
-              {"name": "react", "message": "domain/ and verdict/ are pure TypeScript."},
-              {"name": "react-native", "message": "domain/ and verdict/ are pure TypeScript."}
-            ],
-            "patterns": [
               {
-                "group": ["@amazon-devices/*"],
+                "name": "react",
                 "message": "domain/ and verdict/ are pure TypeScript."
               },
               {
-                "group": ["**/modules/*/**"],
+                "name": "react-native",
+                "message": "domain/ and verdict/ are pure TypeScript."
+              }
+            ],
+            "patterns": [
+              {
+                "group": [
+                  "@amazon-devices/*"
+                ],
+                "message": "domain/ and verdict/ are pure TypeScript."
+              },
+              {
+                "group": [
+                  "~/modules/*/**",
+                  "../**/modules/*/**"
+                ],
                 "message": "Import other modules only via their public index: '~/modules/<name>'."
               }
             ]
@@ -51,14 +74,25 @@
       }
     },
     {
-      "files": ["src/shared/**"],
+      "files": [
+        "src/shared/**"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
           {
             "patterns": [
               {
-                "group": ["~/modules", "~/modules/**", "~/app", "~/app/**", "**/modules/**", "**/app/**"],
+                "group": [
+                  "~/app",
+                  "~/app/**",
+                  "~/modules",
+                  "~/modules/**",
+                  "../**/app",
+                  "../**/app/**",
+                  "../**/modules",
+                  "../**/modules/**"
+                ],
                 "message": "shared/ must not depend on modules/ or app/."
               }
             ]
@@ -67,7 +101,18 @@
       }
     },
     {
-      "files": ["package.json", "kepler-compatibility.json"],
+      "files": [
+        "test/**"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    },
+    {
+      "files": [
+        "package.json",
+        "kepler-compatibility.json"
+      ],
       "parser": "jsonc-eslint-parser"
     }
   ],

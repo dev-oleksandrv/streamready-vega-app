@@ -10,7 +10,7 @@ pnpm run check        # lint + typecheck + tests
 pnpm run build:debug  # Vega debug build
 ```
 
-You need the [Vega SDK](https://developer.amazon.com/docs/vega/latest/), Node.js ≥ 20 and pnpm 12.
+You need the [Vega SDK](https://developer.amazon.com/docs/vega/latest/), Node.js ≥ 22 and pnpm 12.
 
 ## Branches
 

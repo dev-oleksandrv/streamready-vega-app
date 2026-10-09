@@ -27,7 +27,7 @@ Not every module needs every folder. Do not create empty folders.
 
 ## Rules
 
-- Cross-module import: `import {x} from '~/modules/speedtest'`. Never `~/modules/speedtest/store/...`.
+- Cross-module import: `import {x} from '~/modules/speedtest'`. Never `~/modules/speedtest/store/...`. Relative imports stay inside the module; never climb into a sibling module (`../../verdict/...`) — ESLint cannot catch this case.
 - Side effects (network, storage, device APIs) are injected through interfaces so tests can replace them. Providers in `app/providers/` wire real implementations.
 - Stores do not import other modules' stores. Cross-module derivation goes in `app/selectors.ts`.
 - Insights visibility is decided only by `selectVisibleInsights`; UI never checks consent + insights by hand.

@@ -24,7 +24,7 @@ StreamReady asks for consent before running any test or IP lookup, and consent c
 ## Requirements
 
 - [Vega SDK](https://developer.amazon.com/docs/vega/latest/)
-- Node.js ≥ 20
+- Node.js ≥ 22
 - pnpm 12
 
 ## Getting started
