@@ -15,3 +15,6 @@ npm-debug.log
 
 # Working specs and plans (polished docs live in docs/ARCHITECTURE.md and docs/adr/)
 docs/superpowers/
+
+# Superpowers execution workspace
+.superpowers/

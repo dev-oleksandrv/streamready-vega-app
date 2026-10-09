@@ -8,18 +8,14 @@
     "^~/(.*)$": "<rootDir>/src/$1"
   },
   "modulePaths": ["<rootDir>/src"],
-  "roots": [
-    "<rootDir>/src/",
-    "<rootDir>/test/",
-    "<rootDir>/node_modules/"
-  ],
+  "roots": ["<rootDir>/src/", "<rootDir>/test/", "<rootDir>/node_modules/"],
   "transformIgnorePatterns": [
-    "node_modules/(?!(react-native|@react-native|@amazon-devices/react-native-kepler|@amazon-devices)/)"
+    "node_modules/(?!(\\.pnpm/[^/]+/node_modules/)?(react-native|@react-native|@amazon-devices)/)"
   ],
   "collectCoverage": false,
   "collectCoverageFrom": [
-    "src/**/*",
-    "!**/index.{ts,js,tsx}",
+    "src/**/*.{ts,tsx}",
+    "!**/index.ts",
     "!**/types.ts",
     "!src/**/*.d.ts"
   ],
