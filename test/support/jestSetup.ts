@@ -28,19 +28,7 @@ jest.mock(
 );
 
 // Infinite loops (Spinner) would tick on real timers and update outside act().
-// Animations are not under test, so loops start and stop as no-ops.
-jest.mock(
-  '@amazon-devices/react-native-kepler/Libraries/Animated/Animated',
-  () => {
-    const actual = jest.requireActual(
-      '@amazon-devices/react-native-kepler/Libraries/Animated/Animated',
-    );
-    const Animated = actual.default ?? actual;
-    const noopLoop = () => ({start: () => {}, stop: () => {}, reset: () => {}});
-    return {
-      __esModule: true,
-      ...actual,
-      default: {...Animated, loop: noopLoop},
-    };
-  },
-);
+// Animations are not under test, so loops start and stop as no-ops. Patched in
+// place: mocking the Animated module creates a require cycle with ScrollView.
+const {Animated} = require('react-native');
+Animated.loop = () => ({start: () => {}, stop: () => {}, reset: () => {}});

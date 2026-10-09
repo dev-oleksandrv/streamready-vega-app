@@ -12,3 +12,5 @@ export {
   useConsentHydrated,
   useOnConsentAccepted,
 } from './ui/ConsentProvider';
+export {PrivacyScreen} from './ui/screens/PrivacyScreen';
+export type {PrivacyScreenProps} from './ui/screens/PrivacyScreen';
