@@ -6,4 +6,8 @@ export const homeContent = {
     title: 'Privacy Policy',
     subtitle: 'What we collect · your choices',
   },
+  debugCard: {
+    title: 'Speed test (debug)',
+    subtitle: 'Temporary · dev builds only',
+  },
 } as const;

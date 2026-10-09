@@ -16,4 +16,17 @@ describe('HomeScreen', () => {
     fireEvent.press(screen.getByRole('button', {name: 'Privacy Policy'}));
     expect(onOpenPrivacy).toHaveBeenCalledTimes(1);
   });
+
+  it('shows the debug card only when onOpenDebug is given', () => {
+    const onOpenDebug = jest.fn();
+    const {rerender} = render(<HomeScreen onOpenPrivacy={jest.fn()} />);
+    expect(
+      screen.queryByRole('button', {name: 'Speed test (debug)'}),
+    ).toBeNull();
+    rerender(
+      <HomeScreen onOpenPrivacy={jest.fn()} onOpenDebug={onOpenDebug} />,
+    );
+    fireEvent.press(screen.getByRole('button', {name: 'Speed test (debug)'}));
+    expect(onOpenDebug).toHaveBeenCalledTimes(1);
+  });
 });
