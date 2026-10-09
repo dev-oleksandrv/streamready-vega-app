@@ -10,6 +10,7 @@
   "scripts": {
     "clean": "rm -rf node_modules buildinfo.json dist build",
     "start": "react-native start",
+    "dev": "scripts/dev.sh",
     "test": "jest --colors",
     "test:coverage": "jest --colors --coverage",
     "lint": "eslint src test index.js babel.config.js metro.config.js package.json --ext .ts,.tsx",
@@ -25,8 +26,13 @@
   },
   "dependencies": {
     "@amazon-devices/react-native-kepler": "~4.0.0",
+    "@amazon-devices/react-native-safe-area-context": "~8.0.0",
+    "@amazon-devices/react-native-screens": "~3.0.0",
+    "@amazon-devices/react-navigation__native": "~8.0.0",
+    "@amazon-devices/react-navigation__native-stack": "~8.0.0",
     "react": "19.2.0",
-    "react-native": "0.83.0"
+    "react-native": "0.83.0",
+    "zustand": "5.0.15"
   },
   "engines": {
     "node": ">=22"

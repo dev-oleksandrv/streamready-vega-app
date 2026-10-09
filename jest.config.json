@@ -29,5 +29,8 @@
     "!**/types.ts",
     "!src/**/*.d.ts"
   ],
-  "coverageDirectory": ".tmp/coverage"
+  "coverageDirectory": ".tmp/coverage",
+  "setupFiles": [
+    "<rootDir>/test/support/jestSetup.ts"
+  ]
 }

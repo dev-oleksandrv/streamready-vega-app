@@ -41,9 +41,9 @@ src/
   shared/
     ui/                    # tokens, scale(), Text, FocusButton, FocusCard, Dialog, ScreenLayout
     lib/                   # http (timeout + AbortSignal), format, logger, storage adapter
-  assets/fonts/            # Geist, Geist Mono + OFL license
 test/                      # mirrors src/ 1:1
   support/                 # FakeWebSocket, fixtures, renderWithProviders, store reset helpers
+assets/fonts/              # Geist, Geist Mono + OFL license (Vega loads fonts from the app root)
 ```
 
 Each module exposes its public API through `index.ts`. Not every module needs every folder.
@@ -89,7 +89,7 @@ Stores never import other modules' stores. Anything derived from several stores 
   - Insights are hidden but stay in the store.
   - Start is disabled with the hint "Privacy consent withdrawn".
 - **Give consent again:** cached insights show immediately and are refreshed in the background.
-- **Back key:** blocked on the Privacy modal while consent is pending.
+- **Back key:** on the cold-start Privacy gate, Back falls through to the system and exits the app.
 
 ### 5.3 Insights visibility
 
@@ -111,7 +111,7 @@ The cooldown is 30s and starts only after a successful test.
 
 ### 5.5 Navigation and Back key
 
-The app uses a stack navigator with the screens Home, Test, Result, Latency and Device, plus Privacy as a modal.
+The app uses a native stack (`@amazon-devices/react-navigation__native-stack`) with the screens Home, Test, Result, Latency, Device and Privacy. Privacy has two modes: `gate` (cold start, Accept only) and `view` (opened from Home). Accepting from the gate resets the stack to Home. Module screens take callbacks as props; route adapters in `app/navigation/` wire them to the stack.
 
 | Where | Back does |
 |---|---|
@@ -119,6 +119,7 @@ The app uses a stack navigator with the screens Home, Test, Result, Latency and 
 | Stop dialog | Resumes the test |
 | Error overlay | Goes Home |
 | Result | Goes Home |
+| Privacy (gate) | Falls through to the system |
 | Other screens | Pops the stack |
 | Home | Falls through to the system |
 

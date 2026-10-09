@@ -12,7 +12,7 @@ Run the relevant sections on a real Fire TV stick before merging UI or measureme
 ## Consent
 
 - [ ] Accept shows a loader in the button, then goes to Home.
-- [ ] Back does nothing while consent is pending.
+- [ ] Back on the cold-start Privacy gate exits the app.
 - [ ] Withdraw hides the header country and IP, and the Device screen's Public IP and Country rows.
 - [ ] Withdraw disables Start with the hint "Privacy consent withdrawn".
 - [ ] Giving consent again restores insights right away.
@@ -64,3 +64,14 @@ Other focus checks:
 - [ ] The live value and bars update smoothly, with no visible jank during the test.
 - [ ] Memory stays flat during upload (check with the Vega performance tools).
 - [ ] D-pad input stays responsive while a test runs.
+
+## Privacy screen
+
+- [ ] Home: the Privacy Policy card has initial focus and opens Privacy.
+- [ ] Privacy (view): Back has initial focus; ◀ ▶ moves between Back and Withdraw/Give consent.
+- [ ] ▲ ▼ scrolls the policy one step per press, stops at the top and bottom, and never moves focus.
+- [ ] Withdraw changes the status to "Consent withdrawn · speed tests are off"; Give consent restores "Consent given".
+- [ ] Consent state survives killing and relaunching the app.
+- [ ] Back on Privacy (view) returns Home.
+- [ ] After returning Home from Privacy, focus lands on the Privacy Policy card (not lost).
+- [ ] Geist and Geist Mono render (compare the policy numbers and headlines with the design). If the system font shows, fix the family names in `src/shared/ui/fonts.ts`.
