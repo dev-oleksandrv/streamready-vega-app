@@ -8,7 +8,9 @@ export function formatMbps(bps: number): string {
   const mbps = bps / 1e6;
   // Round to one decimal first so 99.95 renders as "100", not "100.0".
   const oneDecimal = Math.round(mbps * 10) / 10;
-  return oneDecimal >= 100 ? Math.round(mbps).toString() : oneDecimal.toFixed(1);
+  return oneDecimal >= 100
+    ? Math.round(mbps).toString()
+    : oneDecimal.toFixed(1);
 }
 
 export function formatMs(ms: number): string {

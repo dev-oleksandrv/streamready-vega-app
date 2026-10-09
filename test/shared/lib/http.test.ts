@@ -7,13 +7,15 @@ const jsonResponse = (body: unknown, status = 200) =>
     ok: status >= 200 && status < 300,
     status,
     json: async () => body,
-  }) as unknown as Response;
+  } as unknown as Response);
 
 /** A fetch that never settles until its signal aborts. */
 const hangingFetch = jest.fn(
   (_url: string, init?: RequestInit) =>
     new Promise<Response>((_resolve, reject) => {
-      init?.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+      init?.signal?.addEventListener('abort', () =>
+        reject(new Error('aborted')),
+      );
     }),
 ) as unknown as typeof fetch;
 
@@ -23,22 +25,35 @@ afterEach(() => {
 
 describe('fetchJson', () => {
   it('resolves parsed JSON', async () => {
-    const fetchFn = jest.fn().mockResolvedValue(jsonResponse({ip: '203.0.113.7'}));
+    const fetchFn = jest
+      .fn()
+      .mockResolvedValue(jsonResponse({ip: '203.0.113.7'}));
     await expect(fetchJson(URL, {timeoutMs: 1000, fetchFn})).resolves.toEqual({
       ip: '203.0.113.7',
     });
-    expect(fetchFn).toHaveBeenCalledWith(URL, expect.objectContaining({signal: expect.anything()}));
+    expect(fetchFn).toHaveBeenCalledWith(
+      URL,
+      expect.objectContaining({signal: expect.anything()}),
+    );
   });
 
   it('passes headers through', async () => {
     const fetchFn = jest.fn().mockResolvedValue(jsonResponse({}));
-    await fetchJson(URL, {timeoutMs: 1000, fetchFn, headers: {Accept: 'application/json'}});
-    expect(fetchFn.mock.calls[0][1].headers).toEqual({Accept: 'application/json'});
+    await fetchJson(URL, {
+      timeoutMs: 1000,
+      fetchFn,
+      headers: {Accept: 'application/json'},
+    });
+    expect(fetchFn.mock.calls[0][1].headers).toEqual({
+      Accept: 'application/json',
+    });
   });
 
   it('rejects with status for non-2xx', async () => {
     const fetchFn = jest.fn().mockResolvedValue(jsonResponse({}, 429));
-    await expect(fetchJson(URL, {timeoutMs: 1000, fetchFn})).rejects.toMatchObject({
+    await expect(
+      fetchJson(URL, {timeoutMs: 1000, fetchFn}),
+    ).rejects.toMatchObject({
       kind: 'status',
       status: 429,
     });
@@ -52,14 +67,20 @@ describe('fetchJson', () => {
         throw new SyntaxError('bad json');
       },
     });
-    await expect(fetchJson(URL, {timeoutMs: 1000, fetchFn})).rejects.toMatchObject({
+    await expect(
+      fetchJson(URL, {timeoutMs: 1000, fetchFn}),
+    ).rejects.toMatchObject({
       kind: 'parse',
     });
   });
 
   it('rejects with network when fetch rejects', async () => {
-    const fetchFn = jest.fn().mockRejectedValue(new TypeError('Network request failed'));
-    await expect(fetchJson(URL, {timeoutMs: 1000, fetchFn})).rejects.toMatchObject({
+    const fetchFn = jest
+      .fn()
+      .mockRejectedValue(new TypeError('Network request failed'));
+    await expect(
+      fetchJson(URL, {timeoutMs: 1000, fetchFn}),
+    ).rejects.toMatchObject({
       kind: 'network',
     });
   });
@@ -104,6 +125,8 @@ describe('fetchJson', () => {
 
   it('is an HttpError instance', async () => {
     const fetchFn = jest.fn().mockRejectedValue(new Error('x'));
-    await expect(fetchJson(URL, {timeoutMs: 1000, fetchFn})).rejects.toBeInstanceOf(HttpError);
+    await expect(
+      fetchJson(URL, {timeoutMs: 1000, fetchFn}),
+    ).rejects.toBeInstanceOf(HttpError);
   });
 });

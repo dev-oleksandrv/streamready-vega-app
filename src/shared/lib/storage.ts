@@ -9,18 +9,23 @@ export interface KeyValueStorage {
   removeItem(key: string): Promise<void>;
 }
 
-type AsyncStorageLike = Pick<KeyValueStorage, 'getItem' | 'setItem' | 'removeItem'>;
+type AsyncStorageLike = Pick<
+  KeyValueStorage,
+  'getItem' | 'setItem' | 'removeItem'
+>;
 
 const log = createLogger('storage');
 
-export function createMemoryStorage(initial: Record<string, string> = {}): KeyValueStorage {
+export function createMemoryStorage(
+  initial: Record<string, string> = {},
+): KeyValueStorage {
   const data = new Map(Object.entries(initial));
   return {
-    getItem: async key => data.get(key) ?? null,
+    getItem: async (key) => data.get(key) ?? null,
     setItem: async (key, value) => {
       data.set(key, value);
     },
-    removeItem: async key => {
+    removeItem: async (key) => {
       data.delete(key);
     },
   };
@@ -31,9 +36,11 @@ export function createMemoryStorage(initial: Record<string, string> = {}): KeyVa
  * (zustand persist) fire writes without awaiting, so a rejection would surface
  * as an unhandled promise, and a failed read must fall back to defaults.
  */
-export function createAsyncStorage(backend: AsyncStorageLike = AsyncStorage): KeyValueStorage {
+export function createAsyncStorage(
+  backend: AsyncStorageLike = AsyncStorage,
+): KeyValueStorage {
   return {
-    getItem: async key => {
+    getItem: async (key) => {
       try {
         return await backend.getItem(key);
       } catch (error) {
@@ -48,7 +55,7 @@ export function createAsyncStorage(backend: AsyncStorageLike = AsyncStorage): Ke
         log.warn('write failed', key, error);
       }
     },
-    removeItem: async key => {
+    removeItem: async (key) => {
       try {
         await backend.removeItem(key);
       } catch (error) {

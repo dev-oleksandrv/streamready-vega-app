@@ -17,5 +17,5 @@ export const fakeBackHandler = {
 
 /** Fires Back like the platform: newest handler first, until one returns true. */
 export function pressBack(): boolean {
-  return [...handlers].reverse().some(handler => handler() === true);
+  return [...handlers].reverse().some((handler) => handler() === true);
 }

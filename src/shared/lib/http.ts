@@ -1,4 +1,9 @@
-export type HttpErrorKind = 'timeout' | 'network' | 'status' | 'parse' | 'aborted';
+export type HttpErrorKind =
+  | 'timeout'
+  | 'network'
+  | 'status'
+  | 'parse'
+  | 'aborted';
 
 export class HttpError extends Error {
   readonly kind: HttpErrorKind;
@@ -20,7 +25,10 @@ export interface FetchJsonOptions {
   fetchFn?: typeof fetch;
 }
 
-export async function fetchJson<T>(url: string, opts: FetchJsonOptions): Promise<T> {
+export async function fetchJson<T>(
+  url: string,
+  opts: FetchJsonOptions,
+): Promise<T> {
   const {timeoutMs, signal, headers, fetchFn = fetch} = opts;
   if (signal?.aborted) {
     throw new HttpError('aborted');

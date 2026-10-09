@@ -10,7 +10,9 @@ const makeSink = () => ({
 describe('redact', () => {
   it('masks access_token values in query strings', () => {
     expect(
-      redact('wss://ndt.example.net/ndt/v7/download?access_token=abc.def-123&x=1'),
+      redact(
+        'wss://ndt.example.net/ndt/v7/download?access_token=abc.def-123&x=1',
+      ),
     ).toBe('wss://ndt.example.net/ndt/v7/download?access_token=***&x=1');
   });
 
@@ -29,7 +31,10 @@ describe('createLogger', () => {
   it('redacts string arguments and error messages', () => {
     const sink = makeSink();
     const log = createLogger('ndt7', {enabled: true, sink});
-    log.error('connect ?access_token=s3cret', new Error('at ?access_token=s3cret'));
+    log.error(
+      'connect ?access_token=s3cret',
+      new Error('at ?access_token=s3cret'),
+    );
     const args = sink.error.mock.calls[0];
     expect(args[1]).toBe('connect ?access_token=***');
     expect(args[2]).toBe('Error: at ?access_token=***');
@@ -42,6 +47,8 @@ describe('createLogger', () => {
     log.info('a');
     log.warn('a');
     log.error('a');
-    expect(Object.values(sink).every(fn => fn.mock.calls.length === 0)).toBe(true);
+    expect(Object.values(sink).every((fn) => fn.mock.calls.length === 0)).toBe(
+      true,
+    );
   });
 });
