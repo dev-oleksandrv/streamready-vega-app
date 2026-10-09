@@ -5,12 +5,65 @@
     "eslint:recommended",
     "plugin:@amazon-devices/eslint-plugin-kepler/kepler"
   ],
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["**/modules/*/**"],
+            "message": "Import other modules only via their public index: '~/modules/<name>'."
+          }
+        ]
+      }
+    ]
+  },
   "overrides": [
     {
       "files": ["**/*.ts", "**/*.tsx"],
       "parser": "@typescript-eslint/parser",
       "parserOptions": {
         "project": "./tsconfig.json"
+      }
+    },
+    {
+      "files": ["src/modules/*/domain/**", "src/modules/verdict/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "paths": [
+              {"name": "react", "message": "domain/ and verdict/ are pure TypeScript."},
+              {"name": "react-native", "message": "domain/ and verdict/ are pure TypeScript."}
+            ],
+            "patterns": [
+              {
+                "group": ["@amazon-devices/*"],
+                "message": "domain/ and verdict/ are pure TypeScript."
+              },
+              {
+                "group": ["**/modules/*/**"],
+                "message": "Import other modules only via their public index: '~/modules/<name>'."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["src/shared/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/modules", "~/modules/**", "~/app", "~/app/**", "**/modules/**", "**/app/**"],
+                "message": "shared/ must not depend on modules/ or app/."
+              }
+            ]
+          }
+        ]
       }
     },
     {
