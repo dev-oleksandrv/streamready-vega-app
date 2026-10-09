@@ -20,6 +20,8 @@ interface ConsentContextValue {
   onConsentAccepted: () => Promise<void>;
 }
 
+export const HYDRATION_TIMEOUT_MS = 3000;
+
 const ConsentContext = createContext<ConsentContextValue | null>(null);
 
 export interface ConsentProviderProps {
@@ -39,13 +41,21 @@ export const ConsentProvider = ({
 
   useEffect(() => {
     let alive = true;
-    hydrateConsentStore(store).then(() => {
+    const done = () => {
       if (alive) {
         setHydrated(true);
       }
+    };
+    // A stuck storage read must not keep the splash up forever: after the
+    // timeout the app continues with `pending` and shows the consent gate.
+    const timer = setTimeout(done, HYDRATION_TIMEOUT_MS);
+    hydrateConsentStore(store).then(() => {
+      clearTimeout(timer);
+      done();
     });
     return () => {
       alive = false;
+      clearTimeout(timer);
     };
   }, [store]);
 
@@ -68,6 +78,11 @@ function useConsentContext(): ConsentContextValue {
 
 export function useConsent<T>(selector: (state: ConsentState) => T): T {
   return useStore(useConsentContext().store, selector);
+}
+
+/** Module-internal: handlers that must read the latest state, not the rendered one. */
+export function useConsentStore(): ConsentStore {
+  return useConsentContext().store;
 }
 
 export function useConsentHydrated(): boolean {

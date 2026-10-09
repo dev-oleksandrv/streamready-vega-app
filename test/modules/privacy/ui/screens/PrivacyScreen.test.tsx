@@ -149,6 +149,18 @@ describe('PrivacyScreen', () => {
       expect(store.getState().status).toBe('accepted');
     });
 
+    it('toggles from the latest status when pressed twice in one frame', async () => {
+      const run = jest.fn().mockResolvedValue(undefined);
+      const {store} = await renderScreen('view', 'withdrawn', run);
+      const toggle = screen.getByRole('button', {name: 'Give consent'});
+      act(() => {
+        fireEvent.press(toggle);
+        fireEvent.press(toggle);
+      });
+      expect(store.getState().status).toBe('withdrawn');
+      expect(run).toHaveBeenCalledTimes(1);
+    });
+
     it('calls onBack from the Back button', async () => {
       const {onBack} = await renderScreen('view', 'accepted');
       fireEvent.press(screen.getByRole('button', {name: 'Back'}));

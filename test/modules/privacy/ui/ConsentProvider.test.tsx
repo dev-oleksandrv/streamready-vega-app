@@ -18,6 +18,15 @@ const Probe = () => {
 };
 
 describe('ConsentProvider', () => {
+  beforeEach(() => {
+    // Failure paths log by design; keep the output clean.
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('hydrates the store and reports it', async () => {
     const storage = createMemoryStorage({
       'streamready.consent': JSON.stringify({
@@ -50,6 +59,28 @@ describe('ConsentProvider', () => {
       </ConsentProvider>,
     );
     expect(await screen.findByText('hydrated:pending')).toBeTruthy();
+  });
+
+  it('gives up waiting after the hydration timeout', async () => {
+    jest.useFakeTimers();
+    const storage: KeyValueStorage = {
+      getItem: () => new Promise(() => {}),
+      setItem: jest.fn(),
+      removeItem: jest.fn(),
+    };
+    render(
+      <ConsentProvider
+        store={createConsentStore(storage)}
+        onConsentAccepted={jest.fn()}>
+        <Probe />
+      </ConsentProvider>,
+    );
+    expect(screen.getByText('loading:pending')).toBeTruthy();
+    await act(async () => {
+      jest.advanceTimersByTime(3000);
+    });
+    expect(screen.getByText('hydrated:pending')).toBeTruthy();
+    jest.useRealTimers();
   });
 
   it('re-renders on store changes and exposes onConsentAccepted', async () => {

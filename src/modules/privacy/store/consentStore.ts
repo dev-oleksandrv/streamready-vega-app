@@ -40,6 +40,12 @@ export function createConsentStore(storage: KeyValueStorage) {
           ...current,
           status: parseConsentStatus(persistedState),
         }),
+        // zustand never rejects rehydrate(); read and parse errors arrive here.
+        onRehydrateStorage: () => (_state, error) => {
+          if (error) {
+            log.warn('hydration failed', error);
+          }
+        },
         // Hydration runs explicitly from ConsentProvider so the splash can wait for it.
         skipHydration: true,
       },
@@ -49,11 +55,10 @@ export function createConsentStore(storage: KeyValueStorage) {
 
 export type ConsentStore = ReturnType<typeof createConsentStore>;
 
-/** Loads persisted consent. Never rejects: on failure the status stays `pending`. */
+/**
+ * Loads persisted consent. Resolves even on bad data: zustand routes errors to
+ * onRehydrateStorage, and the status stays `pending`.
+ */
 export async function hydrateConsentStore(store: ConsentStore): Promise<void> {
-  try {
-    await store.persist.rehydrate();
-  } catch (error) {
-    log.warn('hydration failed', error);
-  }
+  await store.persist.rehydrate();
 }

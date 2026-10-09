@@ -3,7 +3,11 @@ import {
   createConsentStore,
   hydrateConsentStore,
 } from '~/modules/privacy';
-import {createMemoryStorage, type KeyValueStorage} from '~/shared/lib/storage';
+import {
+  createAsyncStorage,
+  createMemoryStorage,
+  type KeyValueStorage,
+} from '~/shared/lib/storage';
 
 const persisted = (status: string) =>
   JSON.stringify({state: {status}, version: 1});
@@ -12,6 +16,15 @@ const flush = () =>
   new Promise<void>((resolve) => setImmediate(() => resolve()));
 
 describe('consentStore', () => {
+  beforeEach(() => {
+    // Failure paths log by design; keep the output clean.
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('starts pending', () => {
     expect(createConsentStore(createMemoryStorage()).getState().status).toBe(
       'pending',
@@ -85,16 +98,62 @@ describe('consentStore', () => {
     expect(store.getState().status).toBe('pending');
   });
 
-  it('keeps the in-memory status when a write fails', async () => {
-    const storage: KeyValueStorage = {
+  test.each([
+    ['unknown status', persisted('yes')],
+    ['invalid json', '{oops'],
+    [
+      'an old version',
+      JSON.stringify({state: {status: 'accepted'}, version: 0}),
+    ],
+  ])('stays pending and writes nothing on %s', async (_name, raw) => {
+    // zustand reports the unmigratable version through console.error.
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const storage = createMemoryStorage({[CONSENT_STORAGE_KEY]: raw});
+    const setItem = jest.spyOn(storage, 'setItem');
+    const store = createConsentStore(storage);
+    await hydrateConsentStore(store);
+    expect(store.getState().status).toBe('pending');
+    expect(setItem).not.toHaveBeenCalled();
+    jest.restoreAllMocks();
+  });
+
+  it('logs when persisted data cannot be read', async () => {
+    const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const store = createConsentStore(
+      createMemoryStorage({[CONSENT_STORAGE_KEY]: '{oops'}),
+    );
+    await hydrateConsentStore(store);
+    expect(warn).toHaveBeenCalledWith(
+      '[consent]',
+      'hydration failed',
+      expect.any(String),
+    );
+    warn.mockRestore();
+  });
+
+  it('keeps the in-memory status when the backend rejects a write', async () => {
+    const adapter = createAsyncStorage({
       getItem: jest.fn().mockResolvedValue(null),
-      // The shared adapter swallows write errors; simulate that contract.
-      setItem: jest.fn().mockResolvedValue(undefined),
+      setItem: jest.fn().mockRejectedValue(new Error('disk full')),
       removeItem: jest.fn().mockResolvedValue(undefined),
+    });
+    // Capture the write promises zustand fires without awaiting.
+    const writes: Promise<void>[] = [];
+    const storage: KeyValueStorage = {
+      ...adapter,
+      setItem: (key, value) => {
+        const write = adapter.setItem(key, value);
+        writes.push(write);
+        return write;
+      },
     };
     const store = createConsentStore(storage);
     await hydrateConsentStore(store);
     store.getState().accept();
     expect(store.getState().status).toBe('accepted');
+    expect(writes).toHaveLength(1);
+    // A rejection here would surface as an unhandled promise in the app.
+    await expect(Promise.all(writes)).resolves.toEqual([undefined]);
   });
 });

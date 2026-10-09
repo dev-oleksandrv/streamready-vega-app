@@ -15,11 +15,11 @@ const press = (eventType: string, eventKeyAction = 0) =>
     handler?.({eventType, eventKeyAction});
   });
 
-function renderScroller() {
+function renderScroller(scrollable = scale(300)) {
   render(<PolicyScroller sections={POLICY_SECTIONS} />);
   const scroller = screen.getByTestId('policy-scroller');
   fireEvent(scroller, 'layout', {nativeEvent: {layout: {height: 500}}});
-  fireEvent(scroller, 'contentSizeChange', 0, 500 + scale(300));
+  fireEvent(scroller, 'contentSizeChange', 0, 500 + scrollable);
   // The host view has no instance; the ScrollView class mock above it does.
   let node: typeof scroller | null = scroller;
   while (node && typeof node.instance?.scrollTo !== 'function') {
@@ -34,7 +34,7 @@ function renderScroller() {
   );
   // The mock's scrollTo lives on the prototype and keeps calls across tests.
   scrollTo.mockClear();
-  return {scrollTo};
+  return {scrollTo, scroller};
 }
 
 beforeEach(() => mockedHook.mockClear());
@@ -63,4 +63,12 @@ it('ignores key-up events and scrolls back with ▲', () => {
   press('down');
   press('up');
   expect(scrollTo).toHaveBeenLastCalledWith({y: 0, animated: true});
+});
+
+it('keeps full steps while a scroll animation reports in-between offsets', () => {
+  const {scrollTo, scroller} = renderScroller(scale(1000));
+  press('down');
+  fireEvent.scroll(scroller, {nativeEvent: {contentOffset: {y: scale(40)}}});
+  press('down');
+  expect(scrollTo).toHaveBeenLastCalledWith({y: scale(440), animated: true});
 });

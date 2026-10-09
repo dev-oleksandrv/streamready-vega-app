@@ -6,7 +6,11 @@ import {colors, radii, scale, ScreenLayout, Text} from '~/shared/ui';
 
 import {POLICY_SECTIONS, privacyContent} from '../../content';
 import type {PrivacyMode} from '../../domain/consent';
-import {useConsent, useOnConsentAccepted} from '../ConsentProvider';
+import {
+  useConsent,
+  useConsentStore,
+  useOnConsentAccepted,
+} from '../ConsentProvider';
 import {ConsentActions} from '../components/ConsentActions';
 import {PolicyScroller} from '../components/PolicyScroller';
 
@@ -28,6 +32,7 @@ export const PrivacyScreen = ({
   const accept = useConsent((s) => s.accept);
   const withdraw = useConsent((s) => s.withdraw);
   const onConsentAccepted = useOnConsentAccepted();
+  const store = useConsentStore();
   const [accepting, setAccepting] = useState(false);
   // State updates are async; the ref blocks a second press in the same frame.
   const acceptingRef = useRef(false);
@@ -48,7 +53,8 @@ export const PrivacyScreen = ({
   }, [accept, onAccepted, onConsentAccepted]);
 
   const handleToggle = useCallback(() => {
-    if (status === 'accepted') {
+    // Read the store, not the render: two presses in one frame must toggle twice.
+    if (store.getState().status === 'accepted') {
       withdraw();
       return;
     }
@@ -56,7 +62,7 @@ export const PrivacyScreen = ({
     onConsentAccepted().catch((error) =>
       log.warn('refresh after consent failed', error),
     );
-  }, [accept, onConsentAccepted, status, withdraw]);
+  }, [accept, onConsentAccepted, store, withdraw]);
 
   return (
     <ScreenLayout style={styles.grid}>

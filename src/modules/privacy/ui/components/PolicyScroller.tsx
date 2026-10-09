@@ -4,13 +4,7 @@ import {
   type HWEvent,
 } from '@amazon-devices/react-native-kepler';
 import React, {useCallback, useRef} from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  type LayoutChangeEvent,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from 'react-native';
+import {ScrollView, StyleSheet, type LayoutChangeEvent} from 'react-native';
 
 import {colors, radii, scale} from '~/shared/ui';
 
@@ -28,6 +22,8 @@ export interface PolicyScrollerProps {
  */
 export const PolicyScroller = ({sections}: PolicyScrollerProps) => {
   const ref = useRef<ScrollView>(null);
+  // The source of truth for the position: the TV has no touch scrolling, and
+  // onScroll would feed back mid-animation offsets and shorten the next step.
   const offset = useRef(0);
   const contentHeight = useRef(0);
   const viewportHeight = useRef(0);
@@ -52,15 +48,11 @@ export const PolicyScroller = ({sections}: PolicyScrollerProps) => {
       testID="policy-scroller"
       focusable={false}
       showsVerticalScrollIndicator={false}
-      scrollEventThrottle={64}
       onLayout={(e: LayoutChangeEvent) => {
         viewportHeight.current = e.nativeEvent.layout.height;
       }}
       onContentSizeChange={(_w: number, h: number) => {
         contentHeight.current = h;
-      }}
-      onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => {
-        offset.current = e.nativeEvent.contentOffset.y;
       }}
       style={styles.panel}
       contentContainerStyle={styles.content}>
