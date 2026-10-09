@@ -10,6 +10,7 @@
   "scripts": {
     "clean": "rm -rf node_modules buildinfo.json dist build",
     "start": "react-native start",
+    "dev": "scripts/dev.sh",
     "test": "jest --colors",
     "test:coverage": "jest --colors --coverage",
     "lint": "eslint src test index.js babel.config.js metro.config.js package.json --ext .ts,.tsx",
