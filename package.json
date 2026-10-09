@@ -25,8 +25,13 @@
   },
   "dependencies": {
     "@amazon-devices/react-native-kepler": "~4.0.0",
+    "@amazon-devices/react-native-safe-area-context": "~8.0.0",
+    "@amazon-devices/react-native-screens": "~3.0.0",
+    "@amazon-devices/react-navigation__native": "~8.0.0",
+    "@amazon-devices/react-navigation__native-stack": "~8.0.0",
     "react": "19.2.0",
-    "react-native": "0.83.0"
+    "react-native": "0.83.0",
+    "zustand": "5.0.15"
   },
   "engines": {
     "node": ">=22"
