@@ -40,6 +40,21 @@ describe('createLogger', () => {
     expect(args[2]).toBe('Error: at ?access_token=***');
   });
 
+  it('redacts tokens inside plain objects', () => {
+    const sink = makeSink();
+    createLogger('ndt7', {enabled: true, sink}).warn('locate', {
+      url: 'wss://ndt.example.net/x?access_token=s3cret',
+    });
+    expect(JSON.stringify(sink.warn.mock.calls[0])).not.toContain('s3cret');
+  });
+
+  it('passes objects without tokens through unchanged', () => {
+    const sink = makeSink();
+    const payload = {status: 429};
+    createLogger('x', {enabled: true, sink}).warn('locate', payload);
+    expect(sink.warn.mock.calls[0][2]).toBe(payload);
+  });
+
   it('prints nothing when disabled', () => {
     const sink = makeSink();
     const log = createLogger('x', {enabled: false, sink});

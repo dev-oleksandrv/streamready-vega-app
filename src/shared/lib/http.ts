@@ -62,6 +62,13 @@ export async function fetchJson<T>(
     try {
       return (await response.json()) as T;
     } catch {
+      // The body read is aborted by the same controller as the request.
+      if (timedOut) {
+        throw new HttpError('timeout');
+      }
+      if (signal?.aborted) {
+        throw new HttpError('aborted');
+      }
       throw new HttpError('parse');
     }
   } finally {

@@ -123,6 +123,25 @@ describe('fetchJson', () => {
     expect(removeSpy).toHaveBeenCalledWith('abort', expect.any(Function));
   });
 
+  it('reports a timeout while the body is still being read as timeout', async () => {
+    jest.useFakeTimers();
+    const fetchFn = jest.fn(async (_url: string, init?: RequestInit) => ({
+      ok: true,
+      status: 200,
+      json: () =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () =>
+            reject(new Error('aborted')),
+          );
+        }),
+    })) as unknown as typeof fetch;
+    const pending = fetchJson(URL, {timeoutMs: 5000, fetchFn});
+    await Promise.resolve();
+    await Promise.resolve();
+    jest.advanceTimersByTime(5000);
+    await expect(pending).rejects.toMatchObject({kind: 'timeout'});
+  });
+
   it('is an HttpError instance', async () => {
     const fetchFn = jest.fn().mockRejectedValue(new Error('x'));
     await expect(

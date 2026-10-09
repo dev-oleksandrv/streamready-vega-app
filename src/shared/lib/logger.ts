@@ -23,6 +23,15 @@ function sanitize(arg: unknown): unknown {
   if (arg instanceof Error) {
     return redact(`${arg.name}: ${arg.message}`);
   }
+  if (typeof arg === 'object' && arg !== null) {
+    // Objects pass through as-is unless serializing reveals a token.
+    try {
+      const text = JSON.stringify(arg);
+      return text.includes('access_token=') ? redact(text) : arg;
+    } catch {
+      return '[unserializable]';
+    }
+  }
   return arg;
 }
 

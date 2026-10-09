@@ -3,6 +3,10 @@ import {AsyncStorage} from '@amazon-devices/react-native-kepler';
 
 import {createLogger} from './logger';
 
+/**
+ * Implementations must never reject: zustand persist fires writes without
+ * awaiting them, and a failed read must fall back to defaults.
+ */
 export interface KeyValueStorage {
   getItem(key: string): Promise<string | null>;
   setItem(key: string, value: string): Promise<void>;
