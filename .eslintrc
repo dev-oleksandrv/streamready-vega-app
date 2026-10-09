@@ -18,7 +18,7 @@
               "~/modules/*/**",
               "../**/modules/*/**"
             ],
-            "message": "Import other modules only via their public index: '~/modules/<name>'."
+            "message": "Use '~/modules/<name>' for other modules and relative imports inside a module."
           }
         ]
       }
@@ -57,7 +57,11 @@
             "patterns": [
               {
                 "group": [
-                  "@amazon-devices/*"
+                  "@amazon-devices/*",
+                  "react/*",
+                  "react-native/*",
+                  "react-native-*",
+                  "@react-native/*"
                 ],
                 "message": "domain/ and verdict/ are pure TypeScript."
               },
@@ -66,7 +70,7 @@
                   "~/modules/*/**",
                   "../**/modules/*/**"
                 ],
-                "message": "Import other modules only via their public index: '~/modules/<name>'."
+                "message": "Use '~/modules/<name>' for other modules and relative imports inside a module."
               }
             ]
           }
@@ -114,12 +118,15 @@
         "kepler-compatibility.json"
       ],
       "parser": "jsonc-eslint-parser"
+    },
+    {
+      "files": [
+        "*.config.js",
+        "index.js"
+      ],
+      "env": {
+        "node": true
+      }
     }
-  ],
-  "ignorePatterns": [
-    "babel.config.js",
-    "metro.config.js",
-    "jest.config.js",
-    "package-lock.json"
   ]
 }
