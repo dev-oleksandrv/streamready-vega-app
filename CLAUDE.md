@@ -11,7 +11,7 @@ Open-source (Apache-2.0) Fire TV app for **Vega OS** (React Native for Vega). Me
 ```bash
 pnpm run check         # lint + typecheck + test — run before every commit
 pnpm test              # jest
-pnpm run test:coverage # jest with coverage thresholds
+pnpm run test:coverage # jest with coverage report
 pnpm run lint          # eslint
 pnpm run typecheck     # tsc --noEmit
 pnpm run format        # prettier

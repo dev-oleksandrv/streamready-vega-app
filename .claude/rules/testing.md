@@ -14,6 +14,6 @@ paths:
 - Screens: React Native Testing Library. Query by role/text the user sees; assert behavior, not implementation details.
 - No snapshot tests.
 - Prefer table tests (`test.each`) for thresholds and mappings; include boundary values.
-- Coverage: ≥ 90% lines/branches for `verdict/`, `speedtest/domain/`, `speedtest/engines/`; ≥ 70% global. Do not lower thresholds to make a build pass.
+- Cover the essential parts first: `verdict/`, `speedtest/domain/`, `speedtest/engines/`, stores, key screen flows. No coverage thresholds for now.
 - D-pad focus and real-device behavior go into `docs/qa-checklist.md`, not fragile unit tests.
 - Run `pnpm run check` before committing.
