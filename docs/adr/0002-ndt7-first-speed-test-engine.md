@@ -43,5 +43,5 @@ Reading Vega's `WebSocket` implementation (kepler 4) showed:
 
 Changes:
 
-- Upload pacing tracks in-flight bytes as bytes sent minus the server's latest `TCPInfo.BytesReceived`, capped at 8 MiB. A numeric `bufferedAmount` is also honored, so the cap keeps working if the platform starts reporting it. The send loop sends at most 4 messages per tick and yields to the event loop between ticks.
-- Download receive mode is an engine option (`downloadMode: 'arraybuffer' | 'blob'`, default `'arraybuffer'`). The temporary debug screen switches it so both can be compared on the stick; the better one becomes the only mode.
+- Upload pacing tracks in-flight bytes as bytes sent minus the server's latest `TCPInfo.BytesReceived`, capped at 8 MiB. A numeric `bufferedAmount` is also honored, so the cap keeps working if the platform starts reporting it. The send loop sends at most 1 MiB per tick and yields to the event loop between ticks, which bounds the base64 work done on the JS thread at a time.
+- Download receive mode is an engine option (`downloadMode: 'arraybuffer' | 'blob'`, default `'arraybuffer'`). The temporary debug screen switches it so both can be compared on the stick; the better one becomes the only mode. In `'arraybuffer'` mode every server message (up to 16 MiB by protocol) is decoded into a fresh buffer, so memory on fast links decides between the two.

@@ -61,6 +61,8 @@ Other focus checks:
 - [ ] Debug screen (dev builds): run 3 tests with download mode `arraybuffer` and 3 with `blob`. Record download, upload and ping for each and compare with the phone.
 - [ ] Debug screen: Stop mid-download and mid-upload shows `aborted`, and a new run starts cleanly.
 - [ ] Debug screen: 3 back-to-back runs complete without a crash or growing memory.
+- [ ] Debug screen: on the fastest available link, watch memory during download in both modes (Vega performance tools). `arraybuffer` decodes every message on the JS thread; pick the default mode from this.
+- [ ] Debug screen: D-pad and Back stay responsive during upload.
 
 ## Performance
 
