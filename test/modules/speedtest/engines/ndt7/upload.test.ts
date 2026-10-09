@@ -33,9 +33,20 @@ function ack(socket: FakeWebSocket, elapsedUs = 1_000_000) {
 }
 
 describe('runUpload', () => {
-  it('starts with 8 KiB messages, at most 4 per tick', () => {
+  it('sends at most 1 MiB per tick before yielding', () => {
     const {socket} = start();
-    expect(socket.sentSizes).toEqual([8192, 8192, 8192, 8192]);
+    // 16×8 KiB, 8×16 KiB, 8×32 KiB, 8×64 KiB: exactly 1 MiB.
+    expect(socket.sentSizes).toHaveLength(40);
+    expect(socket.totalSent).toBe(MiB);
+    jest.advanceTimersByTime(0);
+    // At 128 KiB+ each tick still stops at the byte budget.
+    expect(socket.totalSent).toBe(2 * MiB);
+  });
+
+  it('fills messages with varied bytes', () => {
+    const {socket} = start();
+    const [first] = [...socket.sentBuffers];
+    expect(new Set(new Uint8Array(first)).size).toBeGreaterThan(200);
   });
 
   it('doubles message size up to 1 MiB and reuses one buffer per size', () => {

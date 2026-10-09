@@ -53,8 +53,15 @@ export function openSocket(
     let socket: Ndt7Socket;
     try {
       socket = createSocket(url, NDT7_SUBPROTOCOL);
+    } catch {
+      reject(new SpeedTestError('connect_failed'));
+      return;
+    }
+    try {
       socket.binaryType = binaryType;
     } catch {
+      // Vega throws here when blob mode lacks BlobModule; the socket is already connecting.
+      closeQuietly(socket);
       reject(new SpeedTestError('connect_failed'));
       return;
     }

@@ -24,7 +24,8 @@ export const SCALING_FACTOR = 16;
  * bytes sent minus the server's BytesReceived instead.
  */
 export const MAX_IN_FLIGHT_BYTES = 8 * 1024 * 1024;
-export const MESSAGES_PER_TICK = 4;
+/** Each send base64-encodes on the JS thread; this bounds the work between yields. */
+export const MAX_BYTES_PER_TICK = 1024 * 1024;
 export const CAPPED_RETRY_MS = 10;
 export const NORMAL_CLOSE = 1000;
 

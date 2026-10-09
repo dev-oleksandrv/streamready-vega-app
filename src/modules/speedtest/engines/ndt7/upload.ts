@@ -2,9 +2,9 @@ import {isSpeedTestError, SpeedTestError} from '../../domain/errors';
 import type {PhaseOptions} from './download';
 import {
   CAPPED_RETRY_MS,
+  MAX_BYTES_PER_TICK,
   MAX_IN_FLIGHT_BYTES,
   MAX_MESSAGE_BYTES,
-  MESSAGES_PER_TICK,
   MIN_MESSAGE_BYTES,
   NORMAL_CLOSE,
   parseMeasurement,
@@ -18,11 +18,21 @@ export interface UploadOutcome {
   elapsedMs: number;
 }
 
-/** Filled once with random bytes so nothing on the path can compress it. */
+const NOISE_BLOCK_BYTES = 4096;
+
+/**
+ * Random bytes so nothing on the path can compress them. One small random
+ * block is tiled across the buffer: filling 1 MiB byte-by-byte would stall
+ * the JS thread mid-upload.
+ */
 function noiseBuffer(size: number): ArrayBuffer {
+  const block = new Uint8Array(NOISE_BLOCK_BYTES);
+  for (let i = 0; i < block.length; i++) {
+    block[i] = Math.floor(Math.random() * 256);
+  }
   const bytes = new Uint8Array(size);
-  for (let i = 0; i < size; i++) {
-    bytes[i] = Math.floor(Math.random() * 256);
+  for (let offset = 0; offset < size; offset += block.length) {
+    bytes.set(block.subarray(0, Math.min(block.length, size - offset)), offset);
   }
   return bytes.buffer;
 }
@@ -108,7 +118,7 @@ export function runUpload(
       if (settled) {
         return;
       }
-      for (let i = 0; i < MESSAGES_PER_TICK; i++) {
+      for (let tickBytes = 0; tickBytes < MAX_BYTES_PER_TICK; ) {
         if (!canSend()) {
           pumpTimer = setTimeout(pump, CAPPED_RETRY_MS);
           return;
@@ -120,6 +130,7 @@ export function runUpload(
           return;
         }
         bytesSent += size;
+        tickBytes += size;
         if (size < MAX_MESSAGE_BYTES && bytesSent >= SCALING_FACTOR * size) {
           size *= 2;
         }

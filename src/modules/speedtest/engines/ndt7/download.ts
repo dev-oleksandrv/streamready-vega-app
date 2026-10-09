@@ -33,12 +33,30 @@ function binarySize(data: unknown): number {
   }
   if (typeof data === 'object' && data !== null && 'size' in data) {
     const blob = data as {size: unknown; close?: unknown};
+    // Read before close(): Vega's Blob throws on `size` once released.
+    const size = typeof blob.size === 'number' ? blob.size : 0;
     if (typeof blob.close === 'function') {
       blob.close();
     }
-    return typeof blob.size === 'number' ? blob.size : 0;
+    return size;
   }
   return 0;
+}
+
+/**
+ * Vega registers a blob handler per socket and only removes it in close(),
+ * which returns early once the server already closed. Switching back to
+ * arraybuffer removes it either way.
+ */
+function releaseBlobHandler(socket: Ndt7Socket): void {
+  if (socket.binaryType !== 'blob') {
+    return;
+  }
+  try {
+    socket.binaryType = 'arraybuffer';
+  } catch {
+    // No blob support means no handler was registered.
+  }
 }
 
 export function runDownload(
@@ -128,6 +146,7 @@ export function runDownload(
       clearTimeout(safety);
       signal.removeEventListener('abort', onAbort);
       detach(socket);
+      releaseBlobHandler(socket);
       if (error) {
         closeQuietly(socket);
         reject(error);

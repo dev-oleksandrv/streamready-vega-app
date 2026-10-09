@@ -3,6 +3,25 @@ import type {
   Ndt7Socket,
 } from '~/modules/speedtest/engines/ndt7/socket';
 
+/** Mirrors Vega's Blob: `size` throws once `close()` released the data. */
+export class FakeBlob {
+  private data: {size: number} | null;
+  readonly close = jest.fn(() => {
+    this.data = null;
+  });
+
+  constructor(size: number) {
+    this.data = {size};
+  }
+
+  get size(): number {
+    if (!this.data) {
+      throw new Error('Blob has been closed and is no longer available');
+    }
+    return this.data.size;
+  }
+}
+
 /** Scriptable stand-in for the platform WebSocket. Records sizes, never payload copies. */
 export class FakeWebSocket implements Ndt7Socket {
   binaryType: BinaryMode = 'blob';

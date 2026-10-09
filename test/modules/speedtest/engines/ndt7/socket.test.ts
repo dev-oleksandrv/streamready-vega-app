@@ -64,6 +64,29 @@ describe('openSocket', () => {
     await expect(promise).rejects.toMatchObject({code: 'connect_failed'});
   });
 
+  it('closes the socket when setting the binary type throws', async () => {
+    const {create, sockets} = fakeSocketFactory();
+    const promise = openSocket(
+      (url, protocol) => {
+        const socket = create(url, protocol);
+        Object.defineProperty(socket, 'binaryType', {
+          set: () => {
+            throw new Error('Native module BlobModule is required');
+          },
+        });
+        return socket;
+      },
+      URL,
+      {
+        binaryType: 'blob',
+        timeoutMs: 5_000,
+        signal: new AbortController().signal,
+      },
+    );
+    await expect(promise).rejects.toMatchObject({code: 'connect_failed'});
+    expect(sockets[0].closeCalls).toHaveLength(1);
+  });
+
   it('rejects aborted and closes the socket on abort', async () => {
     const controller = new AbortController();
     const {sockets, promise} = open(controller.signal);

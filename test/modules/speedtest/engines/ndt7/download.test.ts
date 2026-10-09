@@ -1,6 +1,6 @@
 import type {EngineEvent} from '~/modules/speedtest';
 import {runDownload} from '~/modules/speedtest/engines/ndt7/download';
-import {FakeWebSocket} from '../../../../support/FakeWebSocket';
+import {FakeBlob, FakeWebSocket} from '../../../../support/FakeWebSocket';
 import {measurement} from '../../../../support/fixtures/ndt7';
 
 beforeEach(() => jest.useFakeTimers());
@@ -62,13 +62,23 @@ describe('runDownload', () => {
 
   it('counts blob sizes and closes each blob', async () => {
     const {socket, promise} = start();
-    const blob = {size: 4_096, close: jest.fn()};
+    const blob = new FakeBlob(4_096);
     socket.receive(blob);
     socket.receive(measurement({MinRTT: 10_000, RTT: 10_000}));
     jest.advanceTimersByTime(1_000);
     socket.serverClose(1000);
     await expect(promise).resolves.toMatchObject({bytes: 4_096});
     expect(blob.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('switches a blob socket back to arraybuffer when done', async () => {
+    const {socket, promise} = start();
+    socket.binaryType = 'blob';
+    socket.receive(measurement({MinRTT: 10_000, RTT: 10_000}));
+    socket.serverClose(1000);
+    await promise;
+    // Releases the platform's per-socket blob handler, which close() skips once CLOSED.
+    expect(socket.binaryType).toBe('arraybuffer');
   });
 
   it('rejects protocol when no MinRTT arrived', async () => {
