@@ -10,3 +10,8 @@ build
 node_modules
 CMakeUserPresets.json
 npm-debug.log
+# Claude Code
+.claude/settings.local.json
+
+# Working specs and plans (polished docs live in docs/ARCHITECTURE.md and docs/adr/)
+docs/superpowers/

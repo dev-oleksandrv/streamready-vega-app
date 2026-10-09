@@ -1,5 +1,5 @@
 {
-  "name": "@amazon-devices/streamready",
+  "name": "@voronkov/streamready",
   "version": "0.0.1",
   "private": true,
   "files": ["dist"],

@@ -1,5 +1,5 @@
 {
   "//": "The declared app name must follow this pattern to be KRL-compatible",
   "name": "dev.voronkov.speedtest.main",
-  "displayName": "streamready"
+  "displayName": "StreamReady"
 }
