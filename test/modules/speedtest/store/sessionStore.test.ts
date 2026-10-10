@@ -1,8 +1,5 @@
-import {
-  createSessionStore,
-  MAX_BARS,
-  type EngineEvent,
-} from '~/modules/speedtest';
+import {createSessionStore, type EngineEvent} from '~/modules/speedtest';
+import {MAX_BARS} from '~/modules/speedtest/store/sessionStore';
 import {createFakeEngine, TEST_RESULT} from '../../../support/fakeEngine';
 
 const NOW = 1_000_000;
@@ -222,6 +219,41 @@ describe('sessionStore', () => {
     expect(store.getState().error).toBe('interrupted');
   });
 
+  it('a synchronous throw from the engine fails the run without leaking the timer', async () => {
+    const store = createSessionStore({
+      createEngine: () => {
+        throw new Error('no emitter');
+      },
+    });
+    expect(() => store.getState().start()).not.toThrow();
+    await settle();
+    expect(store.getState().status).toBe('failed');
+    expect(store.getState().error).toBe('interrupted');
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it('an aborted rejection the store did not cause shows interrupted', async () => {
+    const {store, fake} = setup();
+    store.getState().start();
+    fake.last().reject('aborted');
+    await settle();
+    expect(store.getState().status).toBe('failed');
+    expect(store.getState().error).toBe('interrupted');
+  });
+
+  it('keeps the progress object while a full step stays full', () => {
+    const {store, fake} = setup();
+    store.getState().start();
+    const run = fake.last();
+    run.emit({type: 'phase', phase: 'download'});
+    run.emit(download(10e6, 11_000));
+    jest.advanceTimersByTime(250);
+    const before = store.getState().progress;
+    run.emit(download(12e6, 12_000));
+    jest.advanceTimersByTime(250);
+    expect(store.getState().progress).toBe(before);
+  });
+
   it('stop aborts silently and resets to idle', async () => {
     const {store, fake} = setup();
     store.getState().start();
@@ -263,6 +295,7 @@ describe('sessionStore', () => {
     expect(store.getState().status).toBe('failed');
     expect(store.getState().error).toBe('connectionLost');
     expect(store.getState().phase).toBe('download');
+    expect(jest.getTimerCount()).toBe(0);
     await settle();
     expect(store.getState().error).toBe('connectionLost');
   });

@@ -4,7 +4,7 @@ import {
   liveUnit,
   liveValue,
   serverName,
-} from '~/modules/speedtest';
+} from '~/modules/speedtest/ui/liveText';
 
 describe('liveLabel', () => {
   it.each([

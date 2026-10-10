@@ -3,7 +3,7 @@ import {
   NO_PROGRESS,
   progressForPhase,
   subtestFraction,
-} from '~/modules/speedtest';
+} from '~/modules/speedtest/domain/progress';
 
 describe('progressForPhase', () => {
   it('locating keeps ping at 0', () => {

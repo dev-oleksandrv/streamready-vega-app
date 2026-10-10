@@ -106,15 +106,18 @@ function applyEvent(run: RunValues, event: EngineEvent): RunValues {
       };
     case 'server':
       return {...run, server: event.server};
-    case 'throughput':
+    case 'throughput': {
+      const fraction = subtestFraction(event.elapsedMs);
       return {
         ...run,
         liveBps: event.bps,
-        progress: {
-          ...run.progress,
-          [event.direction]: subtestFraction(event.elapsedMs),
-        },
+        // Same object while unchanged, so the memoized step bars skip a render.
+        progress:
+          run.progress[event.direction] === fraction
+            ? run.progress
+            : {...run.progress, [event.direction]: fraction},
       };
+    }
     case 'latency':
       return {
         ...run,
@@ -183,12 +186,8 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
 
     const finishFailed = (code: SpeedTestErrorCode) => {
       flush();
-      const variant = errorVariant(code);
-      set(
-        variant
-          ? {status: 'failed', error: variant}
-          : {...EMPTY_RUN, status: 'idle'},
-      );
+      // stop() ends our own aborts before they settle; any other 'aborted' is a failure.
+      set({status: 'failed', error: errorVariant(code) ?? 'interrupted'});
     };
 
     return {
@@ -217,43 +216,47 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
         });
         timer = setInterval(flush, deps.flushIntervalMs);
 
-        deps
-          .createEngine()
-          .run({
+        let running: Promise<SpeedTestResult>;
+        try {
+          running = deps.createEngine().run({
             signal: current.signal,
             onEvent: (event) => {
               if (id === runId) {
                 onEvent(event);
               }
             },
-          })
-          .then(
-            (result) => {
-              if (id !== runId) {
-                return;
-              }
-              endRun();
-              flush();
-              set({
-                status: 'done',
-                result,
-                // A finished run went through every phase; the screen shows the upload result.
-                phase: 'upload',
-                liveBps: result.uploadBps,
-                idleMs: result.idleLatencyMs,
-                loadedMs: result.loadedLatencyMs,
-                progress: FULL_PROGRESS,
-                cooldownUntil: deps.now() + deps.cooldownMs,
-              });
-            },
-            (error: unknown) => {
-              if (id !== runId) {
-                return;
-              }
-              endRun();
-              finishFailed(isSpeedTestError(error) ? error.code : 'protocol');
-            },
-          );
+          });
+        } catch (error) {
+          // A synchronous throw (e.g. building the engine) fails the run like a rejection.
+          running = Promise.reject(error);
+        }
+        running.then(
+          (result) => {
+            if (id !== runId) {
+              return;
+            }
+            endRun();
+            flush();
+            set({
+              status: 'done',
+              result,
+              // A finished run went through every phase; the screen shows the upload result.
+              phase: 'upload',
+              liveBps: result.uploadBps,
+              idleMs: result.idleLatencyMs,
+              loadedMs: result.loadedLatencyMs,
+              progress: FULL_PROGRESS,
+              cooldownUntil: deps.now() + deps.cooldownMs,
+            });
+          },
+          (error: unknown) => {
+            if (id !== runId) {
+              return;
+            }
+            endRun();
+            finishFailed(isSpeedTestError(error) ? error.code : 'protocol');
+          },
+        );
       },
 
       stop: () => {

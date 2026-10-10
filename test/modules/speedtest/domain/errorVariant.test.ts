@@ -1,4 +1,5 @@
-import {errorVariant, type SpeedTestErrorCode} from '~/modules/speedtest';
+import {type SpeedTestErrorCode} from '~/modules/speedtest';
+import {errorVariant} from '~/modules/speedtest/domain/errorVariant';
 
 describe('errorVariant', () => {
   it.each<[SpeedTestErrorCode, string | undefined]>([

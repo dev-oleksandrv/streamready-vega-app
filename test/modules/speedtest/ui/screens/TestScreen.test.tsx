@@ -186,11 +186,29 @@ describe('TestScreen', () => {
     expect(fake.createEngine).toHaveBeenCalledTimes(2);
   });
 
-  it('mounted while offline fails at once with connection lost', () => {
-    setup(false);
+  it('mounted while offline fails at once; back online enables Try again', () => {
+    const {fake, setOnline} = setup(false);
     expect(screen.getByText('Connection lost.')).toBeTruthy();
-    const retry = screen.getByRole('button', {name: 'Try again'});
-    expect(retry.props.accessibilityState.disabled).toBe(true);
+    const retry = () => screen.getByRole('button', {name: 'Try again'});
+    expect(retry().props.accessibilityState.disabled).toBe(true);
+    setOnline(true);
+    expect(retry().props.accessibilityState.disabled).toBe(false);
+    fireEvent.press(retry());
+    expect(fake.createEngine).toHaveBeenCalledTimes(2);
+  });
+
+  it('Try again while offline after another failure waits for the network', async () => {
+    const {fake, setOnline} = setup();
+    fake.last().reject('timeout');
+    await settle();
+    setOnline(false);
+    expect(screen.getByText("The test didn't finish.")).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', {name: 'Try again'}));
+    expect(screen.getByText('Connection lost.')).toBeTruthy();
+    expect(
+      screen.getByRole('button', {name: 'Try again'}).props.accessibilityState
+        .disabled,
+    ).toBe(true);
   });
 
   it('going offline behind the Stop dialog shows the error instead', () => {

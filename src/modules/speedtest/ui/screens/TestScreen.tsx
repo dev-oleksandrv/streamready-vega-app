@@ -40,11 +40,12 @@ export const TestScreen = ({online, onExit}: TestScreenProps) => {
     return () => store.getState().stop();
   }, [store]);
 
+  // Also re-checked on every status change, so a retry while offline fails at once.
   useEffect(() => {
-    if (!online) {
+    if (!online && status === 'running') {
       store.getState().fail('network_lost');
     }
-  }, [online, store]);
+  }, [online, status, store]);
 
   // Only a full background aborts; 'inactive' is a system overlay (e.g. Alexa).
   useEffect(() => {

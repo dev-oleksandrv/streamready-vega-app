@@ -1,7 +1,7 @@
 import {fireEvent, render, screen} from '@testing-library/react-native';
 import React from 'react';
 
-import {TestErrorDialog} from '~/modules/speedtest';
+import {TestErrorDialog} from '~/modules/speedtest/ui/components/TestErrorDialog';
 
 const handlers = () => ({onRetry: jest.fn(), onHome: jest.fn()});
 

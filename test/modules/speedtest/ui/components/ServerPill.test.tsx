@@ -1,7 +1,7 @@
 import {render, screen} from '@testing-library/react-native';
 import React from 'react';
 
-import {ServerPill} from '~/modules/speedtest';
+import {ServerPill} from '~/modules/speedtest/ui/components/ServerPill';
 
 describe('ServerPill', () => {
   it('shows the search state until a server is known', () => {
