@@ -37,7 +37,7 @@ The maintainer drives the process. Propose, then wait for a decision.
   - Scope (optional): `speedtest`, `ndt7`, `verdict`, `insights`, `privacy`, `home`, `app`, `shared`, `deps`.
   - Subject: imperative, lowercase, no trailing period, ≤ 72 chars. Breaking changes: `!` plus a `BREAKING CHANGE:` footer.
 - Claude may create branches and commit. Claude must **never push, force-push, rewrite history, or merge into `main`**.
-- `docs/superpowers/` (working specs and plans) is gitignored. Only polished docs (`docs/ARCHITECTURE.md`, `docs/adr/`, `docs/qa-checklist.md`) are versioned.
+- `docs/superpowers/` (working specs and plans) is gitignored. Only polished docs (`docs/ARCHITECTURE.md`, `docs/adr/`) are versioned. `docs/qa-checklist.md` is a local, gitignored device checklist.
 
 ## Open source: no secrets, no personal data
 

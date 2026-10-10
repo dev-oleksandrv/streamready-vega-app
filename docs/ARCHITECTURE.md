@@ -334,7 +334,7 @@ While the device is offline, `connectionLost` shows a disabled Try again and the
 - Screen flows to cover: cold start (pending, accepted, withdrawn), accept including a failed insights fetch, withdrawing consent, the Stop dialog, the 3 error variants, the cooldown.
 - No snapshot tests. No real network, timers or device APIs in tests.
 - Fixtures use documentation IPs (`203.0.113.0/24`, `2001:db8::/32`), fake UUIDs, and no `access_token` values.
-- D-pad focus and real-device behavior are checked manually with [qa-checklist.md](qa-checklist.md).
+- D-pad focus and real-device behavior are checked manually on a device.
 
 ## 11. Decisions
 

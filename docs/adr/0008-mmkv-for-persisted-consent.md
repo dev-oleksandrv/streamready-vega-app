@@ -26,4 +26,4 @@ It is unclear whether the value was lost or read too slowly for the 3 s hydratio
 
 - Reads are synchronous under the async interface, so consent hydrates at once on cold start. The 3 s hydration timeout stays as a safety net.
 - Consent accepted under the old storage is not migrated: the app was unreleased, and the old value did not survive relaunches anyway.
-- Tests use an in-memory MMKV mock (`test/support/jestSetup.ts`). Persistence across relaunches is checked on device (`docs/qa-checklist.md`).
+- Tests use an in-memory MMKV mock (`test/support/jestSetup.ts`). Persistence across relaunches is checked on a device.

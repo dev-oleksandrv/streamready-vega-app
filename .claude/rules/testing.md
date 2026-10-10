@@ -15,5 +15,5 @@ paths:
 - No snapshot tests.
 - Prefer table tests (`test.each`) for thresholds and mappings; include boundary values.
 - Cover the essential parts first: `verdict/`, `speedtest/domain/`, `speedtest/engines/`, stores, key screen flows. No coverage thresholds for now.
-- D-pad focus and real-device behavior go into `docs/qa-checklist.md`, not fragile unit tests.
+- D-pad focus and real-device behavior go into the local `docs/qa-checklist.md` (gitignored), not fragile unit tests.
 - Run `pnpm run check` before committing.

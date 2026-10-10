@@ -36,7 +36,7 @@ Commits follow [Conventional Commits 1.0](https://www.conventionalcommits.org/en
 - `pnpm run check` passes.
 - New logic comes with tests in `test/`, mirroring the `src/` path (`src/modules/verdict/domain/evaluate.ts` → `test/modules/verdict/domain/evaluate.test.ts`).
 - No snapshot tests. Assert on behavior the user sees.
-- For UI changes, walk the relevant items in [docs/qa-checklist.md](docs/qa-checklist.md) on a device.
+- For UI changes, check the affected screens on a device: D-pad focus, Back key and the states the change touches.
 
 ## Architecture
 
