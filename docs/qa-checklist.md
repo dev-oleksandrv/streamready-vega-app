@@ -63,6 +63,7 @@ Other focus checks:
 - [ ] Debug screen: 3 back-to-back runs complete without a crash or growing memory.
 - [ ] Debug screen: on the fastest available link, watch memory during download in both modes (Vega performance tools). `arraybuffer` decodes every message on the JS thread; pick the default mode from this.
 - [ ] Debug screen: D-pad and Back stay responsive during upload.
+- [ ] Debug screen: on the VVD and on the stick, run each upload window from 1 MiB down to 32 KiB. Record upload Mbps, "Upload window used", and any `upload retry` lines in the logs; pick the default window from the largest one that never retries.
 
 ## Performance
 

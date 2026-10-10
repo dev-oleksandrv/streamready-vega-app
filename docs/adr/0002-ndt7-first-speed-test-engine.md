@@ -41,7 +41,16 @@ Reading Vega's `WebSocket` implementation (kepler 4) showed:
 - Binary `send()` base64-encodes every message on the JS thread before handing it to native code.
 - Binary receive with `binaryType = 'arraybuffer'` base64-decodes every message on the JS thread. With `'blob'`, payloads stay native-side.
 
+Testing on the Vega Virtual Device then showed:
+
+- The server's close frame reaches `onmessage` as a text message (the status code bytes, e.g. `"\u0003"`), and `onclose` follows seconds later with code `1`, not the frame's code.
+- The native socket doesn't queue outgoing data. Sending faster than it drains fails the connection with close `1006` and reason "Failed sending data to the peer", seen after 192–384 KiB.
+
+Other platforms hit the same class of problem. M-Lab's own ndt7-js crashed in Safari with "Failed to send WebSocket frame" when its send loop burst ahead of a late `bufferedAmount`; the fix was one `send()` per loop iteration ([ndt7 updates](https://www.measurementlab.net/blog/ndt7-updates/)). Without any buffer signal, the remaining option is an application-level window confirmed by the peer, which ndt7 provides through the server's upload measurements (every ~250 ms on average, Poisson, 25–625 ms).
+
 Changes:
 
-- Upload pacing tracks in-flight bytes as bytes sent minus the server's latest `TCPInfo.BytesReceived`, capped at 8 MiB. A numeric `bufferedAmount` is also honored, so the cap keeps working if the platform starts reporting it. The send loop sends at most 1 MiB per tick and yields to the event loop between ticks, which bounds the base64 work done on the JS thread at a time.
-- Download receive mode is an engine option (`downloadMode: 'arraybuffer' | 'blob'`, default `'arraybuffer'`). The temporary debug screen switches it so both can be compared on the stick; the better one becomes the only mode. In `'arraybuffer'` mode every server message (up to 16 MiB by protocol) is decoded into a fresh buffer, so memory on fast links decides between the two.
+- The close-frame echo marks the end of a subtest. A plain `onclose` without it is a lost connection.
+- Upload sends one message per event-loop tick, never a burst. It keeps unconfirmed bytes (sent minus the server's `TCPInfo.BytesReceived`, plus the last measured rate times the time since that report) within an upload window. Messages never exceed half the window. A numeric `bufferedAmount` is honored too.
+- The window is an engine option (`uploadWindowBytes`, 32 KiB to 1 MiB, default 128 KiB). If upload fails with a lost connection, the engine retries on a fresh socket with the next smaller window, down to 32 KiB; a retry that cannot connect ends the run. The result reports the window it came from.
+- Download receive mode is an engine option (`downloadMode: 'arraybuffer' | 'blob'`, default `'arraybuffer'`). The temporary debug screen switches it, and the upload window, so both can be tuned on the VVD and the stick; the defaults follow from those runs. In `'arraybuffer'` mode every server message (up to 16 MiB by protocol) is decoded into a fresh buffer, so memory on fast links decides between the two.
