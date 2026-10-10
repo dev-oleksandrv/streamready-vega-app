@@ -18,7 +18,7 @@ import {
   SessionProvider,
   type SessionStore,
 } from '~/modules/speedtest';
-import {createAsyncStorage} from '~/shared/lib/storage';
+import {createMmkvStorage} from '~/shared/lib/storage';
 
 import {createGeoProvider} from './geoProvider';
 
@@ -42,7 +42,7 @@ export const AppProviders = ({
   onConsentAccepted,
 }: AppProvidersProps) => {
   const [consent] = useState(
-    () => consentStore ?? createConsentStore(createAsyncStorage()),
+    () => consentStore ?? createConsentStore(createMmkvStorage()),
   );
   const [insights] = useState(
     () =>

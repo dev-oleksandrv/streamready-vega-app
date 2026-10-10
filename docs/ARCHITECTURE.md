@@ -41,7 +41,7 @@ src/
     home/                  # HomeScreen
   shared/
     ui/                    # tokens, scale(), Text, FocusButton, FocusCard, Dialog, ScreenLayout
-    lib/                   # http (timeout + AbortSignal), format, logger, storage adapter
+    lib/                   # http (timeout + AbortSignal), format, logger, storage adapter (MMKV, ADR 0008)
 test/                      # mirrors src/ 1:1
   support/                 # FakeNdt7Native, fixtures, renderWithProviders, store reset helpers
 assets/fonts/              # Geist, Geist Mono + OFL license (Vega loads fonts from the app root)
@@ -65,7 +65,7 @@ Zustand, one store per module.
 
 | Store | State | Persisted |
 |---|---|---|
-| `privacy/consentStore` | `status: 'pending' \| 'accepted' \| 'withdrawn'` | yes (only this key) |
+| `privacy/consentStore` | `status: 'pending' \| 'accepted' \| 'withdrawn'` | yes, in MMKV (only this key) |
 | `insights/insightsStore` | `connection?`, `device?`, `network: {online, transport: 'wifi' \| 'ethernet' \| 'other' \| 'none', band?}`, `status: 'idle' \| 'loading' \| 'ready' \| 'error'` | no |
 | `speedtest/sessionStore` | phase, live values, throttled samples, `result?`, `error?`, `cooldownUntil?` (today only `cooldownUntil`; the Test module adds the rest) | no |
 

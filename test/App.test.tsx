@@ -5,7 +5,7 @@ import {App} from '~/App';
 
 jest.mock('~/shared/lib/storage', () => {
   const actual = jest.requireActual('~/shared/lib/storage');
-  return {...actual, createAsyncStorage: () => actual.createMemoryStorage()};
+  return {...actual, createMmkvStorage: () => actual.createMemoryStorage()};
 });
 
 jest.mock('~/app/providers/geoProvider', () => ({

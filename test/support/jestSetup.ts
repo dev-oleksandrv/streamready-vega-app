@@ -46,3 +46,20 @@ jest.mock('@amazon-devices/react-native-device-info', () => ({
   __esModule: true,
   default: {getModel: () => 'unknown', getSystemVersion: () => 'unknown'},
 }));
+
+// MMKV is a native module; an in-memory stand-in keeps storage imports working.
+// Each instance gets its own map, so tests never share persisted state.
+jest.mock('@amazon-devices/react-native-mmkv', () => ({
+  MMKV: class {
+    private data = new Map<string, string>();
+    getString(key: string) {
+      return this.data.get(key);
+    }
+    set(key: string, value: string) {
+      this.data.set(key, value);
+    }
+    delete(key: string) {
+      this.data.delete(key);
+    }
+  },
+}));
