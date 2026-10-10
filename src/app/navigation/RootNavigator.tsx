@@ -9,11 +9,11 @@ import {colors} from '~/shared/ui';
 import {useColdStartInsights} from '../hooks/useColdStartInsights';
 import {AppHeader} from '../layout/AppHeader';
 import {SplashScreen} from '../screens/SplashScreen';
-import {DebugSpeedTestRoute} from './DebugSpeedTestRoute';
 import {DeviceRoute} from './DeviceRoute';
 import {HomeRoute} from './HomeRoute';
 import {PrivacyRoute} from './PrivacyRoute';
 import type {RootStackParamList} from './routes';
+import {TestRoute} from './TestRoute';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -48,12 +48,7 @@ export const RootNavigator = () => {
             initialParams={{mode: 'gate'}}
           />
           <Stack.Screen name="Device" component={DeviceRoute} />
-          {__DEV__ ? (
-            <Stack.Screen
-              name="DebugSpeedTest"
-              component={DebugSpeedTestRoute}
-            />
-          ) : null}
+          <Stack.Screen name="Test" component={TestRoute} />
         </Stack.Navigator>
       </NavigationContainer>
       <AppHeader />
