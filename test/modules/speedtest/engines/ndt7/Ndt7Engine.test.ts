@@ -107,6 +107,7 @@ describe('Ndt7Engine', () => {
       },
       finishedAt: Date.now(),
       uploadWindowBytes: 32 * 1024,
+      engineId: 'ndt7',
     });
     expect(s.create.mock.calls.map((c) => c[0])).toEqual([
       'wss://ndt-1.example/ndt/v7/download?access_token=REDACTED',

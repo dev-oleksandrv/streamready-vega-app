@@ -43,8 +43,10 @@ function uploadWindowLadder(first: number): number[] {
   return [first, ...[...smaller].reverse()];
 }
 
+export const NDT7_ENGINE_ID = 'ndt7';
+
 export class Ndt7Engine implements SpeedTestEngine {
-  readonly id = 'ndt7';
+  readonly id = NDT7_ENGINE_ID;
   private running = false;
   private readonly log: Logger;
 
@@ -114,6 +116,7 @@ export class Ndt7Engine implements SpeedTestEngine {
       server: target.server,
       finishedAt: now(),
       uploadWindowBytes: upload.windowBytes,
+      engineId: NDT7_ENGINE_ID,
     };
   }
 

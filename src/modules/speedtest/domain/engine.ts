@@ -27,6 +27,8 @@ export interface SpeedTestResult {
   finishedAt: number;
   /** Engines that pace uploads report the send window the result came from. */
   uploadWindowBytes?: number;
+  /** Which engine produced the result (diagnostics only; the UI never branches on it). */
+  engineId?: string;
 }
 
 export interface RunOptions {

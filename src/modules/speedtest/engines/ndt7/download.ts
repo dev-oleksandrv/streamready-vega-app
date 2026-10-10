@@ -7,8 +7,8 @@ import {
   parseMeasurement,
   SAMPLE_INTERVAL_MS,
 } from './protocol';
+import {bitsPerSecond, DownloadLatency} from './measurements';
 import {closeQuietly, detach, type Ndt7Socket} from './socket';
-import {median} from './stats';
 
 export interface PhaseOptions {
   now: () => number;
@@ -25,9 +25,6 @@ export interface DownloadOutcome {
   idleLatencyMs: number;
   loadedLatencyMs: number;
 }
-
-const bitsPerSecond = (bytes: number, elapsedMs: number) =>
-  elapsedMs > 0 ? (bytes * 8000) / elapsedMs : 0;
 
 /** Byte size of a binary message. Blobs are released right away: payloads are never kept. */
 function binarySize(data: unknown): number {
@@ -76,10 +73,7 @@ export function runDownload(
     const start = now();
     let bytes = 0;
     let messages = 0;
-    let minRttMs: number | undefined;
-    const rttsMs: number[] = [];
-    let emittedIdleMs: number | undefined;
-    let emittedLoadedMs: number | undefined;
+    const latency = new DownloadLatency();
     let settled = false;
 
     const ticker = setInterval(sample, SAMPLE_INTERVAL_MS);
@@ -101,16 +95,7 @@ export function runDownload(
         return;
       }
       try {
-        const m = parseMeasurement(data);
-        if (m.minRttMs !== undefined) {
-          minRttMs =
-            minRttMs === undefined
-              ? m.minRttMs
-              : Math.min(minRttMs, m.minRttMs);
-        }
-        if (m.rttMs !== undefined) {
-          rttsMs.push(m.rttMs);
-        }
+        latency.add(parseMeasurement(data));
       } catch (error) {
         settle(
           isSpeedTestError(error) ? error : new SpeedTestError('protocol'),
@@ -123,10 +108,6 @@ export function runDownload(
         : settle(new SpeedTestError('network_lost'));
     socket.onerror = () => settle(new SpeedTestError('network_lost'));
 
-    function loadedMs(): number | undefined {
-      return rttsMs.length > 0 ? median(rttsMs) : undefined;
-    }
-
     function sample() {
       const elapsedMs = now() - start;
       if (elapsedMs > 0) {
@@ -137,11 +118,9 @@ export function runDownload(
           elapsedMs,
         });
       }
-      const loaded = loadedMs();
-      if (minRttMs !== emittedIdleMs || loaded !== emittedLoadedMs) {
-        emittedIdleMs = minRttMs;
-        emittedLoadedMs = loaded;
-        onEvent({type: 'latency', idleMs: minRttMs, loadedMs: loaded});
+      const event = latency.nextEvent();
+      if (event) {
+        onEvent(event);
       }
     }
 
@@ -161,7 +140,8 @@ export function runDownload(
         reject(error);
         return;
       }
-      if (minRttMs === undefined) {
+      const idleMs = latency.idleMs;
+      if (idleMs === undefined) {
         reject(new SpeedTestError('protocol'));
         return;
       }
@@ -173,8 +153,8 @@ export function runDownload(
         messages,
         elapsedMs,
         bps: bitsPerSecond(bytes, elapsedMs),
-        idleLatencyMs: minRttMs,
-        loadedLatencyMs: loadedMs() ?? minRttMs,
+        idleLatencyMs: idleMs,
+        loadedLatencyMs: latency.loadedMs() ?? idleMs,
       });
     }
   });

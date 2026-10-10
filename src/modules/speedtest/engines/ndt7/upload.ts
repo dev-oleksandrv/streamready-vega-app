@@ -10,6 +10,7 @@ import {
   SCALING_FACTOR,
   UPLOAD_DURATION_MS,
 } from './protocol';
+import {UploadRate} from './measurements';
 import {closeQuietly, detach, type Ndt7Socket} from './socket';
 
 export interface UploadOptions extends PhaseOptions {
@@ -62,9 +63,8 @@ export function runUpload(
     );
     let size = MIN_MESSAGE_BYTES;
     let bytesSent = 0;
-    let serverBytes = 0;
+    const rate = new UploadRate();
     let measuredAt = start;
-    let lastBps: number | undefined;
     let settled = false;
     let pumpTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -81,19 +81,13 @@ export function runUpload(
         return;
       }
       try {
-        const m = parseMeasurement(data);
-        if (
-          m.bytesReceived !== undefined &&
-          m.elapsedMs !== undefined &&
-          m.elapsedMs > 0
-        ) {
-          serverBytes = m.bytesReceived;
+        const bps = rate.add(parseMeasurement(data));
+        if (bps !== undefined) {
           measuredAt = now();
-          lastBps = (m.bytesReceived * 8000) / m.elapsedMs;
           onEvent({
             type: 'throughput',
             direction: 'upload',
-            bps: lastBps,
+            bps,
             elapsedMs: now() - start,
           });
         }
@@ -128,9 +122,10 @@ export function runUpload(
      * keep draining at its last measured rate.
      */
     function unconfirmedBytes(): number {
+      const lastBps = rate.lastBps;
       const drainedSince =
         lastBps === undefined ? 0 : ((now() - measuredAt) * lastBps) / 8000;
-      return Math.max(0, bytesSent - (serverBytes + drainedSince));
+      return Math.max(0, bytesSent - (rate.serverBytes + drainedSince));
     }
 
     function canSend(): boolean {
@@ -166,6 +161,7 @@ export function runUpload(
     }
 
     function complete() {
+      const lastBps = rate.lastBps;
       settle(lastBps === undefined ? new SpeedTestError('protocol') : lastBps);
     }
 
