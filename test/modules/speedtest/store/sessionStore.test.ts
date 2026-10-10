@@ -169,6 +169,38 @@ describe('sessionStore', () => {
     });
   });
 
+  it('stops adding bars once the subtest has run its full length', () => {
+    const {store, fake} = setup();
+    store.getState().start();
+    const run = fake.last();
+    run.emit({type: 'phase', phase: 'upload'});
+    run.emit(upload(10e6, 10_000));
+    jest.advanceTimersByTime(250 * 4); // closing handshake: no new data
+    expect(store.getState().bars).toEqual([]);
+  });
+
+  it('stops repeating the last value after a second without samples', () => {
+    const {store, fake} = setup();
+    store.getState().start();
+    const run = fake.last();
+    run.emit({type: 'phase', phase: 'download'});
+    run.emit(download(10e6, 1_000));
+    jest.advanceTimersByTime(250 * 8);
+    expect(store.getState().bars).toHaveLength(4);
+  });
+
+  it('settling does not add an extra bar', async () => {
+    const {store, fake} = setup();
+    store.getState().start();
+    const run = fake.last();
+    run.emit({type: 'phase', phase: 'upload'});
+    run.emit(upload(20e6, 5_000));
+    jest.advanceTimersByTime(250);
+    run.resolve();
+    await settle();
+    expect(store.getState().bars).toHaveLength(1);
+  });
+
   it(`caps the chart at ${MAX_BARS} bars`, () => {
     const {store, fake} = setup();
     store.getState().start();
@@ -187,6 +219,7 @@ describe('sessionStore', () => {
     const run = fake.last();
     run.emit({type: 'phase', phase: 'upload'});
     run.emit(upload(20e6, 9_000));
+    jest.advanceTimersByTime(250);
     run.resolve();
     await settle();
     const s = store.getState();
@@ -224,6 +257,7 @@ describe('sessionStore', () => {
       const run = fake.last();
       run.emit({type: 'phase', phase: 'download'});
       run.emit(download(10e6, 300));
+      jest.advanceTimersByTime(250);
       run.reject(code);
       await settle();
       const s = store.getState();

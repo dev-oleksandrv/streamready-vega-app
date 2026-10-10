@@ -24,6 +24,11 @@ import {
 /** ~4 Hz: React never sees engine events directly (1 GB stick). */
 export const FLUSH_INTERVAL_MS = 250;
 export const MAX_BARS = 120;
+/**
+ * Flushes a value may repeat without a new sample (~1 s): covers upload's
+ * batched samples, but a stall or the closing handshake draws no flat bars.
+ */
+const MAX_REPEAT_FLUSHES = 4;
 
 export type SessionStatus = 'idle' | 'running' | 'done' | 'failed';
 
@@ -137,6 +142,7 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
     let timer: ReturnType<typeof setInterval> | null = null;
     let pending: RunValues = EMPTY_RUN;
     let changed = false;
+    let flushesSinceSample = 0;
 
     const onEvent = (event: EngineEvent) => {
       // A late sample of the other direction would draw a wrong bar.
@@ -145,15 +151,22 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
       }
       pending = applyEvent(pending, event);
       changed = true;
+      if (event.type === 'throughput') {
+        flushesSinceSample = 0;
+      }
     };
 
-    const flush = () => {
+    /** `addBar` is false for the final flush of a run: it only applies values. */
+    const flush = (addBar = true) => {
       const {phase, liveBps} = pending;
       // One bar per flush, not per sample: upload samples arrive in batches
       // between blocking sends, and the chart must show both subtests by time.
       if (
+        addBar &&
         (phase === 'download' || phase === 'upload') &&
         liveBps !== undefined &&
+        pending.progress[phase] < 1 &&
+        flushesSinceSample < MAX_REPEAT_FLUSHES &&
         pending.bars.length < MAX_BARS
       ) {
         pending = {
@@ -163,6 +176,7 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
         };
         changed = true;
       }
+      flushesSinceSample += 1;
       if (changed) {
         changed = false;
         set(pending);
@@ -182,7 +196,7 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
     };
 
     const finishFailed = (code: SpeedTestErrorCode) => {
-      flush();
+      flush(false);
       // stop() ends our own aborts before they settle; any other 'aborted' is a failure.
       set({status: 'failed', error: errorVariant(code) ?? 'interrupted'});
     };
@@ -204,13 +218,14 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
         controller = current;
         pending = EMPTY_RUN;
         changed = false;
+        flushesSinceSample = 0;
         set({
           ...EMPTY_RUN,
           status: 'running',
           result: undefined,
           error: undefined,
         });
-        timer = setInterval(flush, deps.flushIntervalMs);
+        timer = setInterval(() => flush(), deps.flushIntervalMs);
 
         let running: Promise<SpeedTestResult>;
         try {
@@ -232,7 +247,7 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
               return;
             }
             endRun();
-            flush();
+            flush(false);
             set({
               status: 'done',
               result,
