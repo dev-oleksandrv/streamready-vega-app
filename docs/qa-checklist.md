@@ -70,7 +70,7 @@ Other focus checks:
 - [ ] Debug screen shows `Native module: present` on the VVD and the stick.
 - [ ] Engine `native`, on the stick: 5 back-to-back runs complete without a crash (check `vega device copy-logs -a SYSTEM_TOMBSTONE/acr` afterwards).
 - [ ] Before Start, leave the debug screen idle for ~10 s and record `JS stall (idle)`: the screen's own baseline at the same 4 Hz re-render.
-- [ ] Engine `native`: JS stall (download) max < 100 ms, or no more than ~20 ms above the idle baseline; record max/avg for download and upload.
+- [ ] Engine `native`: JS stall (download) max < 100 ms; record max/avg for download and upload, next to the idle baseline.
 - [ ] Debug screen: every row, including `Error`, is visible on screen.
 - [ ] Engine `native`: 3 runs on the stick vs 3 M-Lab runs on a phone on the same network; download, upload and ping in the same range.
 - [ ] Engine `native`: Stop mid-download and mid-upload shows `aborted`; the next run starts cleanly.
