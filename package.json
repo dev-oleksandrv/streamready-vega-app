@@ -17,13 +17,14 @@
     "lint:fix": "eslint src test index.js babel.config.js metro.config.js package.json --ext .ts,.tsx --fix",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"test/**/*.{ts,tsx}\"",
-    "check": "npm-run-all lint typecheck test",
+    "check": "npm-run-all lint typecheck test test:native",
     "build:release": "react-native build-vega --build-type Release",
     "build:debug": "react-native build-vega --build-type Debug",
     "build:app": "npm-run-all build:release",
     "build": "npm-run-all build:release",
     "release": "npm-run-all check build:app",
-    "codegen:ndt7": "keplerscript-turbomodule-api codegen src/modules/speedtest/engines/ndt7native/NativeNdt7.ts -o kepler/turbo-modules/ -s Ndt7TurboModule -c Ndt7Native"
+    "codegen:ndt7": "keplerscript-turbomodule-api codegen src/modules/speedtest/engines/ndt7native/NativeNdt7.ts -o kepler/turbo-modules/ -s Ndt7TurboModule -c Ndt7Native",
+    "test:native": "scripts/test-native.sh"
   },
   "dependencies": {
     "@amazon-devices/keplerscript-turbomodule-api": "1.2.5",

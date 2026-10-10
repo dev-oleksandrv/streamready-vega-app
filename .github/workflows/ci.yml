@@ -27,3 +27,4 @@ jobs:
       - run: pnpm run lint
       - run: pnpm run typecheck
       - run: pnpm run test:coverage
+      - run: pnpm run test:native
