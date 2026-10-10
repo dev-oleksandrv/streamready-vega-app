@@ -7,6 +7,7 @@ Run the relevant sections on a real Fire TV stick before merging UI or measureme
 - [ ] Fresh install shows the splash, then the Privacy modal.
 - [ ] Relaunch with consent accepted goes from the splash straight to Home, with insights in the header.
 - [ ] Relaunch with consent withdrawn shows the Privacy modal again.
+- [ ] Accept, then close and reopen the app twice without reinstalling: Home opens straight away both times (consent persists in MMKV).
 - [ ] With the network off and consent accepted, the splash hides within about 5s and Home shows without insights.
 
 ## Consent
@@ -82,7 +83,8 @@ Other focus checks:
 - [ ] After a successful debug run, Home shows "Next test in 0:ss" counting down to "Press OK".
 - [ ] Device card subtitle reads "Vega OS · …" and opens the Device screen; Back (button and key) returns Home.
 - [ ] Device rows match the device; geo rows disappear after withdrawing consent.
-- [ ] Dev logs (`[insights] device …`, `[insights] network …`): record the `getModel()` codename and whether `frequency` is present, on the stick and on the VVD. Seed `DEVICE_PROFILES` and finish ADR 0007 with the results.
+- [ ] Dev logs (`[insights] device …`, `[insights] network …`) on a new device model: record the codename and whether `frequency` is present, then add the model to `DEVICE_PROFILES` and ADR 0007.
+- [ ] On the 4K Select (`AFTCA002`): the Device screen shows Model "Fire TV Stick 4K Select", Connection "Wi‑Fi 5 · 5 GHz" and Device limit "~300 Mbps"; the Home card reads "Vega OS · Wi‑Fi 5".
 
 ## Performance
 
