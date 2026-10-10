@@ -24,7 +24,7 @@ The SDK has no TLS library for apps on the device: OpenSSL is not in the sysroot
 - Native code counts bytes and time and forwards server measurement texts unparsed, about every 250 ms. It forwards every text since the last event, because loaded latency is the median of all RTT samples. TypeScript keeps Locate, measurement parsing and all result logic.
 - `NativeNdt7Engine` implements `SpeedTestEngine`, so UI, stores and verdict don't change.
 - If the native module is missing, every run fails with `connect_failed`.
-- `emit()` keeps no order across calls, so events carry a `seq`. A late event still contributes its measurements. JS also guards each subtest with a watchdog (30 s download, 25 s upload) in case a `done` event is lost.
+- `emit()` keeps no order across calls, so events carry a `seq`. A late event still contributes its measurements. JS also guards each subtest with a watchdog (33 s download, 35 s upload) in case a `done` event is lost.
 - Signed URLs never appear in native logs, exceptions or events.
 
 ## Consequences

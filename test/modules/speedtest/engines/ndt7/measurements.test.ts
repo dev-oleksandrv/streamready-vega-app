@@ -51,6 +51,14 @@ describe('UploadRate', () => {
     expect(rate.serverBytes).toBe(500_000);
   });
 
+  it('ignores a sample older than the last one', () => {
+    const rate = new UploadRate();
+    rate.add({bytesReceived: 1_000_000, elapsedMs: 2000});
+    expect(rate.add({bytesReceived: 400_000, elapsedMs: 1000})).toBeUndefined();
+    expect(rate.lastBps).toBe(4_000_000);
+    expect(rate.serverBytes).toBe(1_000_000);
+  });
+
   it.each([
     [{bytesReceived: 1000}],
     [{elapsedMs: 1000}],

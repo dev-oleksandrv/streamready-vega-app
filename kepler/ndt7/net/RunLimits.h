@@ -4,7 +4,7 @@
 
 namespace ndt7 {
 
-// Defaults follow ndt7-client-go params and the TypeScript engine; tests shorten them.
+// Defaults follow ndt7-client-go params; tests shorten them.
 struct RunLimits {
     int64_t connectBudgetMs = 5000;
     int64_t ioTimeoutMs = 7000;

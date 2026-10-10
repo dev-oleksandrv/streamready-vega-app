@@ -32,7 +32,8 @@ src/
     privacy/               # consent store (persisted), policy content, PrivacyScreen
     speedtest/
       domain/              # SpeedTestEngine, EngineEvent, SpeedTestResult, SpeedTestError, units, canStartTest
-      engines/ndt7/        # locate.ts, download.ts, upload.ts, protocol.ts, Ndt7Engine.ts
+      engines/ndt7/        # locate.ts, protocol.ts, measurements.ts, stats.ts
+      engines/ndt7native/  # NativeNdt7 (Turbo Module spec), nativeEvents, nativeRun, NativeNdt7Engine
       store/               # sessionStore
       ui/                  # TestScreen, ResultScreen, LatencyScreen + components
     verdict/               # pure: thresholds, evaluate(), grade(), formatters, copy
@@ -169,7 +170,7 @@ The only engine is `NativeNdt7Engine` (ADR 0006): TypeScript runs Locate and com
    2. performs the WebSocket handshake (subprotocol `net.measurementlab.ndt.v7`, `Sec-WebSocket-Accept` checked)
    3. runs the subtest on a blocking socket and emits `ndt7native` events about every 250 ms: `{runId, seq, type: 'progress' | 'done', bytes, elapsedMs, measurements, error?}`. Each event carries the server measurement texts received since the previous one; `done` repeats the totals.
    - `emit()` keeps no order across calls. A late event still adds its measurements, and `done` waits up to 250 ms for events still in flight.
-   - A JS watchdog (30 s download, 25 s upload) fails the subtest with `timeout` if `done` never arrives.
+   - A JS watchdog (33 s download, 35 s upload) fails the subtest with `timeout` if `done` never arrives.
 4. **Download:** counts binary bytes without keeping them, answers pings, and ends at the server's close frame. The 15 s safety timeout gives `timeout`; 7 s without data gives `network_lost`.
 5. **Upload:** sends masked binary frames from one pre-filled 1 MiB random buffer. Sizes start at 8 KiB and double while the size is at most 1/16 of the bytes sent, up to 1 MiB. The blocking send is the backpressure. After 10 s the client sends a close frame and collects the final measurements.
 6. **Final values:** TypeScript parses measurements with `parseMeasurement` (`DownloadLatency`, `UploadRate`).
@@ -336,7 +337,8 @@ While the device is offline, `connectionLost` shows a disabled Try again and the
 ## 11. Decisions
 
 - [0001 Modular domain architecture](adr/0001-modular-domain-architecture.md)
-- [0002 ndt7 as the first speed test engine](adr/0002-ndt7-first-speed-test-engine.md)
+- [0002 ndt7 as the first speed test engine](adr/0002-ndt7-first-speed-test-engine.md) (superseded by 0006)
 - [0003 Zustand for state management](adr/0003-zustand-state-management.md)
 - [0004 Tokenless geo-IP providers](adr/0004-tokenless-geo-ip-providers.md)
 - [0005 Consent-gated insights](adr/0005-consent-gated-insights.md)
+- [0006 Native ndt7 engine (C++ Turbo Module)](adr/0006-native-ndt7-engine.md)

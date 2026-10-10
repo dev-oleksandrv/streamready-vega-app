@@ -16,5 +16,5 @@ export interface Ndt7NativeSpec extends KeplerTurboModule {
 }
 
 // `get`, not `getEnforcing`: null when the native library is missing (Jest,
-// older builds), which selects the TypeScript engine.
+// a broken build), and runs then fail with connect_failed (ADR 0006).
 export default TurboModuleRegistry.get<Ndt7NativeSpec>('Ndt7Native');

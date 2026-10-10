@@ -27,19 +27,22 @@ export interface NativeRunOptions {
 }
 
 /**
- * Upper bound for a run with no `done`: native limits (connect 5 s, I/O stall
- * 7 s, download 15 s or upload 10 s, close 1 s) plus margin. Guards against a
- * done event lost in the native bridge.
+ * Upper bound for a run with no `done`, guarding against a done event lost in
+ * the native bridge. Native worst cases: download = connect 5 s + handshake
+ * 7 s + 15 s + close 1 s = 28 s; upload = connect 5 s + handshake 7 s + 10 s
+ * + a stalled close send 7 s + close 1 s = 30 s.
  */
 export const NATIVE_WATCHDOG_MS: Readonly<Record<NativeDirection, number>> = {
-  download: 30_000,
-  upload: 25_000,
+  download: 33_000,
+  upload: 35_000,
 };
 
 /** How long `done` waits for earlier events still in flight. */
 export const NATIVE_LATE_EVENT_GRACE_MS = 250;
 
-let nextRunId = 1;
+// Seeded from the clock so a native run that outlives a JS reload cannot be
+// mistaken for a new run with the same id; kept well inside Int32.
+let nextRunId = Date.now() % 1_000_000_000;
 
 /**
  * One native subtest as a Promise. Resolves with the successful `done` event

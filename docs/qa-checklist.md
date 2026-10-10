@@ -58,10 +58,6 @@ Other focus checks:
 - [ ] Run 3 tests on the stick and 3 tests of the M-Lab web speed test on a phone on the same network.
   - [ ] Record download, upload and ping for each.
   - [ ] The stick's results are in the same range as the phone's, or close to the device's Wi‑Fi limit, where the "Near your stick's Wi‑Fi limit" note shows.
-- [ ] Debug screen: Stop mid-download and mid-upload shows `aborted`, and a new run starts cleanly.
-- [ ] Debug screen: 3 back-to-back runs complete without a crash or growing memory.
-- [ ] Debug screen: on the fastest available link, watch memory during download and upload (Vega performance tools).
-- [ ] Debug screen: D-pad and Back stay responsive during upload.
 
 ## Native engine
 
@@ -72,7 +68,7 @@ Other focus checks:
 - [ ] Debug screen: every row, including `Error`, is visible on screen.
 - [ ] 3 runs on the stick vs 3 M-Lab runs on a phone on the same network; download, upload and ping in the same range.
 - [ ] Stop mid-download and mid-upload shows `aborted`; the next run starts cleanly.
-- [ ] Memory stays flat across 5 native runs (Vega performance tools).
+- [ ] Memory stays flat across 5 native runs, also on the fastest available link (Vega performance tools).
 - [ ] D-pad and Back stay responsive during native download and upload.
 - [ ] With outbound port 80 blocked (router or proxy), the test fails cleanly with the `interrupted` overlay; no hang.
 - [ ] Same checks on the VVD.

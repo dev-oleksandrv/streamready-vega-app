@@ -170,6 +170,32 @@ describe('NativeNdt7Engine', () => {
     expect(downloadElapsed).toEqual([500]);
   });
 
+  it('keeps the newest upload rate when an older measurement arrives late', async () => {
+    const s = setup();
+    await flush();
+    s.fake.done(s.run(0), downloadDone);
+    await flush();
+    const runId = s.run(1);
+    const upload = (seq: number, bytes: number, elapsedUs: number) => ({
+      runId,
+      seq,
+      type: 'progress',
+      bytes: 0,
+      elapsedMs: 0,
+      measurements: [
+        measurement({BytesReceived: bytes, ElapsedTime: elapsedUs}),
+      ],
+    });
+    s.fake.emitRaw(upload(2, 1_000_000, 2_000_000));
+    s.fake.emitRaw(upload(1, 300_000, 1_000_000));
+    s.fake.emitRaw({...upload(3, 0, 0), type: 'done', measurements: []});
+    await expect(s.promise).resolves.toMatchObject({uploadBps: 4_000_000});
+    const uploadBps = s.events.flatMap((e) =>
+      e.type === 'throughput' && e.direction === 'upload' ? [e.bps] : [],
+    );
+    expect(uploadBps).toEqual([4_000_000]);
+  });
+
   it('tries the next server when a download cannot connect', async () => {
     const s = setup();
     await flush();

@@ -50,16 +50,22 @@ export class DownloadLatency {
 export class UploadRate {
   private bps: number | undefined;
   private bytes = 0;
+  private elapsedMs = 0;
 
-  /** Returns the new rate when the sample carries one. */
+  /**
+   * Returns the new rate when the sample carries one. Native events can
+   * arrive out of order, so a sample older than the last one is ignored.
+   */
   add(sample: TcpSample): number | undefined {
     if (
       sample.bytesReceived === undefined ||
       sample.elapsedMs === undefined ||
-      sample.elapsedMs <= 0
+      sample.elapsedMs <= 0 ||
+      sample.elapsedMs < this.elapsedMs
     ) {
       return undefined;
     }
+    this.elapsedMs = sample.elapsedMs;
     this.bytes = sample.bytesReceived;
     this.bps = (sample.bytesReceived * 8000) / sample.elapsedMs;
     return this.bps;
