@@ -148,7 +148,10 @@ export const DebugSpeedTestScreen = ({
             disabled={running}
           />
           <FocusButton
-            label={copy.window(copy.kib(uploadWindow))}
+            label={copy.window(
+              copy.kib(uploadWindow),
+              uploadWindow > DEFAULT_UPLOAD_WINDOW_BYTES,
+            )}
             onPress={toggleUploadWindow}
             disabled={running}
           />

@@ -17,7 +17,12 @@ export const UPLOAD_DURATION_MS = 10_000;
 export const SAMPLE_INTERVAL_MS = 250;
 
 export const MIN_MESSAGE_BYTES = 8 * 1024;
-export const MAX_MESSAGE_BYTES = 1024 * 1024;
+/**
+ * Upload stops scaling at 16 KiB. Vega's WebSocket sends through libcurl 8.4
+ * (experimental WebSocket support); larger sends failed with "Failed sending
+ * data to the peer" or crashed (SIGSEGV in libcurl) on the stick.
+ */
+export const MAX_MESSAGE_BYTES = 16 * 1024;
 export const SCALING_FACTOR = 16;
 /**
  * Upload windows the engine can use, smallest first. Vega fails a socket that
@@ -32,7 +37,8 @@ export const UPLOAD_WINDOW_OPTIONS = [
   512 * 1024,
   1024 * 1024,
 ] as const;
-export const DEFAULT_UPLOAD_WINDOW_BYTES = 128 * 1024;
+/** The only window that completed on the stick; larger ones are for experiments. */
+export const DEFAULT_UPLOAD_WINDOW_BYTES = 32 * 1024;
 export const CAPPED_RETRY_MS = 10;
 export const NORMAL_CLOSE = 1000;
 

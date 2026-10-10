@@ -106,7 +106,7 @@ describe('Ndt7Engine', () => {
         country: 'ZZ',
       },
       finishedAt: Date.now(),
-      uploadWindowBytes: 128 * 1024,
+      uploadWindowBytes: 32 * 1024,
     });
     expect(s.create.mock.calls.map((c) => c[0])).toEqual([
       'wss://ndt-1.example/ndt/v7/download?access_token=REDACTED',
@@ -181,13 +181,13 @@ describe('Ndt7Engine', () => {
     expect(s.sockets).toHaveLength(2);
   });
 
-  it('reports the upload window it used', async () => {
+  it('reports the upload window it used, 32 KiB by default', async () => {
     const s = setup();
     const {promise} = s.run();
     await tick();
     await completeRun(s);
     await expect(promise).resolves.toMatchObject({
-      uploadWindowBytes: 128 * 1024,
+      uploadWindowBytes: 32 * 1024,
     });
   });
 
@@ -221,7 +221,7 @@ describe('Ndt7Engine', () => {
   });
 
   it('stops retrying when a retry cannot connect', async () => {
-    const s = setup();
+    const s = setup(undefined, undefined, 64 * 1024);
     const {settled} = s.run();
     await tick();
     await finishDownload(s);

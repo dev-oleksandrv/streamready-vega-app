@@ -52,5 +52,14 @@ Changes:
 
 - The close-frame echo marks the end of a subtest. A plain `onclose` without it is a lost connection.
 - Upload sends one message per event-loop tick, never a burst. It keeps unconfirmed bytes (sent minus the server's `TCPInfo.BytesReceived`, plus the last measured rate times the time since that report) within an upload window. Messages never exceed half the window. A numeric `bufferedAmount` is honored too.
-- The window is an engine option (`uploadWindowBytes`, 32 KiB to 1 MiB, default 128 KiB). If upload fails with a lost connection, the engine retries on a fresh socket with the next smaller window, down to 32 KiB; a retry that cannot connect ends the run. The result reports the window it came from.
+- The window is an engine option (`uploadWindowBytes`, 32 KiB to 1 MiB, default 32 KiB). If upload fails with a lost connection, the engine retries on a fresh socket with the next smaller window, down to 32 KiB; a retry that cannot connect ends the run. The result reports the window it came from.
 - Download receive mode is an engine option (`downloadMode: 'arraybuffer' | 'blob'`, default `'arraybuffer'`). The temporary debug screen switches it, and the upload window, so both can be tuned on the VVD and the stick; the defaults follow from those runs. In `'arraybuffer'` mode every server message (up to 16 MiB by protocol) is decoded into a fresh buffer, so memory on fast links decides between the two.
+
+Testing on a Fire TV stick then showed:
+
+- Upload completed only with the 32 KiB window. Two runs crashed the app with `SIGSEGV` inside `libcurl.so.4`, called from the JS thread through Vega's native `sendBinary`.
+- The stick ships libcurl 8.4.0, whose WebSocket support was still experimental. `curl_ws_send` may accept only part of a frame, and the caller must resend the rest ([curl_ws_send](https://curl.se/libcurl/c/curl_ws_send.html)); "Failed sending data to the peer" is libcurl's text for `CURLE_SEND_ERROR`. Large sends fail or crash, small ones don't, which fits a native layer that mishandles partial sends. A crash cannot be caught, so retrying with a smaller window cannot protect against it.
+
+Changes:
+
+- Upload messages stop scaling at 16 KiB, whatever the window, and the default window is 32 KiB. Larger windows stay in the debug screen for experiments, labelled risky.

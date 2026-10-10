@@ -56,7 +56,7 @@ describe('DebugSpeedTestScreen', () => {
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     expect(createEngine).toHaveBeenCalledWith({
       downloadMode: 'arraybuffer',
-      uploadWindowBytes: 128 * 1024,
+      uploadWindowBytes: 32 * 1024,
     });
 
     act(() => {
@@ -122,8 +122,14 @@ describe('DebugSpeedTestScreen', () => {
     const toggle = () =>
       fireEvent.press(screen.getByRole('button', {name: /^Upload window:/}));
     expect(
-      screen.getByRole('button', {name: 'Upload window: 128 KiB'}),
+      screen.getByRole('button', {name: 'Upload window: 32 KiB'}),
     ).toBeTruthy();
+    toggle();
+    // Larger windows crashed the stick's WebSocket; the label says so.
+    expect(
+      screen.getByRole('button', {name: 'Upload window: 64 KiB (risky)'}),
+    ).toBeTruthy();
+    toggle(); // 128
     toggle(); // 256
     toggle(); // 512
     toggle(); // 1024
@@ -131,9 +137,10 @@ describe('DebugSpeedTestScreen', () => {
     expect(
       screen.getByRole('button', {name: 'Upload window: 32 KiB'}),
     ).toBeTruthy();
+    toggle();
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     expect(createEngine).toHaveBeenCalledWith(
-      expect.objectContaining({uploadWindowBytes: 32 * 1024}),
+      expect.objectContaining({uploadWindowBytes: 64 * 1024}),
     );
   });
 

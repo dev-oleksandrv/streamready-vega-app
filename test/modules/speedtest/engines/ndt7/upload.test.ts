@@ -55,27 +55,26 @@ describe('runUpload', () => {
     expect(new Set(new Uint8Array(first)).size).toBeGreaterThan(200);
   });
 
-  it('doubles message size up to 1 MiB and reuses one buffer per size', () => {
+  it('doubles message size up to 16 KiB, even in a large window, reusing one buffer per size', () => {
+    // Larger sends crashed Vega's libcurl-based WebSocket (ADR 0002 amendment).
     const {socket} = start({windowBytes: 4 * MiB});
     for (let i = 0; i < 400; i++) {
       ack(socket);
       jest.advanceTimersByTime(1);
     }
     const sizes = [...new Set(socket.sentSizes)];
-    expect(sizes).toEqual([
-      8192, 16384, 32768, 65536, 131072, 262144, 524288, 1048576,
-    ]);
+    expect(sizes).toEqual([8192, 16384]);
     expect(socket.sentBuffers.size).toBe(sizes.length);
     expect(socket.sentSizes.filter((s) => s === 8192)).toHaveLength(16);
   });
 
   it('caps message size at half the window', () => {
-    const {socket} = start({windowBytes: 64 * KiB});
+    const {socket} = start({windowBytes: 16 * KiB});
     for (let i = 0; i < 400; i++) {
       ack(socket);
       jest.advanceTimersByTime(1);
     }
-    expect(Math.max(...socket.sentSizes)).toBe(32 * KiB);
+    expect(Math.max(...socket.sentSizes)).toBe(8 * KiB);
   });
 
   it('keeps unconfirmed bytes within the window until the server reports progress', () => {

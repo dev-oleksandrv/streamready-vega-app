@@ -4,7 +4,8 @@ export const debugContent = {
   start: 'Start',
   stop: 'Stop',
   mode: (mode: string) => `Download mode: ${mode}`,
-  window: (size: string) => `Upload window: ${size}`,
+  window: (size: string, risky: boolean) =>
+    `Upload window: ${size}${risky ? ' (risky)' : ''}`,
   kib: (bytes: number) => `${bytes / 1024} KiB`,
   empty: '—',
   rows: {

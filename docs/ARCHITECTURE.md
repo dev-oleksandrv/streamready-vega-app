@@ -168,8 +168,8 @@ Throughput is measured in bits/s inside the engine. Values are converted to Mbps
    - Text messages are server `Measurement` JSON. `TCPInfo.MinRTT` gives idle latency, and `TCPInfo.RTT` samples give loaded latency.
    - The server ends the test after about 10s. The client has a 15s safety timeout.
 4. **Upload:**
-   - Binary messages start at 8 KiB. The size doubles each time the total bytes sent pass 16× the current size, up to 1 MiB.
-   - One message per event-loop tick. Unconfirmed bytes (sent minus the server's `TCPInfo.BytesReceived`, extrapolated at the last measured rate) stay within the upload window (default 128 KiB); messages never exceed half of it.
+   - Binary messages start at 8 KiB. The size doubles each time the total bytes sent pass 16× the current size, up to 16 KiB.
+   - One message per event-loop tick. Unconfirmed bytes (sent minus the server's `TCPInfo.BytesReceived`, extrapolated at the last measured rate) stay within the upload window (default 32 KiB). Messages scale 8 → 16 KiB and never exceed half the window: larger sends crash Vega's libcurl-based WebSocket.
    - Vega's socket fails instead of buffering, so a lost upload retries with the next smaller window, down to 32 KiB (ADR 0002 amendment).
    - Each message size has one pre-allocated buffer, which is reused.
    - Throughput comes from the server measurement `TCPInfo.BytesReceived / ElapsedTime`.
