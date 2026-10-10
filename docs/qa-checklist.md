@@ -65,6 +65,18 @@ Other focus checks:
 - [ ] Debug screen: D-pad and Back stay responsive during upload.
 - [ ] Debug screen: on the VVD and on the stick, run each upload window from 1 MiB down to 32 KiB. Record upload Mbps, "Upload window used", and any `upload retry` lines in the logs; pick the default window from the largest one that never retries.
 
+## Native engine
+
+- [ ] Debug screen shows `Native module: present` on the VVD and the stick.
+- [ ] Engine `native`, on the stick: 5 back-to-back runs complete without a crash (check `vega device copy-logs -a SYSTEM_TOMBSTONE/acr` afterwards).
+- [ ] Engine `native`: JS stall (download) max < 100 ms; record max/avg for download and upload.
+- [ ] Engine `native`: 3 runs on the stick vs 3 M-Lab runs on a phone on the same network; download, upload and ping in the same range.
+- [ ] Engine `native`: Stop mid-download and mid-upload shows `aborted`; the next run starts cleanly.
+- [ ] Engine `auto` with outbound port 80 blocked (router or proxy): the run falls back and `Engine used` shows `ndt7`.
+- [ ] Memory stays flat across 5 native runs (Vega performance tools).
+- [ ] D-pad and Back stay responsive during native download and upload.
+- [ ] Same checks on the VVD.
+
 ## Performance
 
 - [ ] The live value and bars update smoothly, with no visible jank during the test.

@@ -187,10 +187,35 @@ The engine uses a single stream, as the ndt7 design intends. Protocol reference:
 
 ### 6.3 Integration
 
-- `Ndt7Engine` receives its dependencies through the constructor (`createSocket`, `fetch`, `now`).
+- Engines receive their dependencies through the constructor; `app/providers/speedTestEngine.ts` selects them (§6.4).
 - The session store throttles engine events to about 4 Hz before React sees them. Each throttled sample becomes one bar in the chart, up to 120 bars.
 - Stop test calls `AbortController.abort()`, which closes the socket and rejects with `aborted`. The UI then returns Home silently.
 - If the app goes to the background mid-test, the test is aborted silently.
+
+### 6.4 Engine selection
+
+| Choice | Engine | Used by |
+|---|---|---|
+| `auto` | `FallbackEngine(NativeNdt7Engine, Ndt7Engine)` when the `Ndt7Native` module loads, otherwise `Ndt7Engine` | production |
+| `native` | `NativeNdt7Engine` only | debug screen |
+| `js` | `Ndt7Engine` only | debug screen |
+
+`FallbackEngine` reruns the test with the TypeScript engine only if the native engine failed before any download data with `connect_failed` or `no_servers` (ADR 0006).
+
+### 6.5 Native ndt7 pipeline
+
+1. TypeScript runs Locate and keeps targets with `ws:///ndt/v7/download` and `ws:///ndt/v7/upload` URLs.
+2. `Ndt7Native.start(runId, 'download' | 'upload', url)` spawns one worker thread per subtest. The worker:
+   1. resolves the host (IPv4/IPv6) and connects within 5 s
+   2. performs the WebSocket handshake (subprotocol `net.measurementlab.ndt.v7`, `Sec-WebSocket-Accept` checked)
+   3. runs the subtest on a blocking socket
+3. The worker emits `ndt7native` events about every 250 ms: `{runId, seq, type: 'progress' | 'done', bytes, elapsedMs, measurements, error?}`. Each event carries the server measurement texts received since the previous one. `done` repeats the totals.
+4. Download counts binary bytes without keeping them, answers pings, and ends at the server's close frame. The 15 s safety timeout gives `timeout`; 7 s without data gives `network_lost`.
+5. Upload sends masked binary frames from one pre-filled 1 MiB random buffer. Sizes start at 8 KiB and double while the size is at most 1/16 of the bytes sent, up to 1 MiB. The blocking send is the backpressure. After 10 s the client sends a close frame and collects the final measurements.
+6. TypeScript parses measurements with `parseMeasurement` and computes the result exactly as the TypeScript engine does (`DownloadLatency`, `UploadRate`).
+7. Stop calls `cancel(runId)`, which shuts the socket down so blocking calls return. The run rejects with `aborted` immediately.
+
+Code layout: `kepler/ndt7/core` (pure, host-tested), `kepler/ndt7/net` (POSIX sockets, host-tested over `socketpair`), `kepler/turbo-modules` (glue). Run `pnpm run test:native` for the host C++ tests.
 
 ## 7. Connection insights and device information
 

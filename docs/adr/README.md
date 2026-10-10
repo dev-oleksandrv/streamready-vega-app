@@ -31,3 +31,4 @@ An ADR records one significant decision: the context, what was decided, and what
 - [0003 Zustand for state management](0003-zustand-state-management.md)
 - [0004 Tokenless geo-IP providers](0004-tokenless-geo-ip-providers.md)
 - [0005 Consent-gated insights](0005-consent-gated-insights.md)
+- [0006 Native ndt7 engine (C++ Turbo Module)](0006-native-ndt7-engine.md)
