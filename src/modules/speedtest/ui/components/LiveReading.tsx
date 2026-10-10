@@ -1,5 +1,5 @@
-import React from 'react';
-import {StyleSheet, View} from 'react-native';
+import React, {useLayoutEffect, useMemo, useRef} from 'react';
+import {Animated, StyleSheet, View} from 'react-native';
 
 import {colors, scale, Text} from '~/shared/ui';
 
@@ -12,27 +12,49 @@ export interface LiveReadingProps {
   blinking: boolean;
 }
 
+const FADE_IN_MS = 200;
+
 export const LiveReading = ({
   label,
   value,
   unit,
   blinking,
-}: LiveReadingProps) => (
-  <View style={styles.column}>
-    <View style={styles.labelRow}>
-      <BlinkDot color={colors.lime} blinking={blinking} />
-      <Text style={styles.label}>{label}</Text>
+}: LiveReadingProps) => {
+  const opacity = useRef(new Animated.Value(1)).current;
+  // Stable style: this view re-renders at 4 Hz during a test.
+  const fade = useMemo(() => ({opacity}), [opacity]);
+
+  // A new phase fades in. Layout effect: hidden before the new text paints, so it never flashes.
+  useLayoutEffect(() => {
+    opacity.setValue(0);
+    const fadeIn = Animated.timing(opacity, {
+      toValue: 1,
+      duration: FADE_IN_MS,
+      useNativeDriver: true,
+    });
+    fadeIn.start();
+    return () => fadeIn.stop();
+  }, [label, opacity]);
+
+  return (
+    <View style={styles.column}>
+      <View style={styles.labelRow}>
+        <BlinkDot color={colors.lime} blinking={blinking} />
+        <Animated.View style={fade}>
+          <Text style={styles.label}>{label}</Text>
+        </Animated.View>
+      </View>
+      <Animated.View style={[styles.valueRow, fade]}>
+        <Text weight="semibold" style={styles.value}>
+          {value}
+        </Text>
+        <Text weight="medium" style={styles.unit}>
+          {unit}
+        </Text>
+      </Animated.View>
     </View>
-    <View style={styles.valueRow}>
-      <Text weight="semibold" style={styles.value}>
-        {value}
-      </Text>
-      <Text weight="medium" style={styles.unit}>
-        {unit}
-      </Text>
-    </View>
-  </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   column: {gap: scale(8)},
