@@ -8,6 +8,7 @@ import {colors} from '~/shared/ui';
 
 import {AppHeader} from '../layout/AppHeader';
 import {SplashScreen} from '../screens/SplashScreen';
+import {DebugSpeedTestRoute} from './DebugSpeedTestRoute';
 import {HomeRoute} from './HomeRoute';
 import {PrivacyRoute} from './PrivacyRoute';
 import type {RootStackParamList} from './routes';
@@ -43,6 +44,12 @@ export const RootNavigator = () => {
             component={PrivacyRoute}
             initialParams={{mode: 'gate'}}
           />
+          {__DEV__ ? (
+            <Stack.Screen
+              name="DebugSpeedTest"
+              component={DebugSpeedTestRoute}
+            />
+          ) : null}
         </Stack.Navigator>
       </NavigationContainer>
       <AppHeader />

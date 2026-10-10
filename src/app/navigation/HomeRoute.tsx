@@ -12,5 +12,14 @@ export const HomeRoute = ({
     () => navigation.navigate('Privacy', {mode: 'view'}),
     [navigation],
   );
-  return <HomeScreen onOpenPrivacy={openPrivacy} />;
+  const openDebug = useCallback(
+    () => navigation.navigate('DebugSpeedTest'),
+    [navigation],
+  );
+  return (
+    <HomeScreen
+      onOpenPrivacy={openPrivacy}
+      onOpenDebug={__DEV__ ? openDebug : undefined}
+    />
+  );
 };

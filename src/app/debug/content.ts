@@ -1,0 +1,29 @@
+// Temporary debug screen copy; removed with the screen when the Test UI lands.
+export const debugContent = {
+  title: 'Speed test (debug)',
+  start: 'Start',
+  stop: 'Stop',
+  mode: (mode: string) => `Download mode: ${mode}`,
+  window: (size: string, risky: boolean) =>
+    `Upload window: ${size}${risky ? ' (risky)' : ''}`,
+  kib: (bytes: number) => `${bytes / 1024} KiB`,
+  empty: '—',
+  rows: {
+    status: 'Status',
+    phase: 'Phase',
+    server: 'Server',
+    download: 'Download',
+    upload: 'Upload',
+    idle: 'Idle ping',
+    loaded: 'Loaded ping',
+    elapsed: 'Elapsed',
+    window: 'Upload window used',
+    stallDownload: 'JS stall (download)',
+    stallUpload: 'JS stall (upload)',
+    error: 'Error',
+  },
+  mbps: (value: string) => `${value} Mbps`,
+  ms: (value: string) => `${value} ms`,
+  seconds: (value: string) => `${value} s`,
+  stall: (maxMs: number, avgMs: number) => `max ${maxMs} ms · avg ${avgMs} ms`,
+} as const;

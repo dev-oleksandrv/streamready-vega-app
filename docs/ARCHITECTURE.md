@@ -163,13 +163,14 @@ Throughput is measured in bits/s inside the engine. Values are converted to Mbps
    - The signed URLs contain `access_token`, so they are never logged.
 2. **Latency step** (shown as "Ping" in the UI): covers the Locate call and opening the download socket.
 3. **Download:**
-   - `new WebSocket(url, 'net.measurementlab.ndt.v7')` with `binaryType = 'arraybuffer'`.
+   - `new WebSocket(url, 'net.measurementlab.ndt.v7')` with `binaryType = 'arraybuffer'` (or `'blob'`, see the ADR 0002 amendment).
    - The engine counts the bytes of every message and never keeps payloads.
    - Text messages are server `Measurement` JSON. `TCPInfo.MinRTT` gives idle latency, and `TCPInfo.RTT` samples give loaded latency.
    - The server ends the test after about 10s. The client has a 15s safety timeout.
 4. **Upload:**
-   - Binary messages start at 8 KiB. The size doubles each time the total bytes sent pass 16× the current size, up to 1 MiB.
-   - The engine sends only while `bufferedAmount` is below the threshold.
+   - Binary messages start at 8 KiB. The size doubles each time the total bytes sent pass 16× the current size, up to 16 KiB.
+   - One message per event-loop tick. Unconfirmed bytes (sent minus the server's `TCPInfo.BytesReceived`, extrapolated at the last measured rate) stay within the upload window (default 32 KiB). Messages scale 8 → 16 KiB and never exceed half the window: larger sends crash Vega's libcurl-based WebSocket.
+   - Vega's socket fails instead of buffering, so a lost upload retries with the next smaller window, down to 32 KiB (ADR 0002 amendment).
    - Each message size has one pre-allocated buffer, which is reused.
    - Throughput comes from the server measurement `TCPInfo.BytesReceived / ElapsedTime`.
    - The client stops after 10s.

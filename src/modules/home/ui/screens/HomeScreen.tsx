@@ -7,10 +7,12 @@ import {homeContent} from '../../content';
 
 export interface HomeScreenProps {
   onOpenPrivacy: () => void;
+  /** Temporary dev entry to the debug speed test; omitted in release builds. */
+  onOpenDebug?: () => void;
 }
 
 // Mock Home for Module 1: Start and the Device card arrive with the speed test.
-export const HomeScreen = ({onOpenPrivacy}: HomeScreenProps) => (
+export const HomeScreen = ({onOpenPrivacy, onOpenDebug}: HomeScreenProps) => (
   <ScreenLayout>
     <View style={styles.hero}>
       <Text weight="medium" style={styles.eyebrow}>
@@ -27,6 +29,13 @@ export const HomeScreen = ({onOpenPrivacy}: HomeScreenProps) => (
           onPress={onOpenPrivacy}
           hasTVPreferredFocus
         />
+        {onOpenDebug ? (
+          <FocusCard
+            title={homeContent.debugCard.title}
+            subtitle={homeContent.debugCard.subtitle}
+            onPress={onOpenDebug}
+          />
+        ) : null}
       </View>
     </View>
   </ScreenLayout>
