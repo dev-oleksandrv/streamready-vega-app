@@ -97,6 +97,11 @@ export class Ndt7Engine implements SpeedTestEngine {
 
     enter('download');
     const download = await runDownload(socket, {now, signal, onEvent});
+    this.log.info('download', {
+      bytes: download.bytes,
+      messages: download.messages,
+      elapsedMs: download.elapsedMs,
+    });
 
     enter('upload');
     const upload = await this.upload(target, signal, onEvent);

@@ -84,6 +84,21 @@ describe('DebugSpeedTestScreen', () => {
     expect(screen.getByText('64 KiB')).toBeTruthy();
   });
 
+  it('measures JS thread stalls per phase', () => {
+    const {createEngine, control} = fakeEngine();
+    render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    fireEvent.press(screen.getByRole('button', {name: 'Start'}));
+    act(() => {
+      control.emit({type: 'phase', phase: 'download'});
+      jest.advanceTimersByTime(100);
+      // The JS thread is blocked for 400 ms: the next probe fires that late.
+      jest.setSystemTime(Date.now() + 400);
+      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(250);
+    });
+    expect(screen.getByText(/^max 400 ms · avg \d+ ms$/)).toBeTruthy();
+  });
+
   it('shows the raw error code on failure', async () => {
     const {createEngine, control} = fakeEngine();
     render(<DebugSpeedTestScreen createEngine={createEngine} />);

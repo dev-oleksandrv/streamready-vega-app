@@ -18,6 +18,8 @@ export interface PhaseOptions {
 
 export interface DownloadOutcome {
   bytes: number;
+  /** Binary and text messages received; JS-thread load on Vega scales with it. */
+  messages: number;
   elapsedMs: number;
   bps: number;
   idleLatencyMs: number;
@@ -73,6 +75,7 @@ export function runDownload(
 
     const start = now();
     let bytes = 0;
+    let messages = 0;
     let minRttMs: number | undefined;
     const rttsMs: number[] = [];
     let emittedIdleMs: number | undefined;
@@ -88,6 +91,7 @@ export function runDownload(
     signal.addEventListener('abort', onAbort);
 
     socket.onmessage = ({data}) => {
+      messages++;
       if (typeof data !== 'string') {
         bytes += binarySize(data);
         return;
@@ -166,6 +170,7 @@ export function runDownload(
       const elapsedMs = now() - start;
       resolve({
         bytes,
+        messages,
         elapsedMs,
         bps: bitsPerSecond(bytes, elapsedMs),
         idleLatencyMs: minRttMs,

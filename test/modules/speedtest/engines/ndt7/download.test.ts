@@ -29,6 +29,7 @@ describe('runDownload', () => {
     socket.serverClose(1000);
     await expect(promise).resolves.toEqual({
       bytes: 15_000,
+      messages: 5,
       elapsedMs: 1_000,
       bps: 120_000,
       idleLatencyMs: 18,

@@ -17,6 +17,20 @@ import type {SpeedTestEngineConfig} from '../providers/speedTestEngine';
 import {debugContent as copy} from './content';
 import {DebugRow} from './DebugRow';
 import {applyEngineEvent, type DebugSnapshot} from './debugSnapshot';
+import {
+  emptyStall,
+  recordStall,
+  STALL_PROBE_INTERVAL_MS,
+  summarizeStall,
+  type StallStats,
+} from './stallMeter';
+
+interface PhaseStalls {
+  download: StallStats;
+  upload: StallStats;
+}
+
+const noStalls: PhaseStalls = {download: emptyStall, upload: emptyStall};
 
 export interface DebugSpeedTestScreenProps {
   createEngine: (config: SpeedTestEngineConfig) => SpeedTestEngine;
@@ -30,6 +44,11 @@ const FLUSH_INTERVAL_MS = 250;
 function nextUploadWindow(current: number): number {
   const index = UPLOAD_WINDOW_OPTIONS.findIndex((w) => w === current);
   return UPLOAD_WINDOW_OPTIONS[(index + 1) % UPLOAD_WINDOW_OPTIONS.length];
+}
+
+function stallText(stats: StallStats): string {
+  const summary = summarizeStall(stats);
+  return summary ? copy.stall(summary.maxMs, summary.avgMs) : copy.empty;
 }
 
 const mbps = (bps?: number) => copy.mbps(formatMbps(bps ?? Number.NaN));
@@ -56,6 +75,8 @@ export const DebugSpeedTestScreen = ({
   const [elapsedMs, setElapsedMs] = useState(0);
   const [result, setResult] = useState<SpeedTestResult>();
   const [errorCode, setErrorCode] = useState<string>();
+  const [stalls, setStalls] = useState<PhaseStalls>(noStalls);
+  const stallsRef = useRef<PhaseStalls>(noStalls);
   const controllerRef = useRef<AbortController | null>(null);
   const latestRef = useRef<DebugSnapshot>({});
   const mountedRef = useRef(true);
@@ -78,11 +99,28 @@ export const DebugSpeedTestScreen = ({
     setErrorCode(undefined);
     setElapsedMs(0);
     setStatus('running');
+    stallsRef.current = noStalls;
+    setStalls(noStalls);
+
+    let lastProbe = Date.now();
+    const probe = setInterval(() => {
+      const probedAt = Date.now();
+      const late = probedAt - lastProbe - STALL_PROBE_INTERVAL_MS;
+      lastProbe = probedAt;
+      const phase = latestRef.current.phase;
+      if (phase === 'download' || phase === 'upload') {
+        stallsRef.current = {
+          ...stallsRef.current,
+          [phase]: recordStall(stallsRef.current[phase], late),
+        };
+      }
+    }, STALL_PROBE_INTERVAL_MS);
 
     const flush = () => {
       if (mountedRef.current) {
         setSnapshot(latestRef.current);
         setElapsedMs(Date.now() - startedAt);
+        setStalls(stallsRef.current);
       }
     };
     const timer = setInterval(flush, FLUSH_INTERVAL_MS);
@@ -110,6 +148,7 @@ export const DebugSpeedTestScreen = ({
       )
       .finally(() => {
         clearInterval(timer);
+        clearInterval(probe);
         flush();
       });
   }, [createEngine, mode, uploadWindow]);
@@ -193,6 +232,14 @@ export const DebugSpeedTestScreen = ({
                 ? copy.empty
                 : copy.kib(result.uploadWindowBytes)
             }
+          />
+          <DebugRow
+            label={copy.rows.stallDownload}
+            value={stallText(stalls.download)}
+          />
+          <DebugRow
+            label={copy.rows.stallUpload}
+            value={stallText(stalls.upload)}
           />
           <DebugRow label={copy.rows.error} value={errorCode ?? copy.empty} />
         </View>

@@ -18,9 +18,12 @@ export const debugContent = {
     loaded: 'Loaded ping',
     elapsed: 'Elapsed',
     window: 'Upload window used',
+    stallDownload: 'JS stall (download)',
+    stallUpload: 'JS stall (upload)',
     error: 'Error',
   },
   mbps: (value: string) => `${value} Mbps`,
   ms: (value: string) => `${value} ms`,
   seconds: (value: string) => `${value} s`,
+  stall: (maxMs: number, avgMs: number) => `max ${maxMs} ms · avg ${avgMs} ms`,
 } as const;
