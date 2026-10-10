@@ -1,8 +1,5 @@
 import {SpeedTestError} from '~/modules/speedtest';
-import {
-  isCloseFrameEcho,
-  parseMeasurement,
-} from '~/modules/speedtest/engines/ndt7/protocol';
+import {parseMeasurement} from '~/modules/speedtest/engines/ndt7/protocol';
 import {measurement} from '../../../../support/fixtures/ndt7';
 
 function protocolCode(text: string): string | undefined {
@@ -60,19 +57,4 @@ describe('parseMeasurement', () => {
       expect(protocolCode(text)).toBe('protocol');
     },
   );
-});
-
-describe('isCloseFrameEcho', () => {
-  // Vega delivers a close frame's status code (1000 = 0x03 0xE8) as a text message.
-  test.each([
-    ['\u0003', true],
-    ['\u0003\u00e8', true],
-    ['\u0003\ufffd', true],
-    ['', false],
-    ['x', false],
-    ['{}', false],
-    ['\u0003abc', false],
-  ])('%j → %s', (text, expected) => {
-    expect(isCloseFrameEcho(text)).toBe(expected);
-  });
 });

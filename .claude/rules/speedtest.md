@@ -12,19 +12,19 @@ paths:
 
 ## Engines
 
-- Every engine implements `SpeedTestEngine` from `speedtest/domain`. The UI and store depend on the interface, never on `Ndt7Engine` directly.
+- Every engine implements `SpeedTestEngine` from `speedtest/domain`. The UI and store depend on the interface, never on `NativeNdt7Engine` directly.
 - Engines are UI-agnostic: they emit `EngineEvent`s and resolve a `SpeedTestResult`. No React, no stores.
 - Engines honor `AbortSignal`: on abort, close sockets, clear timers, reject with `SpeedTestError('aborted')`.
 - Failures reject with `SpeedTestError` using the defined codes only: `locate_failed | no_servers | connect_failed | network_lost | timeout | protocol | aborted`. Adding a code requires updating the UI mapping and tests.
-- Dependencies (`createSocket`, `fetch`, `now`) come in through the constructor.
-- `NativeNdt7Engine` (ADR 0006) runs ndt7 in the `Ndt7Native` C++ Turbo Module over plain `ws://`. `FallbackEngine` switches to `Ndt7Engine` only before the native engine reached a server or moved download data, on `connect_failed` / `no_servers`. Selection lives in `app/providers/speedTestEngine.ts`.
+- Dependencies (native module, event source, `fetch`, `now`) come in through the constructor.
+- `NativeNdt7Engine` (ADR 0006) is the only engine: it runs ndt7 in the `Ndt7Native` C++ Turbo Module over plain `ws://`. There is no JavaScript WebSocket fallback; a missing module fails runs with `connect_failed`. Wiring lives in `app/providers/speedTestEngine.ts`.
 
 ## ndt7 specifics
 
 - Locate: `https://locate.measurementlab.net/v2/nearest/ndt/ndt7` with `client_name` and `client_version`. Try up to 3 servers.
-- WebSocket subprotocol `net.measurementlab.ndt.v7`, `binaryType = 'arraybuffer'`.
-- Download: count bytes, never retain payloads. Idle latency = `TCPInfo.MinRTT`; loaded latency = median `TCPInfo.RTT`.
-- Upload: 8 KiB → 16 KiB message scaling (capped at half the upload window; larger sends crash Vega's libcurl WebSocket), one send per tick, unconfirmed bytes within the upload window, smaller-window retry on `network_lost`, reuse pre-allocated buffers. Throughput from server `TCPInfo.BytesReceived / ElapsedTime`. Vega quirks: ADR 0002 amendment.
+- Locate's `ws:///ndt/v7/download` and `ws:///ndt/v7/upload` URLs; WebSocket subprotocol `net.measurementlab.ndt.v7`.
+- Download: count bytes, never retain payloads. Idle latency = `TCPInfo.MinRTT`; loaded latency = median `TCPInfo.RTT` (every sample, including late events).
+- Upload: 8 KiB → 1 MiB message scaling (double while size ≤ bytes sent / 16, as ndt7-client-go), one reused random buffer, blocking sends as backpressure. Throughput from server `TCPInfo.BytesReceived / ElapsedTime`.
 - Time-bounded: ~10 s per direction, 15 s safety timeout.
 - Signed URLs contain `access_token`: never log them.
 - Follow the ndt7 protocol spec: https://github.com/m-lab/ndt-server/blob/main/spec/ndt7-protocol.md

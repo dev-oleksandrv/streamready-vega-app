@@ -84,7 +84,6 @@ describe('NativeNdt7Engine', () => {
         country: 'ZZ',
       },
       finishedAt: 1_000,
-      engineId: 'ndt7-native',
     });
     expect(
       s.events.flatMap((e) => (e.type === 'phase' ? [e.phase] : [])),
@@ -201,7 +200,7 @@ describe('NativeNdt7Engine', () => {
     expect(s.fake.started).toHaveLength(3);
   });
 
-  it('reports no_servers when Locate has no plain ws urls', async () => {
+  it('reports no_servers when Locate has no ws urls', async () => {
     const entry = locateEntry(1);
     const urls: Record<string, string> = {...entry.urls};
     delete urls['ws:///ndt/v7/download'];

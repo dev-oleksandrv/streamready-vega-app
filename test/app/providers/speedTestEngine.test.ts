@@ -1,9 +1,8 @@
 import {
   createSpeedTestEngine,
-  defaultSpeedTestEngineConfig,
   isNativeEngineAvailable,
 } from '~/app/providers/speedTestEngine';
-import {FallbackEngine, isSpeedTestError} from '~/modules/speedtest';
+import {isSpeedTestError, NativeNdt7Engine} from '~/modules/speedtest';
 import {fakeNdt7Native} from '../../support/FakeNdt7Native';
 
 const events = () => fakeNdt7Native().events;
@@ -14,48 +13,14 @@ describe('createSpeedTestEngine', () => {
     expect(isNativeEngineAvailable(fakeNdt7Native().native)).toBe(true);
   });
 
-  it('auto uses native with JS fallback when the module exists', () => {
-    const engine = createSpeedTestEngine(
-      defaultSpeedTestEngineConfig,
-      fakeNdt7Native().native,
-      events,
-    );
-    expect(engine).toBeInstanceOf(FallbackEngine);
-    expect(engine.id).toBe('ndt7-native');
-  });
-
-  it('auto uses the JS engine when the module is missing', () => {
+  it('uses the native engine when the module exists', () => {
     expect(
-      createSpeedTestEngine(defaultSpeedTestEngineConfig, null, events).id,
-    ).toBe('ndt7');
+      createSpeedTestEngine(fakeNdt7Native().native, events),
+    ).toBeInstanceOf(NativeNdt7Engine);
   });
 
-  it('js always uses the JS engine', () => {
-    expect(
-      createSpeedTestEngine(
-        {...defaultSpeedTestEngineConfig, engine: 'js'},
-        fakeNdt7Native().native,
-        events,
-      ).id,
-    ).toBe('ndt7');
-  });
-
-  it('native uses the native engine alone', () => {
-    const engine = createSpeedTestEngine(
-      {...defaultSpeedTestEngineConfig, engine: 'native'},
-      fakeNdt7Native().native,
-      events,
-    );
-    expect(engine).not.toBeInstanceOf(FallbackEngine);
-    expect(engine.id).toBe('ndt7-native');
-  });
-
-  it('native without the module fails with connect_failed', async () => {
-    const engine = createSpeedTestEngine(
-      {...defaultSpeedTestEngineConfig, engine: 'native'},
-      null,
-      events,
-    );
+  it('fails with connect_failed when the module is missing', async () => {
+    const engine = createSpeedTestEngine(null, events);
     const error = await engine
       .run({signal: new AbortController().signal, onEvent: () => {}})
       .catch((e: unknown) => e);

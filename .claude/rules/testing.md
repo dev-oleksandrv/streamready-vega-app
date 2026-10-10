@@ -8,7 +8,7 @@ paths:
 
 - Tests live in `test/`, mirroring `src/` 1:1: `src/modules/verdict/domain/evaluate.ts` → `test/modules/verdict/domain/evaluate.test.ts`.
 - Write the failing test first for domain logic, engines, stores, and bug fixes.
-- No real network, timers, or device APIs in tests. Use `test/support/` fakes (`FakeWebSocket`, mocked `fetch`, fake clock, `renderWithProviders`).
+- No real network, timers, or device APIs in tests. Use `test/support/` fakes (`FakeNdt7Native`, mocked `fetch`, fake clock, `renderWithProviders`); C++ host tests use `socketpair` and loopback only.
 - Fixtures are sanitized: documentation IPs (`203.0.113.0/24`, `2001:db8::/32`), fake UUIDs, no `access_token` values.
 - Reset Zustand stores between tests with the shared helper.
 - Screens: React Native Testing Library. Query by role/text the user sees; assert behavior, not implementation details.

@@ -26,16 +26,8 @@ export interface NativeNdt7EngineDeps {
   logger?: Logger;
 }
 
-type PlainTarget = Ndt7Target & {
-  plainDownloadUrl: string;
-  plainUploadUrl: string;
-};
-
-const hasPlainUrls = (target: Ndt7Target): target is PlainTarget =>
-  target.plainDownloadUrl !== undefined && target.plainUploadUrl !== undefined;
-
 interface DownloadOutcome {
-  target: PlainTarget;
+  target: Ndt7Target;
   bps: number;
   idleLatencyMs: number;
   loadedLatencyMs: number;
@@ -83,12 +75,9 @@ export class NativeNdt7Engine implements SpeedTestEngine {
     };
 
     enter('locating');
-    const targets = (await locate({fetch: fetchFn, clientVersion, signal}))
-      .filter(hasPlainUrls)
-      .slice(0, MAX_SERVER_ATTEMPTS);
-    if (targets.length === 0) {
-      throw new SpeedTestError('no_servers');
-    }
+    const targets = (
+      await locate({fetch: fetchFn, clientVersion, signal})
+    ).slice(0, MAX_SERVER_ATTEMPTS);
 
     enter('latency');
     const download = await this.download(targets, signal, onEvent, enter);
@@ -103,13 +92,12 @@ export class NativeNdt7Engine implements SpeedTestEngine {
       loadedLatencyMs: download.loadedLatencyMs,
       server: download.target.server,
       finishedAt: now(),
-      engineId: NATIVE_NDT7_ENGINE_ID,
     };
   }
 
   /** Tries targets in Locate order until one connects; then that one is the test. */
   private async download(
-    targets: readonly PlainTarget[],
+    targets: readonly Ndt7Target[],
     signal: AbortSignal,
     onEvent: (event: EngineEvent) => void,
     enter: (phase: TestPhase) => void,
@@ -134,7 +122,7 @@ export class NativeNdt7Engine implements SpeedTestEngine {
           this.deps.native,
           this.deps.events,
           'download',
-          target.plainDownloadUrl,
+          target.downloadUrl,
           {
             signal,
             onProgress: (event, fresh) => {
@@ -186,7 +174,7 @@ export class NativeNdt7Engine implements SpeedTestEngine {
   }
 
   private async upload(
-    target: PlainTarget,
+    target: Ndt7Target,
     signal: AbortSignal,
     onEvent: (event: EngineEvent) => void,
   ): Promise<number> {
@@ -208,7 +196,7 @@ export class NativeNdt7Engine implements SpeedTestEngine {
       this.deps.native,
       this.deps.events,
       'upload',
-      target.plainUploadUrl,
+      target.uploadUrl,
       {signal, onProgress: absorb},
     );
     absorb(done);

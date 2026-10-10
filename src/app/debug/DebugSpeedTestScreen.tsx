@@ -2,10 +2,7 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 
 import {
-  DEFAULT_UPLOAD_WINDOW_BYTES,
   isSpeedTestError,
-  UPLOAD_WINDOW_OPTIONS,
-  type DownloadMode,
   type ServerInfo,
   type SpeedTestEngine,
   type SpeedTestResult,
@@ -13,11 +10,6 @@ import {
 import {formatMbps, formatMs} from '~/shared/lib/format';
 import {FocusButton, scale, ScreenLayout, Text} from '~/shared/ui';
 
-import {
-  ENGINE_CHOICES,
-  type EngineChoice,
-  type SpeedTestEngineConfig,
-} from '../providers/speedTestEngine';
 import {debugContent as copy} from './content';
 import {DebugRow} from './DebugRow';
 import {applyEngineEvent, type DebugSnapshot} from './debugSnapshot';
@@ -43,7 +35,7 @@ const noStalls: PhaseStalls = {
 };
 
 export interface DebugSpeedTestScreenProps {
-  createEngine: (config: SpeedTestEngineConfig) => SpeedTestEngine;
+  createEngine: () => SpeedTestEngine;
   /** Whether the Ndt7Native Turbo Module loaded on this build. */
   nativeAvailable: boolean;
 }
@@ -52,16 +44,6 @@ type RunStatus = 'idle' | 'running' | 'done' | 'failed';
 
 /** Matches the planned ~4 Hz store throttle so the stick sees realistic render load. */
 const FLUSH_INTERVAL_MS = 250;
-
-function nextUploadWindow(current: number): number {
-  const index = UPLOAD_WINDOW_OPTIONS.findIndex((w) => w === current);
-  return UPLOAD_WINDOW_OPTIONS[(index + 1) % UPLOAD_WINDOW_OPTIONS.length];
-}
-
-function nextEngine(current: EngineChoice): EngineChoice {
-  const index = ENGINE_CHOICES.indexOf(current);
-  return ENGINE_CHOICES[(index + 1) % ENGINE_CHOICES.length];
-}
 
 function stallText(stats: StallStats): string {
   const summary = summarizeStall(stats);
@@ -84,11 +66,6 @@ export const DebugSpeedTestScreen = ({
   createEngine,
   nativeAvailable,
 }: DebugSpeedTestScreenProps) => {
-  const [engine, setEngine] = useState<EngineChoice>('auto');
-  const [mode, setMode] = useState<DownloadMode>('arraybuffer');
-  const [uploadWindow, setUploadWindow] = useState<number>(
-    DEFAULT_UPLOAD_WINDOW_BYTES,
-  );
   const [status, setStatus] = useState<RunStatus>('idle');
   const [snapshot, setSnapshot] = useState<DebugSnapshot>({});
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -160,7 +137,7 @@ export const DebugSpeedTestScreen = ({
     };
     const timer = setInterval(flush, FLUSH_INTERVAL_MS);
 
-    createEngine({engine, downloadMode: mode, uploadWindowBytes: uploadWindow})
+    createEngine()
       .run({
         signal: controller.signal,
         onEvent: (event) => {
@@ -186,23 +163,11 @@ export const DebugSpeedTestScreen = ({
         clearInterval(timer);
         flush();
       });
-  }, [createEngine, engine, mode, uploadWindow]);
+  }, [createEngine]);
 
   const stop = useCallback(() => controllerRef.current?.abort(), []);
-  const toggleMode = useCallback(
-    () => setMode((m) => (m === 'arraybuffer' ? 'blob' : 'arraybuffer')),
-    [],
-  );
-
-  const toggleEngine = useCallback(() => setEngine(nextEngine), []);
-
-  const toggleUploadWindow = useCallback(
-    () => setUploadWindow(nextUploadWindow),
-    [],
-  );
 
   const running = status === 'running';
-  const jsOnlyDisabled = running || engine !== 'js';
 
   return (
     <ScreenLayout>
@@ -219,26 +184,8 @@ export const DebugSpeedTestScreen = ({
             hasTVPreferredFocus
           />
           <FocusButton label={copy.stop} onPress={stop} disabled={!running} />
-          <FocusButton
-            label={copy.engine(engine, engine === 'native' && !nativeAvailable)}
-            onPress={toggleEngine}
-            disabled={running}
-          />
-          <FocusButton
-            label={copy.mode(mode)}
-            onPress={toggleMode}
-            disabled={jsOnlyDisabled}
-          />
-          <FocusButton
-            label={copy.window(
-              copy.kib(uploadWindow),
-              uploadWindow > DEFAULT_UPLOAD_WINDOW_BYTES,
-            )}
-            onPress={toggleUploadWindow}
-            disabled={jsOnlyDisabled}
-          />
         </View>
-        {/* Two columns: one column of 15 rows does not fit 1080p. */}
+        {/* Two columns: one column of all rows does not fit 1080p. */}
         <View style={styles.rows}>
           <View style={styles.column}>
             <DebugRow label={copy.rows.status} value={status} />
@@ -274,20 +221,8 @@ export const DebugSpeedTestScreen = ({
               value={describeServer(result?.server ?? snapshot.server)}
             />
             <DebugRow
-              label={copy.rows.engineUsed}
-              value={result?.engineId ?? copy.empty}
-            />
-            <DebugRow
               label={copy.rows.nativeModule}
               value={nativeAvailable ? copy.present : copy.missing}
-            />
-            <DebugRow
-              label={copy.rows.window}
-              value={
-                result?.uploadWindowBytes === undefined
-                  ? copy.empty
-                  : copy.kib(result.uploadWindowBytes)
-              }
             />
             <DebugRow
               label={copy.rows.stallIdle}

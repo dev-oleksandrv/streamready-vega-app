@@ -58,25 +58,23 @@ Other focus checks:
 - [ ] Run 3 tests on the stick and 3 tests of the M-Lab web speed test on a phone on the same network.
   - [ ] Record download, upload and ping for each.
   - [ ] The stick's results are in the same range as the phone's, or close to the device's Wi‑Fi limit, where the "Near your stick's Wi‑Fi limit" note shows.
-- [ ] Debug screen (dev builds): run 3 tests with download mode `arraybuffer` and 3 with `blob`. Record download, upload and ping for each and compare with the phone.
 - [ ] Debug screen: Stop mid-download and mid-upload shows `aborted`, and a new run starts cleanly.
 - [ ] Debug screen: 3 back-to-back runs complete without a crash or growing memory.
-- [ ] Debug screen: on the fastest available link, watch memory during download in both modes (Vega performance tools). `arraybuffer` decodes every message on the JS thread; pick the default mode from this.
+- [ ] Debug screen: on the fastest available link, watch memory during download and upload (Vega performance tools).
 - [ ] Debug screen: D-pad and Back stay responsive during upload.
-- [ ] Debug screen: on the VVD and on the stick, run each upload window from 1 MiB down to 32 KiB. Record upload Mbps, "Upload window used", and any `upload retry` lines in the logs; pick the default window from the largest one that never retries.
 
 ## Native engine
 
 - [ ] Debug screen shows `Native module: present` on the VVD and the stick.
-- [ ] Engine `native`, on the stick: 5 back-to-back runs complete without a crash (check `vega device copy-logs -a SYSTEM_TOMBSTONE/acr` afterwards).
+- [ ] On the stick: 5 back-to-back runs complete without a crash (check `vega device copy-logs -a SYSTEM_TOMBSTONE/acr` afterwards).
 - [ ] Before Start, leave the debug screen idle for ~10 s and record `JS stall (idle)`: the screen's own baseline at the same 4 Hz re-render.
-- [ ] Engine `native`: JS stall (download) max < 100 ms; record max/avg for download and upload, next to the idle baseline.
+- [ ] JS stall (download) max < 100 ms; record max/avg for download and upload, next to the idle baseline.
 - [ ] Debug screen: every row, including `Error`, is visible on screen.
-- [ ] Engine `native`: 3 runs on the stick vs 3 M-Lab runs on a phone on the same network; download, upload and ping in the same range.
-- [ ] Engine `native`: Stop mid-download and mid-upload shows `aborted`; the next run starts cleanly.
-- [ ] Engine `auto` with outbound port 80 blocked (router or proxy): the run falls back and `Engine used` shows `ndt7`.
+- [ ] 3 runs on the stick vs 3 M-Lab runs on a phone on the same network; download, upload and ping in the same range.
+- [ ] Stop mid-download and mid-upload shows `aborted`; the next run starts cleanly.
 - [ ] Memory stays flat across 5 native runs (Vega performance tools).
 - [ ] D-pad and Back stay responsive during native download and upload.
+- [ ] With outbound port 80 blocked (router or proxy), the test fails cleanly with the `interrupted` overlay; no hang.
 - [ ] Same checks on the VVD.
 
 ## Performance

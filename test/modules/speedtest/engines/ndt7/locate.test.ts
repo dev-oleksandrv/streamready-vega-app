@@ -32,30 +32,16 @@ describe('locate', () => {
         city: 'Testville 1',
         country: 'ZZ',
       },
-      downloadUrl: 'wss://ndt-1.example/ndt/v7/download?access_token=REDACTED',
-      uploadUrl: 'wss://ndt-1.example/ndt/v7/upload?access_token=REDACTED',
-      plainDownloadUrl:
-        'ws://ndt-1.example/ndt/v7/download?access_token=REDACTED',
-      plainUploadUrl: 'ws://ndt-1.example/ndt/v7/upload?access_token=REDACTED',
+      // Plain ws:// only: the native engine has no TLS (ADR 0006).
+      downloadUrl: 'ws://ndt-1.example/ndt/v7/download?access_token=REDACTED',
+      uploadUrl: 'ws://ndt-1.example/ndt/v7/upload?access_token=REDACTED',
     });
   });
 
-  it('leaves plain ws urls undefined when Locate omits them', async () => {
-    const entry = locateEntry(1);
-    const urls: Record<string, string> = {...entry.urls};
-    delete urls['ws:///ndt/v7/upload'];
-    const fetchFn = jest
-      .fn()
-      .mockResolvedValue(jsonResponse({results: [{...entry, urls}]}));
-    const [target] = await run(fetchFn);
-    expect(target.plainUploadUrl).toBeUndefined();
-    expect(target.plainDownloadUrl).toBeDefined();
-  });
-
-  it('skips entries without both wss urls or a machine', async () => {
+  it('skips entries without both ws urls or a machine', async () => {
     const noUpload = locateEntry(1);
     const urls: Record<string, string> = {...noUpload.urls};
-    delete urls['wss:///ndt/v7/upload'];
+    delete urls['ws:///ndt/v7/upload'];
     const fetchFn = jest.fn().mockResolvedValue(
       jsonResponse({
         results: [

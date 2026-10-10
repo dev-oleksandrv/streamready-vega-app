@@ -39,12 +39,6 @@ function fakeEngine() {
   return {createEngine, control};
 }
 
-/** auto → native → js: download mode and window only apply to the JS engine. */
-function selectJsEngine() {
-  fireEvent.press(screen.getByRole('button', {name: 'Engine: auto'}));
-  fireEvent.press(screen.getByRole('button', {name: 'Engine: native'}));
-}
-
 const result: SpeedTestResult = {
   downloadBps: 87_400_000,
   uploadBps: 12_300_000,
@@ -52,7 +46,6 @@ const result: SpeedTestResult = {
   loadedLatencyMs: 61,
   server: {machine: 'mlab1-tst01.example', city: 'Testville', country: 'ZZ'},
   finishedAt: 0,
-  uploadWindowBytes: 64 * 1024,
 };
 
 describe('DebugSpeedTestScreen', () => {
@@ -62,11 +55,7 @@ describe('DebugSpeedTestScreen', () => {
       <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
     );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
-    expect(createEngine).toHaveBeenCalledWith({
-      engine: 'auto',
-      downloadMode: 'arraybuffer',
-      uploadWindowBytes: 32 * 1024,
-    });
+    expect(createEngine).toHaveBeenCalledTimes(1);
 
     act(() => {
       control.emit({type: 'phase', phase: 'download'});
@@ -90,7 +79,6 @@ describe('DebugSpeedTestScreen', () => {
     expect(
       screen.getByText('mlab1-tst01.example · Testville, ZZ'),
     ).toBeTruthy();
-    expect(screen.getByText('64 KiB')).toBeTruthy();
   });
 
   it('measures JS thread stalls per phase', () => {
@@ -151,107 +139,29 @@ describe('DebugSpeedTestScreen', () => {
     expect(screen.getByText('aborted')).toBeTruthy();
   });
 
-  it('toggles the download mode before starting', () => {
+  it('shows whether the native module loaded', () => {
     const {createEngine} = fakeEngine();
-    render(
+    const view = render(
       <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
-    );
-    selectJsEngine();
-    fireEvent.press(
-      screen.getByRole('button', {name: 'Download mode: arraybuffer'}),
-    );
-    fireEvent.press(screen.getByRole('button', {name: 'Start'}));
-    expect(createEngine).toHaveBeenCalledWith(
-      expect.objectContaining({engine: 'js', downloadMode: 'blob'}),
-    );
-  });
-
-  it('cycles the upload window through the options before starting', () => {
-    const {createEngine} = fakeEngine();
-    render(
-      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
-    );
-    selectJsEngine();
-    const toggle = () =>
-      fireEvent.press(screen.getByRole('button', {name: /^Upload window:/}));
-    expect(
-      screen.getByRole('button', {name: 'Upload window: 32 KiB'}),
-    ).toBeTruthy();
-    toggle();
-    // Larger windows crashed the stick's WebSocket; the label says so.
-    expect(
-      screen.getByRole('button', {name: 'Upload window: 64 KiB (risky)'}),
-    ).toBeTruthy();
-    toggle(); // 128
-    toggle(); // 256
-    toggle(); // 512
-    toggle(); // 1024
-    toggle(); // wraps to 32
-    expect(
-      screen.getByRole('button', {name: 'Upload window: 32 KiB'}),
-    ).toBeTruthy();
-    toggle();
-    fireEvent.press(screen.getByRole('button', {name: 'Start'}));
-    expect(createEngine).toHaveBeenCalledWith(
-      expect.objectContaining({engine: 'js', uploadWindowBytes: 64 * 1024}),
-    );
-  });
-
-  it('cycles the engine and passes it to createEngine', () => {
-    const {createEngine} = fakeEngine();
-    render(
-      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
-    );
-    fireEvent.press(screen.getByRole('button', {name: 'Engine: auto'}));
-    fireEvent.press(screen.getByRole('button', {name: 'Start'}));
-    expect(createEngine).toHaveBeenCalledWith(
-      expect.objectContaining({engine: 'native'}),
     );
     expect(screen.getByText('present')).toBeTruthy();
-  });
-
-  it('marks native as unavailable when the module is missing', () => {
-    const {createEngine} = fakeEngine();
-    render(
+    view.rerender(
       <DebugSpeedTestScreen
         createEngine={createEngine}
         nativeAvailable={false}
       />,
     );
-    fireEvent.press(screen.getByRole('button', {name: 'Engine: auto'}));
-    expect(
-      screen.getByRole('button', {name: 'Engine: native (unavailable)'}),
-    ).toBeTruthy();
     expect(screen.getByText('missing')).toBeTruthy();
   });
 
-  it('only lets the JS engine change download mode and window', () => {
+  it('offers only Start and Stop', () => {
     const {createEngine} = fakeEngine();
     render(
       <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
     );
-    fireEvent.press(
-      screen.getByRole('button', {name: 'Download mode: arraybuffer'}),
-    );
-    fireEvent.press(screen.getByRole('button', {name: /^Upload window:/}));
     expect(
-      screen.getByRole('button', {name: 'Download mode: arraybuffer'}),
-    ).toBeTruthy();
-    expect(
-      screen.getByRole('button', {name: 'Upload window: 32 KiB'}),
-    ).toBeTruthy();
-  });
-
-  it('shows which engine produced the result', async () => {
-    const {createEngine, control} = fakeEngine();
-    render(
-      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
-    );
-    fireEvent.press(screen.getByRole('button', {name: 'Start'}));
-    await act(async () =>
-      control.resolve({...result, engineId: 'ndt7-native'}),
-    );
-    expect(screen.getByText('ndt7-native')).toBeTruthy();
+      screen.getAllByRole('button').map((b) => b.props.accessibilityLabel),
+    ).toEqual(['Start', 'Stop']);
   });
 
   it('aborts and stops updating when unmounted mid-run', async () => {
