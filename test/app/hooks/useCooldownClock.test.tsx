@@ -2,10 +2,14 @@ import {act, render, screen} from '@testing-library/react-native';
 import React from 'react';
 import {Text} from 'react-native';
 
-import {cooldownSeconds, useCooldownClock} from '~/app/hooks/useCooldownClock';
+import {
+  boundedCooldown,
+  cooldownSeconds,
+  useCooldownClock,
+} from '~/app/hooks/useCooldownClock';
 
-const Probe = ({until}: {until?: number}) => {
-  const now = useCooldownClock(until);
+const Probe = ({until, active}: {until?: number; active?: boolean}) => {
+  const now = useCooldownClock(until, active);
   return <Text>{String(cooldownSeconds(until, now))}</Text>;
 };
 
@@ -28,7 +32,34 @@ describe('cooldownSeconds', () => {
   });
 });
 
+describe('boundedCooldown', () => {
+  it.each([
+    [undefined, undefined],
+    [130_000, 130_000],
+    [99_000, 99_000],
+    // The wall clock went back: a cooldown can never be longer than COOLDOWN_MS.
+    [130_001, undefined],
+    [3_700_000, undefined],
+  ])('until %p → %p', (until, expected) => {
+    expect(boundedCooldown(until, 100_000)).toBe(expected);
+  });
+});
+
 describe('useCooldownClock', () => {
+  it('runs no timer for a cooldown longer than COOLDOWN_MS', () => {
+    render(<Probe until={3_700_000} />);
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
+  it('pauses while inactive and resumes with a fresh clock', () => {
+    const {rerender} = render(<Probe until={110_000} active={false} />);
+    expect(jest.getTimerCount()).toBe(0);
+    jest.setSystemTime(104_000);
+    rerender(<Probe until={110_000} active />);
+    expect(screen.getByText('6')).toBeTruthy();
+    expect(jest.getTimerCount()).toBe(1);
+  });
+
   it('ticks once a second while active, then stops', () => {
     render(<Probe until={103_000} />);
     expect(screen.getByText('3')).toBeTruthy();

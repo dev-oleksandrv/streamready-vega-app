@@ -1,3 +1,4 @@
+import {useIsFocused} from '@amazon-devices/react-navigation__native';
 import type {NativeStackScreenProps} from '@amazon-devices/react-navigation__native-stack';
 import React, {useCallback} from 'react';
 
@@ -6,7 +7,11 @@ import {deviceProfile, deviceSubtitle, useInsights} from '~/modules/insights';
 import {useConsent} from '~/modules/privacy';
 import {useSession} from '~/modules/speedtest';
 
-import {cooldownSeconds, useCooldownClock} from '../hooks/useCooldownClock';
+import {
+  boundedCooldown,
+  cooldownSeconds,
+  useCooldownClock,
+} from '../hooks/useCooldownClock';
 import {selectStartCheck} from '../selectors';
 import type {RootStackParamList} from './routes';
 
@@ -16,8 +21,10 @@ export const HomeRoute = ({
   const consent = useConsent((s) => s.status);
   const network = useInsights((s) => s.network);
   const model = useInsights((s) => s.device?.model);
-  const cooldownUntil = useSession((s) => s.cooldownUntil);
-  const now = useCooldownClock(cooldownUntil);
+  const storedCooldown = useSession((s) => s.cooldownUntil);
+  // The stack keeps Home mounted under Device and the test; no ticking while hidden.
+  const now = useCooldownClock(storedCooldown, useIsFocused());
+  const cooldownUntil = boundedCooldown(storedCooldown, now);
 
   // Until the Test module lands, Start opens the debug test in dev and does nothing in release.
   const start = useCallback(() => {

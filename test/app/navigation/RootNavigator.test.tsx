@@ -228,6 +228,13 @@ describe('start', () => {
     expect(screen.getByText('Press OK')).toBeTruthy();
   });
 
+  it('a cooldown far in the future (clock went back) does not block Start', async () => {
+    const sessionStore = createSessionStore();
+    sessionStore.getState().startCooldown(Date.now(), 3_600_000);
+    await start('accepted', undefined, undefined, {sessionStore});
+    expect(await screen.findByText('Press OK')).toBeTruthy();
+  });
+
   it('Start opens the debug test in dev', async () => {
     await start('accepted');
     fireEvent.press(await screen.findByRole('button', {name: 'Start'}));
