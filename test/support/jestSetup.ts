@@ -11,6 +11,15 @@ jest.mock(
   }),
 );
 
+// The preset's AppState mock never calls listeners; background abort needs them.
+jest.mock(
+  '@amazon-devices/react-native-kepler/Libraries/AppState/AppState',
+  () => ({
+    __esModule: true,
+    default: require('./fakeAppState').fakeAppState,
+  }),
+);
+
 // The preset's addEventListener returns undefined; useWindowDimensions needs a subscription.
 jest.mock(
   '@amazon-devices/react-native-kepler/Libraries/Utilities/Dimensions',

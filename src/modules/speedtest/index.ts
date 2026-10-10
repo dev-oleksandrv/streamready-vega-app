@@ -29,3 +29,5 @@ export {
   useSession,
   useSessionStore,
 } from './ui/SessionProvider';
+export {TestScreen} from './ui/screens/TestScreen';
+export type {TestScreenProps} from './ui/screens/TestScreen';

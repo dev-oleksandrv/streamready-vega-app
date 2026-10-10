@@ -26,12 +26,7 @@ export const HomeRoute = ({
   const now = useCooldownClock(storedCooldown, useIsFocused());
   const cooldownUntil = boundedCooldown(storedCooldown, now);
 
-  // Until the Test module lands, Start opens the debug test in dev and does nothing in release.
-  const start = useCallback(() => {
-    if (__DEV__) {
-      navigation.navigate('DebugSpeedTest');
-    }
-  }, [navigation]);
+  const start = useCallback(() => navigation.navigate('Test'), [navigation]);
   const openDevice = useCallback(
     () => navigation.navigate('Device'),
     [navigation],

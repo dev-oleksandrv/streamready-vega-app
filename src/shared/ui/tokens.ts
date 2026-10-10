@@ -1,3 +1,6 @@
+/** Disabled focus ring and the test chart's upload bars share one grey. */
+const GREY_500 = '#5C6068';
+
 export const colors = {
   background: '#0B0C0E',
   surface: '#15171B',
@@ -6,12 +9,14 @@ export const colors = {
   border: '#22252A',
   borderStrong: '#2A2E34',
   track: '#1F2227',
+  /** Upload bars in the test chart. */
+  chartMuted: GREY_500,
   text: '#F2F2EE',
   textMuted: '#8E929A',
   textSecondary: '#A4A8AF',
   textTertiary: '#C4C7CC',
   textDisabled: '#6E727A',
-  focusDisabled: '#5C6068',
+  focusDisabled: GREY_500,
   lime: '#C8F560',
   onLime: '#0B0C0E',
   amber: '#FFC24B',

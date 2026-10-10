@@ -15,12 +15,6 @@ import {APP_VERSION} from '../config/app';
 // TurboModuleRegistry.get is typed `T | null | undefined`; both mean "missing".
 const platformNative: Ndt7NativeSpec | null = nativeNdt7 ?? null;
 
-export function isNativeEngineAvailable(
-  native: Ndt7NativeSpec | null = platformNative,
-): boolean {
-  return native !== null;
-}
-
 // Vega: NativeEventEmitter takes no module argument for Turbo Module events.
 const platformEvents = (): NativeEventSource => new NativeEventEmitter();
 

@@ -18,6 +18,8 @@ import {
   type ProviderOptions,
 } from '../../support/renderWithProviders';
 import type {ConnectionInfo} from '~/modules/insights';
+import {createFakeEngine} from '../../support/fakeEngine';
+import {emitAppState} from '../../support/fakeAppState';
 
 /** Fires the hardware Back key; true when the app handled it. */
 function pressBack(): boolean {
@@ -234,11 +236,65 @@ describe('start', () => {
     await start('accepted', undefined, undefined, {sessionStore});
     expect(await screen.findByText('Press OK')).toBeTruthy();
   });
+});
 
-  it('Start opens the debug test in dev', async () => {
-    await start('accepted');
+describe('test screen', () => {
+  function sessionWithFake() {
+    const fake = createFakeEngine();
+    const sessionStore = createSessionStore({
+      createEngine: fake.createEngine,
+      cooldownMs: 30_000,
+    });
+    return {fake, sessionStore};
+  }
+
+  async function openTest() {
+    const {fake, sessionStore} = sessionWithFake();
+    const networkMonitor = new FakeNetworkMonitor();
+    await start('accepted', undefined, undefined, {
+      sessionStore,
+      networkMonitor,
+    });
     fireEvent.press(await screen.findByRole('button', {name: 'Start'}));
-    expect(await screen.findByText('Speed test (debug)')).toBeTruthy();
+    expect(await screen.findByText('Finding nearest server…')).toBeTruthy();
+    return {fake, sessionStore, networkMonitor};
+  }
+
+  afterEach(() => act(() => emitAppState('active')));
+
+  it('Start opens the test and runs the engine', async () => {
+    const {fake} = await openTest();
+    expect(fake.createEngine).toHaveBeenCalledTimes(1);
+  });
+
+  it('Back → Stop test returns home with the cooldown', async () => {
+    await openTest();
+    expect(pressBack()).toBe(true);
+    fireEvent.press(screen.getByRole('button', {name: 'Stop test'}));
+    expect(await screen.findByText('0:30')).toBeTruthy();
+  });
+
+  it('a finished test stays on screen; Back shows the home cooldown', async () => {
+    const {fake} = await openTest();
+    await act(async () => fake.last().resolve());
+    expect(screen.getByText('Finished')).toBeTruthy();
+    expect(pressBack()).toBe(true);
+    expect(await screen.findByText('0:30')).toBeTruthy();
+  });
+
+  it('going to the background aborts and returns home with the cooldown', async () => {
+    const {fake} = await openTest();
+    act(() => emitAppState('background'));
+    expect(fake.last().signal.aborted).toBe(true);
+    expect(await screen.findByText('0:30')).toBeTruthy();
+  });
+
+  it('going offline shows connection lost; Back to home returns home', async () => {
+    const {networkMonitor} = await openTest();
+    act(() => networkMonitor.emit({online: false, transport: 'none'}));
+    expect(await screen.findByText('Connection lost.')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', {name: 'Back to home'}));
+    expect(await screen.findByText('You are offline')).toBeTruthy();
   });
 });
 

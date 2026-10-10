@@ -20,7 +20,9 @@ import {
 } from '~/modules/speedtest';
 import {createMmkvStorage} from '~/shared/lib/storage';
 
+import {COOLDOWN_MS} from '../config/app';
 import {createGeoProvider} from './geoProvider';
+import {createSpeedTestEngine} from './speedTestEngine';
 
 export interface AppProvidersProps {
   children: ReactNode;
@@ -53,7 +55,15 @@ export const AppProviders = ({
       }),
   );
   const [monitor] = useState(() => networkMonitor ?? createNetInfoMonitor());
-  const [session] = useState(() => sessionStore ?? createSessionStore());
+  const [session] = useState(
+    () =>
+      sessionStore ??
+      createSessionStore({
+        createEngine: () => createSpeedTestEngine(),
+        now: Date.now,
+        cooldownMs: COOLDOWN_MS,
+      }),
+  );
   const refreshInsights = useCallback(
     () => insights.getState().refreshConnection(),
     [insights],
