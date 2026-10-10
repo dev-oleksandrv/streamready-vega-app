@@ -3,6 +3,10 @@ export const debugContent = {
   title: 'Speed test (debug)',
   start: 'Start',
   stop: 'Stop',
+  engine: (choice: string, unavailable: boolean) =>
+    `Engine: ${choice}${unavailable ? ' (unavailable)' : ''}`,
+  present: 'present',
+  missing: 'missing',
   mode: (mode: string) => `Download mode: ${mode}`,
   window: (size: string, risky: boolean) =>
     `Upload window: ${size}${risky ? ' (risky)' : ''}`,
@@ -18,6 +22,8 @@ export const debugContent = {
     loaded: 'Loaded ping',
     elapsed: 'Elapsed',
     window: 'Upload window used',
+    engineUsed: 'Engine used',
+    nativeModule: 'Native module',
     stallDownload: 'JS stall (download)',
     stallUpload: 'JS stall (upload)',
     error: 'Error',

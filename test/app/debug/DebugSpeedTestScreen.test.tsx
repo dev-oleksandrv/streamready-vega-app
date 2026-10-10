@@ -39,6 +39,12 @@ function fakeEngine() {
   return {createEngine, control};
 }
 
+/** auto → native → js: download mode and window only apply to the JS engine. */
+function selectJsEngine() {
+  fireEvent.press(screen.getByRole('button', {name: 'Engine: auto'}));
+  fireEvent.press(screen.getByRole('button', {name: 'Engine: native'}));
+}
+
 const result: SpeedTestResult = {
   downloadBps: 87_400_000,
   uploadBps: 12_300_000,
@@ -52,9 +58,12 @@ const result: SpeedTestResult = {
 describe('DebugSpeedTestScreen', () => {
   it('runs the engine and shows live then final values', async () => {
     const {createEngine, control} = fakeEngine();
-    render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     expect(createEngine).toHaveBeenCalledWith({
+      engine: 'auto',
       downloadMode: 'arraybuffer',
       uploadWindowBytes: 32 * 1024,
     });
@@ -86,7 +95,9 @@ describe('DebugSpeedTestScreen', () => {
 
   it('measures JS thread stalls per phase', () => {
     const {createEngine, control} = fakeEngine();
-    render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     act(() => {
       control.emit({type: 'phase', phase: 'download'});
@@ -101,7 +112,9 @@ describe('DebugSpeedTestScreen', () => {
 
   it('shows the raw error code on failure', async () => {
     const {createEngine, control} = fakeEngine();
-    render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     await act(async () => control.reject(new SpeedTestError('no_servers')));
     expect(screen.getByText('failed')).toBeTruthy();
@@ -110,7 +123,9 @@ describe('DebugSpeedTestScreen', () => {
 
   it('stops a running test', async () => {
     const {createEngine, control} = fakeEngine();
-    render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     await act(async () => {
       fireEvent.press(screen.getByRole('button', {name: 'Stop'}));
@@ -121,19 +136,25 @@ describe('DebugSpeedTestScreen', () => {
 
   it('toggles the download mode before starting', () => {
     const {createEngine} = fakeEngine();
-    render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
+    selectJsEngine();
     fireEvent.press(
       screen.getByRole('button', {name: 'Download mode: arraybuffer'}),
     );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     expect(createEngine).toHaveBeenCalledWith(
-      expect.objectContaining({downloadMode: 'blob'}),
+      expect.objectContaining({engine: 'js', downloadMode: 'blob'}),
     );
   });
 
   it('cycles the upload window through the options before starting', () => {
     const {createEngine} = fakeEngine();
-    render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
+    selectJsEngine();
     const toggle = () =>
       fireEvent.press(screen.getByRole('button', {name: /^Upload window:/}));
     expect(
@@ -155,13 +176,72 @@ describe('DebugSpeedTestScreen', () => {
     toggle();
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     expect(createEngine).toHaveBeenCalledWith(
-      expect.objectContaining({uploadWindowBytes: 64 * 1024}),
+      expect.objectContaining({engine: 'js', uploadWindowBytes: 64 * 1024}),
     );
+  });
+
+  it('cycles the engine and passes it to createEngine', () => {
+    const {createEngine} = fakeEngine();
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
+    fireEvent.press(screen.getByRole('button', {name: 'Engine: auto'}));
+    fireEvent.press(screen.getByRole('button', {name: 'Start'}));
+    expect(createEngine).toHaveBeenCalledWith(
+      expect.objectContaining({engine: 'native'}),
+    );
+    expect(screen.getByText('present')).toBeTruthy();
+  });
+
+  it('marks native as unavailable when the module is missing', () => {
+    const {createEngine} = fakeEngine();
+    render(
+      <DebugSpeedTestScreen
+        createEngine={createEngine}
+        nativeAvailable={false}
+      />,
+    );
+    fireEvent.press(screen.getByRole('button', {name: 'Engine: auto'}));
+    expect(
+      screen.getByRole('button', {name: 'Engine: native (unavailable)'}),
+    ).toBeTruthy();
+    expect(screen.getByText('missing')).toBeTruthy();
+  });
+
+  it('only lets the JS engine change download mode and window', () => {
+    const {createEngine} = fakeEngine();
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
+    fireEvent.press(
+      screen.getByRole('button', {name: 'Download mode: arraybuffer'}),
+    );
+    fireEvent.press(screen.getByRole('button', {name: /^Upload window:/}));
+    expect(
+      screen.getByRole('button', {name: 'Download mode: arraybuffer'}),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('button', {name: 'Upload window: 32 KiB'}),
+    ).toBeTruthy();
+  });
+
+  it('shows which engine produced the result', async () => {
+    const {createEngine, control} = fakeEngine();
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
+    fireEvent.press(screen.getByRole('button', {name: 'Start'}));
+    await act(async () =>
+      control.resolve({...result, engineId: 'ndt7-native'}),
+    );
+    expect(screen.getByText('ndt7-native')).toBeTruthy();
   });
 
   it('aborts and stops updating when unmounted mid-run', async () => {
     const {createEngine, control} = fakeEngine();
-    const view = render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    const view = render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     view.unmount();
     expect(control.signal?.aborted).toBe(true);

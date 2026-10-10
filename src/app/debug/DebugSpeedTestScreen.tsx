@@ -13,7 +13,11 @@ import {
 import {formatMbps, formatMs} from '~/shared/lib/format';
 import {FocusButton, scale, ScreenLayout, Text} from '~/shared/ui';
 
-import type {SpeedTestEngineConfig} from '../providers/speedTestEngine';
+import {
+  ENGINE_CHOICES,
+  type EngineChoice,
+  type SpeedTestEngineConfig,
+} from '../providers/speedTestEngine';
 import {debugContent as copy} from './content';
 import {DebugRow} from './DebugRow';
 import {applyEngineEvent, type DebugSnapshot} from './debugSnapshot';
@@ -34,6 +38,8 @@ const noStalls: PhaseStalls = {download: emptyStall, upload: emptyStall};
 
 export interface DebugSpeedTestScreenProps {
   createEngine: (config: SpeedTestEngineConfig) => SpeedTestEngine;
+  /** Whether the Ndt7Native Turbo Module loaded on this build. */
+  nativeAvailable: boolean;
 }
 
 type RunStatus = 'idle' | 'running' | 'done' | 'failed';
@@ -44,6 +50,11 @@ const FLUSH_INTERVAL_MS = 250;
 function nextUploadWindow(current: number): number {
   const index = UPLOAD_WINDOW_OPTIONS.findIndex((w) => w === current);
   return UPLOAD_WINDOW_OPTIONS[(index + 1) % UPLOAD_WINDOW_OPTIONS.length];
+}
+
+function nextEngine(current: EngineChoice): EngineChoice {
+  const index = ENGINE_CHOICES.indexOf(current);
+  return ENGINE_CHOICES[(index + 1) % ENGINE_CHOICES.length];
 }
 
 function stallText(stats: StallStats): string {
@@ -65,7 +76,9 @@ function describeServer(server?: ServerInfo): string {
 // Temporary: removed when the real Test UI lands.
 export const DebugSpeedTestScreen = ({
   createEngine,
+  nativeAvailable,
 }: DebugSpeedTestScreenProps) => {
+  const [engine, setEngine] = useState<EngineChoice>('auto');
   const [mode, setMode] = useState<DownloadMode>('arraybuffer');
   const [uploadWindow, setUploadWindow] = useState<number>(
     DEFAULT_UPLOAD_WINDOW_BYTES,
@@ -125,7 +138,7 @@ export const DebugSpeedTestScreen = ({
     };
     const timer = setInterval(flush, FLUSH_INTERVAL_MS);
 
-    createEngine({downloadMode: mode, uploadWindowBytes: uploadWindow})
+    createEngine({engine, downloadMode: mode, uploadWindowBytes: uploadWindow})
       .run({
         signal: controller.signal,
         onEvent: (event) => {
@@ -151,7 +164,7 @@ export const DebugSpeedTestScreen = ({
         clearInterval(probe);
         flush();
       });
-  }, [createEngine, mode, uploadWindow]);
+  }, [createEngine, engine, mode, uploadWindow]);
 
   const stop = useCallback(() => controllerRef.current?.abort(), []);
   const toggleMode = useCallback(
@@ -159,12 +172,15 @@ export const DebugSpeedTestScreen = ({
     [],
   );
 
+  const toggleEngine = useCallback(() => setEngine(nextEngine), []);
+
   const toggleUploadWindow = useCallback(
     () => setUploadWindow(nextUploadWindow),
     [],
   );
 
   const running = status === 'running';
+  const jsOnlyDisabled = running || engine !== 'js';
 
   return (
     <ScreenLayout>
@@ -182,9 +198,14 @@ export const DebugSpeedTestScreen = ({
           />
           <FocusButton label={copy.stop} onPress={stop} disabled={!running} />
           <FocusButton
+            label={copy.engine(engine, engine === 'native' && !nativeAvailable)}
+            onPress={toggleEngine}
+            disabled={running}
+          />
+          <FocusButton
             label={copy.mode(mode)}
             onPress={toggleMode}
-            disabled={running}
+            disabled={jsOnlyDisabled}
           />
           <FocusButton
             label={copy.window(
@@ -192,7 +213,7 @@ export const DebugSpeedTestScreen = ({
               uploadWindow > DEFAULT_UPLOAD_WINDOW_BYTES,
             )}
             onPress={toggleUploadWindow}
-            disabled={running}
+            disabled={jsOnlyDisabled}
           />
         </View>
         <View style={styles.rows}>
@@ -232,6 +253,14 @@ export const DebugSpeedTestScreen = ({
                 ? copy.empty
                 : copy.kib(result.uploadWindowBytes)
             }
+          />
+          <DebugRow
+            label={copy.rows.engineUsed}
+            value={result?.engineId ?? copy.empty}
+          />
+          <DebugRow
+            label={copy.rows.nativeModule}
+            value={nativeAvailable ? copy.present : copy.missing}
           />
           <DebugRow
             label={copy.rows.stallDownload}

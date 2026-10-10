@@ -30,3 +30,4 @@ export {
 export type {NativeNdt7EngineDeps} from './engines/ndt7native/NativeNdt7Engine';
 export {default as nativeNdt7} from './engines/ndt7native/NativeNdt7';
 export {NDT7_ENGINE_ID} from './engines/ndt7/Ndt7Engine';
+export {FallbackEngine} from './engines/FallbackEngine';
