@@ -4,6 +4,8 @@ export const debugContent = {
   start: 'Start',
   stop: 'Stop',
   mode: (mode: string) => `Download mode: ${mode}`,
+  window: (size: string) => `Upload window: ${size}`,
+  kib: (bytes: number) => `${bytes / 1024} KiB`,
   empty: '—',
   rows: {
     status: 'Status',
@@ -14,6 +16,7 @@ export const debugContent = {
     idle: 'Idle ping',
     loaded: 'Loaded ping',
     elapsed: 'Elapsed',
+    window: 'Upload window used',
     error: 'Error',
   },
   mbps: (value: string) => `${value} Mbps`,

@@ -2,7 +2,9 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {StyleSheet, View} from 'react-native';
 
 import {
+  DEFAULT_UPLOAD_WINDOW_BYTES,
   isSpeedTestError,
+  UPLOAD_WINDOW_OPTIONS,
   type DownloadMode,
   type ServerInfo,
   type SpeedTestEngine,
@@ -11,18 +13,24 @@ import {
 import {formatMbps, formatMs} from '~/shared/lib/format';
 import {FocusButton, scale, ScreenLayout, Text} from '~/shared/ui';
 
+import type {SpeedTestEngineConfig} from '../providers/speedTestEngine';
 import {debugContent as copy} from './content';
 import {DebugRow} from './DebugRow';
 import {applyEngineEvent, type DebugSnapshot} from './debugSnapshot';
 
 export interface DebugSpeedTestScreenProps {
-  createEngine: (mode: DownloadMode) => SpeedTestEngine;
+  createEngine: (config: SpeedTestEngineConfig) => SpeedTestEngine;
 }
 
 type RunStatus = 'idle' | 'running' | 'done' | 'failed';
 
 /** Matches the planned ~4 Hz store throttle so the stick sees realistic render load. */
 const FLUSH_INTERVAL_MS = 250;
+
+function nextUploadWindow(current: number): number {
+  const index = UPLOAD_WINDOW_OPTIONS.findIndex((w) => w === current);
+  return UPLOAD_WINDOW_OPTIONS[(index + 1) % UPLOAD_WINDOW_OPTIONS.length];
+}
 
 const mbps = (bps?: number) => copy.mbps(formatMbps(bps ?? Number.NaN));
 const ms = (value?: number) => copy.ms(formatMs(value ?? Number.NaN));
@@ -40,6 +48,9 @@ export const DebugSpeedTestScreen = ({
   createEngine,
 }: DebugSpeedTestScreenProps) => {
   const [mode, setMode] = useState<DownloadMode>('arraybuffer');
+  const [uploadWindow, setUploadWindow] = useState<number>(
+    DEFAULT_UPLOAD_WINDOW_BYTES,
+  );
   const [status, setStatus] = useState<RunStatus>('idle');
   const [snapshot, setSnapshot] = useState<DebugSnapshot>({});
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -76,7 +87,7 @@ export const DebugSpeedTestScreen = ({
     };
     const timer = setInterval(flush, FLUSH_INTERVAL_MS);
 
-    createEngine(mode)
+    createEngine({downloadMode: mode, uploadWindowBytes: uploadWindow})
       .run({
         signal: controller.signal,
         onEvent: (event) => {
@@ -101,11 +112,16 @@ export const DebugSpeedTestScreen = ({
         clearInterval(timer);
         flush();
       });
-  }, [createEngine, mode]);
+  }, [createEngine, mode, uploadWindow]);
 
   const stop = useCallback(() => controllerRef.current?.abort(), []);
   const toggleMode = useCallback(
     () => setMode((m) => (m === 'arraybuffer' ? 'blob' : 'arraybuffer')),
+    [],
+  );
+
+  const toggleUploadWindow = useCallback(
+    () => setUploadWindow(nextUploadWindow),
     [],
   );
 
@@ -129,6 +145,11 @@ export const DebugSpeedTestScreen = ({
           <FocusButton
             label={copy.mode(mode)}
             onPress={toggleMode}
+            disabled={running}
+          />
+          <FocusButton
+            label={copy.window(copy.kib(uploadWindow))}
+            onPress={toggleUploadWindow}
             disabled={running}
           />
         </View>
@@ -161,6 +182,14 @@ export const DebugSpeedTestScreen = ({
           <DebugRow
             label={copy.rows.elapsed}
             value={copy.seconds((elapsedMs / 1000).toFixed(1))}
+          />
+          <DebugRow
+            label={copy.rows.window}
+            value={
+              result?.uploadWindowBytes === undefined
+                ? copy.empty
+                : copy.kib(result.uploadWindowBytes)
+            }
           />
           <DebugRow label={copy.rows.error} value={errorCode ?? copy.empty} />
         </View>

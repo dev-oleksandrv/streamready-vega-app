@@ -46,6 +46,7 @@ const result: SpeedTestResult = {
   loadedLatencyMs: 61,
   server: {machine: 'mlab1-tst01.example', city: 'Testville', country: 'ZZ'},
   finishedAt: 0,
+  uploadWindowBytes: 64 * 1024,
 };
 
 describe('DebugSpeedTestScreen', () => {
@@ -53,7 +54,10 @@ describe('DebugSpeedTestScreen', () => {
     const {createEngine, control} = fakeEngine();
     render(<DebugSpeedTestScreen createEngine={createEngine} />);
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
-    expect(createEngine).toHaveBeenCalledWith('arraybuffer');
+    expect(createEngine).toHaveBeenCalledWith({
+      downloadMode: 'arraybuffer',
+      uploadWindowBytes: 128 * 1024,
+    });
 
     act(() => {
       control.emit({type: 'phase', phase: 'download'});
@@ -77,6 +81,7 @@ describe('DebugSpeedTestScreen', () => {
     expect(
       screen.getByText('mlab1-tst01.example · Testville, ZZ'),
     ).toBeTruthy();
+    expect(screen.getByText('64 KiB')).toBeTruthy();
   });
 
   it('shows the raw error code on failure', async () => {
@@ -106,7 +111,30 @@ describe('DebugSpeedTestScreen', () => {
       screen.getByRole('button', {name: 'Download mode: arraybuffer'}),
     );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
-    expect(createEngine).toHaveBeenCalledWith('blob');
+    expect(createEngine).toHaveBeenCalledWith(
+      expect.objectContaining({downloadMode: 'blob'}),
+    );
+  });
+
+  it('cycles the upload window through the options before starting', () => {
+    const {createEngine} = fakeEngine();
+    render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    const toggle = () =>
+      fireEvent.press(screen.getByRole('button', {name: /^Upload window:/}));
+    expect(
+      screen.getByRole('button', {name: 'Upload window: 128 KiB'}),
+    ).toBeTruthy();
+    toggle(); // 256
+    toggle(); // 512
+    toggle(); // 1024
+    toggle(); // wraps to 32
+    expect(
+      screen.getByRole('button', {name: 'Upload window: 32 KiB'}),
+    ).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', {name: 'Start'}));
+    expect(createEngine).toHaveBeenCalledWith(
+      expect.objectContaining({uploadWindowBytes: 32 * 1024}),
+    );
   });
 
   it('aborts and stops updating when unmounted mid-run', async () => {
