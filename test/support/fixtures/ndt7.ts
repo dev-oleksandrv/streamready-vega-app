@@ -6,9 +6,8 @@ export function locateEntry(n: number) {
     machine: `mlab${n}-tst0${n}.mlab-sandbox.measurement-lab.example`,
     location: {city: `Testville ${n}`, country: 'ZZ'},
     urls: {
-      'wss:///ndt/v7/download': `wss://ndt-${n}.example/ndt/v7/download?access_token=REDACTED`,
-      'wss:///ndt/v7/upload': `wss://ndt-${n}.example/ndt/v7/upload?access_token=REDACTED`,
       'ws:///ndt/v7/download': `ws://ndt-${n}.example/ndt/v7/download?access_token=REDACTED`,
+      'ws:///ndt/v7/upload': `ws://ndt-${n}.example/ndt/v7/upload?access_token=REDACTED`,
     },
   };
 }

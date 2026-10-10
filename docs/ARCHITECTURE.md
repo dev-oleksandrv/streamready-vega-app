@@ -6,7 +6,7 @@ StreamReady is an open-source Fire TV app for Vega OS. It answers the question "
 
 **In scope (v1):**
 - Screens: Splash, Privacy (consent modal and policy view), Home, Test (with the Stop dialog and the error overlay), Result, Latency ("Why it lags"), Device & connection.
-- Speed measurement with M-Lab ndt7, implemented manually over WebSocket.
+- Speed measurement with M-Lab ndt7, implemented in a C++ Turbo Module over plain `ws://`.
 - Connection insights (public IP, country, city, ISP) and device information.
 - English only. Single session, with no test history.
 
@@ -32,7 +32,8 @@ src/
     privacy/               # consent store (persisted), policy content, PrivacyScreen
     speedtest/
       domain/              # SpeedTestEngine, EngineEvent, SpeedTestResult, SpeedTestError, units, canStartTest
-      engines/ndt7/        # locate.ts, download.ts, upload.ts, protocol.ts, Ndt7Engine.ts
+      engines/ndt7/        # locate.ts, protocol.ts, measurements.ts, stats.ts
+      engines/ndt7native/  # NativeNdt7 (Turbo Module spec), nativeEvents, nativeRun, NativeNdt7Engine
       store/               # sessionStore
       ui/                  # TestScreen, ResultScreen, LatencyScreen + components
     verdict/               # pure: thresholds, evaluate(), grade(), formatters, copy
@@ -42,7 +43,7 @@ src/
     ui/                    # tokens, scale(), Text, FocusButton, FocusCard, Dialog, ScreenLayout
     lib/                   # http (timeout + AbortSignal), format, logger, storage adapter
 test/                      # mirrors src/ 1:1
-  support/                 # FakeWebSocket, fixtures, renderWithProviders, store reset helpers
+  support/                 # FakeNdt7Native, fixtures, renderWithProviders, store reset helpers
 assets/fonts/              # Geist, Geist Mono + OFL license (Vega loads fonts from the app root)
 ```
 
@@ -156,40 +157,40 @@ Throughput is measured in bits/s inside the engine. Values are converted to Mbps
 
 ### 6.2 ndt7 pipeline
 
+The only engine is `NativeNdt7Engine` (ADR 0006): TypeScript runs Locate and computes results, and the `Ndt7Native` C++ Turbo Module moves the bytes. Vega's JS `WebSocket` cannot run ndt7 reliably on the stick (ADR 0002 amendment).
+
 1. **Locate:**
    - `GET https://locate.measurementlab.net/v2/nearest/ndt/ndt7?client_name=streamready&client_version=<appVersion>`.
-   - The response lists servers with signed download and upload URLs.
-   - If connecting fails, the engine falls back to the next server, trying up to 3 servers in total.
-   - The signed URLs contain `access_token`, so they are never logged.
+   - The response lists servers with signed `ws:///ndt/v7/download` and `ws:///ndt/v7/upload` URLs. The engine uses plain `ws://` on port 80: the device has no TLS library apps can use.
+   - If connecting fails, the engine tries the next server, up to 3 servers in total.
+   - The signed URLs contain `access_token`, so they are never logged, not even by native code.
 2. **Latency step** (shown as "Ping" in the UI): covers the Locate call and opening the download socket.
-3. **Download:**
-   - `new WebSocket(url, 'net.measurementlab.ndt.v7')` with `binaryType = 'arraybuffer'` (or `'blob'`, see the ADR 0002 amendment).
-   - The engine counts the bytes of every message and never keeps payloads.
-   - Text messages are server `Measurement` JSON. `TCPInfo.MinRTT` gives idle latency, and `TCPInfo.RTT` samples give loaded latency.
-   - The server ends the test after about 10s. The client has a 15s safety timeout.
-4. **Upload:**
-   - Binary messages start at 8 KiB. The size doubles each time the total bytes sent pass 16× the current size, up to 16 KiB.
-   - One message per event-loop tick. Unconfirmed bytes (sent minus the server's `TCPInfo.BytesReceived`, extrapolated at the last measured rate) stay within the upload window (default 32 KiB). Messages scale 8 → 16 KiB and never exceed half the window: larger sends crash Vega's libcurl-based WebSocket.
-   - Vega's socket fails instead of buffering, so a lost upload retries with the next smaller window, down to 32 KiB (ADR 0002 amendment).
-   - Each message size has one pre-allocated buffer, which is reused.
-   - Throughput comes from the server measurement `TCPInfo.BytesReceived / ElapsedTime`.
-   - The client stops after 10s.
-5. **Final values:**
+3. **Native subtest:** `Ndt7Native.start(runId, 'download' | 'upload', url)` spawns one worker thread per subtest. The worker:
+   1. resolves the host (IPv4/IPv6) and connects within 5 s, splitting the time across addresses
+   2. performs the WebSocket handshake (subprotocol `net.measurementlab.ndt.v7`, `Sec-WebSocket-Accept` checked)
+   3. runs the subtest on a blocking socket and emits `ndt7native` events about every 250 ms: `{runId, seq, type: 'progress' | 'done', bytes, elapsedMs, measurements, error?}`. Each event carries the server measurement texts received since the previous one; `done` repeats the totals.
+   - `emit()` keeps no order across calls. A late event still adds its measurements, and `done` waits up to 250 ms for events still in flight.
+   - A JS watchdog (33 s download, 35 s upload) fails the subtest with `timeout` if `done` never arrives.
+4. **Download:** counts binary bytes without keeping them, answers pings, and ends at the server's close frame. The 15 s safety timeout gives `timeout`; 7 s without data gives `network_lost`.
+5. **Upload:** sends masked binary frames from one pre-filled 1 MiB random buffer. Sizes start at 8 KiB and double while the size is at most 1/16 of the bytes sent, up to 1 MiB. The blocking send is the backpressure. After 10 s the client sends a close frame and collects the final measurements.
+6. **Final values:** TypeScript parses measurements with `parseMeasurement` (`DownloadLatency`, `UploadRate`).
 
 | Value | Source |
 |---|---|
 | Download | Total bytes over total time, the same as the M-Lab reference client |
-| Upload | The last server measurement |
+| Upload | The last server measurement, `TCPInfo.BytesReceived / ElapsedTime` |
 | Idle latency | `MinRTT` |
 | Loaded latency | Median download `RTT` |
 
 The engine uses a single stream, as the ndt7 design intends. Protocol reference: https://github.com/m-lab/ndt-server/blob/main/spec/ndt7-protocol.md
 
+Code layout: `kepler/ndt7/core` (pure, host-tested), `kepler/ndt7/net` (POSIX sockets, host-tested over `socketpair`), `kepler/turbo-modules` (glue). Run `pnpm run test:native` for the host C++ tests.
+
 ### 6.3 Integration
 
-- `Ndt7Engine` receives its dependencies through the constructor (`createSocket`, `fetch`, `now`).
+- `app/providers/speedTestEngine.ts` builds `NativeNdt7Engine` with its dependencies (native module, event emitter, `fetch`, `now`). If the native module is missing, every run fails with `connect_failed`.
 - The session store throttles engine events to about 4 Hz before React sees them. Each throttled sample becomes one bar in the chart, up to 120 bars.
-- Stop test calls `AbortController.abort()`, which closes the socket and rejects with `aborted`. The UI then returns Home silently.
+- Stop test calls `AbortController.abort()`, which calls `Ndt7Native.cancel` (the socket is shut down) and rejects with `aborted`. The UI then returns Home silently.
 - If the app goes to the background mid-test, the test is aborted silently.
 
 ## 7. Connection insights and device information
@@ -327,7 +328,7 @@ While the device is offline, `connectionLost` shows a disabled Try again and the
 ## 10. Testing
 
 - Tests live in `test/`, mirroring `src/`, named `*.test.ts(x)`.
-- Cover the essential parts first: `verdict/` (table tests over the 6 design scenarios and every threshold boundary), `speedtest/domain/`, `speedtest/engines/` (`FakeWebSocket`, fake clock, sanitized M-Lab fixtures), stores, and key screen flows with React Native Testing Library. There are no coverage thresholds for now.
+- Cover the essential parts first: `verdict/` (table tests over the 6 design scenarios and every threshold boundary), `speedtest/domain/`, `speedtest/engines/` (`FakeNdt7Native`, sanitized M-Lab fixtures; native code via `pnpm run test:native`), stores, and key screen flows with React Native Testing Library. There are no coverage thresholds for now.
 - Screen flows to cover: cold start (pending, accepted, withdrawn), accept including a failed insights fetch, withdrawing consent, the Stop dialog, the 3 error variants, the cooldown.
 - No snapshot tests. No real network, timers or device APIs in tests.
 - Fixtures use documentation IPs (`203.0.113.0/24`, `2001:db8::/32`), fake UUIDs, and no `access_token` values.
@@ -336,7 +337,8 @@ While the device is offline, `connectionLost` shows a disabled Try again and the
 ## 11. Decisions
 
 - [0001 Modular domain architecture](adr/0001-modular-domain-architecture.md)
-- [0002 ndt7 as the first speed test engine](adr/0002-ndt7-first-speed-test-engine.md)
+- [0002 ndt7 as the first speed test engine](adr/0002-ndt7-first-speed-test-engine.md) (superseded by 0006)
 - [0003 Zustand for state management](adr/0003-zustand-state-management.md)
 - [0004 Tokenless geo-IP providers](adr/0004-tokenless-geo-ip-providers.md)
 - [0005 Consent-gated insights](adr/0005-consent-gated-insights.md)
+- [0006 Native ndt7 engine (C++ Turbo Module)](adr/0006-native-ndt7-engine.md)

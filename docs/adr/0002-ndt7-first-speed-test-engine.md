@@ -1,6 +1,6 @@
 # 0002. ndt7 as the first speed test engine
 
-- Status: Accepted
+- Status: Superseded by 0006
 - Date: 2026-10-09
 
 ## Context

@@ -25,8 +25,6 @@ export interface SpeedTestResult {
   loadedLatencyMs: number;
   server: ServerInfo;
   finishedAt: number;
-  /** Engines that pace uploads report the send window the result came from. */
-  uploadWindowBytes?: number;
 }
 
 export interface RunOptions {

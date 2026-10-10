@@ -2,7 +2,7 @@
 
 Open-source (Apache-2.0) Fire TV app for **Vega OS** (React Native for Vega). Measures download, upload, idle latency and latency under load, then answers "Will my TV stream in 4K?" with a plain-language verdict.
 
-- Measurement: M-Lab **ndt7**, implemented manually over WebSocket (the official client is not Vega-compatible).
+- Measurement: M-Lab **ndt7**, implemented in an in-app C++ Turbo Module over plain `ws://` (Vega's JS WebSocket and the official client are not usable on the device).
 - Connection insights: public IP, country, city, ISP via free geo-IP providers.
 - Architecture and decisions: `docs/ARCHITECTURE.md`, `docs/adr/`. Read them before structural changes.
 

@@ -20,5 +20,6 @@ export const DebugRow = ({label, value}: DebugRowProps) => (
 const styles = StyleSheet.create({
   row: {flexDirection: 'row', gap: scale(24)},
   label: {width: scale(260), fontSize: scale(28), color: colors.textSecondary},
-  value: {fontSize: scale(28)},
+  // Long values (server names) wrap inside the column instead of overflowing.
+  value: {flexShrink: 1, fontSize: scale(28)},
 });

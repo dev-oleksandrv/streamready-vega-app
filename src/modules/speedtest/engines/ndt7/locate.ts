@@ -12,9 +12,9 @@ import {
 
 export interface Ndt7Target {
   server: ServerInfo;
-  /** Signed: carries an access token. Never log. */
+  /** Signed ws:// URL: carries an access token. Never log. */
   downloadUrl: string;
-  /** Signed: carries an access token. Never log. */
+  /** Signed ws:// URL: carries an access token. Never log. */
   uploadUrl: string;
 }
 

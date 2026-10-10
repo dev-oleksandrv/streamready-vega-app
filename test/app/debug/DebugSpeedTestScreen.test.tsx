@@ -46,18 +46,16 @@ const result: SpeedTestResult = {
   loadedLatencyMs: 61,
   server: {machine: 'mlab1-tst01.example', city: 'Testville', country: 'ZZ'},
   finishedAt: 0,
-  uploadWindowBytes: 64 * 1024,
 };
 
 describe('DebugSpeedTestScreen', () => {
   it('runs the engine and shows live then final values', async () => {
     const {createEngine, control} = fakeEngine();
-    render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
-    expect(createEngine).toHaveBeenCalledWith({
-      downloadMode: 'arraybuffer',
-      uploadWindowBytes: 32 * 1024,
-    });
+    expect(createEngine).toHaveBeenCalledTimes(1);
 
     act(() => {
       control.emit({type: 'phase', phase: 'download'});
@@ -81,12 +79,13 @@ describe('DebugSpeedTestScreen', () => {
     expect(
       screen.getByText('mlab1-tst01.example · Testville, ZZ'),
     ).toBeTruthy();
-    expect(screen.getByText('64 KiB')).toBeTruthy();
   });
 
   it('measures JS thread stalls per phase', () => {
     const {createEngine, control} = fakeEngine();
-    render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     act(() => {
       control.emit({type: 'phase', phase: 'download'});
@@ -99,9 +98,28 @@ describe('DebugSpeedTestScreen', () => {
     expect(screen.getByText(/^max 400 ms · avg \d+ ms$/)).toBeTruthy();
   });
 
+  it('measures an idle baseline stall while no test runs', () => {
+    const {createEngine} = fakeEngine();
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
+    act(() => {
+      jest.advanceTimersByTime(100);
+      // The JS thread is blocked for 300 ms with no test running.
+      jest.setSystemTime(Date.now() + 300);
+      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(250);
+    });
+    expect(screen.getByText('JS stall (idle)')).toBeTruthy();
+    expect(screen.getByText(/^max 300 ms · avg \d+ ms$/)).toBeTruthy();
+    expect(createEngine).not.toHaveBeenCalled();
+  });
+
   it('shows the raw error code on failure', async () => {
     const {createEngine, control} = fakeEngine();
-    render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     await act(async () => control.reject(new SpeedTestError('no_servers')));
     expect(screen.getByText('failed')).toBeTruthy();
@@ -110,7 +128,9 @@ describe('DebugSpeedTestScreen', () => {
 
   it('stops a running test', async () => {
     const {createEngine, control} = fakeEngine();
-    render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     await act(async () => {
       fireEvent.press(screen.getByRole('button', {name: 'Stop'}));
@@ -119,49 +139,36 @@ describe('DebugSpeedTestScreen', () => {
     expect(screen.getByText('aborted')).toBeTruthy();
   });
 
-  it('toggles the download mode before starting', () => {
+  it('shows whether the native module loaded', () => {
     const {createEngine} = fakeEngine();
-    render(<DebugSpeedTestScreen createEngine={createEngine} />);
-    fireEvent.press(
-      screen.getByRole('button', {name: 'Download mode: arraybuffer'}),
+    const view = render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
     );
-    fireEvent.press(screen.getByRole('button', {name: 'Start'}));
-    expect(createEngine).toHaveBeenCalledWith(
-      expect.objectContaining({downloadMode: 'blob'}),
+    expect(screen.getByText('present')).toBeTruthy();
+    view.rerender(
+      <DebugSpeedTestScreen
+        createEngine={createEngine}
+        nativeAvailable={false}
+      />,
     );
+    expect(screen.getByText('missing')).toBeTruthy();
   });
 
-  it('cycles the upload window through the options before starting', () => {
+  it('offers only Start and Stop', () => {
     const {createEngine} = fakeEngine();
-    render(<DebugSpeedTestScreen createEngine={createEngine} />);
-    const toggle = () =>
-      fireEvent.press(screen.getByRole('button', {name: /^Upload window:/}));
-    expect(
-      screen.getByRole('button', {name: 'Upload window: 32 KiB'}),
-    ).toBeTruthy();
-    toggle();
-    // Larger windows crashed the stick's WebSocket; the label says so.
-    expect(
-      screen.getByRole('button', {name: 'Upload window: 64 KiB (risky)'}),
-    ).toBeTruthy();
-    toggle(); // 128
-    toggle(); // 256
-    toggle(); // 512
-    toggle(); // 1024
-    toggle(); // wraps to 32
-    expect(
-      screen.getByRole('button', {name: 'Upload window: 32 KiB'}),
-    ).toBeTruthy();
-    toggle();
-    fireEvent.press(screen.getByRole('button', {name: 'Start'}));
-    expect(createEngine).toHaveBeenCalledWith(
-      expect.objectContaining({uploadWindowBytes: 64 * 1024}),
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
     );
+    expect(
+      screen.getAllByRole('button').map((b) => b.props.accessibilityLabel),
+    ).toEqual(['Start', 'Stop']);
   });
 
   it('aborts and stops updating when unmounted mid-run', async () => {
     const {createEngine, control} = fakeEngine();
-    const view = render(<DebugSpeedTestScreen createEngine={createEngine} />);
+    const view = render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
     fireEvent.press(screen.getByRole('button', {name: 'Start'}));
     view.unmount();
     expect(control.signal?.aborted).toBe(true);
