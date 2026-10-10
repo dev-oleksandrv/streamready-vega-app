@@ -23,3 +23,10 @@ export {
 } from './engines/ndt7/protocol';
 export type {Ndt7NativeSpec} from './engines/ndt7native/NativeNdt7';
 export type {NativeEventSource} from './engines/ndt7native/nativeRun';
+export {
+  NATIVE_NDT7_ENGINE_ID,
+  NativeNdt7Engine,
+} from './engines/ndt7native/NativeNdt7Engine';
+export type {NativeNdt7EngineDeps} from './engines/ndt7native/NativeNdt7Engine';
+export {default as nativeNdt7} from './engines/ndt7native/NativeNdt7';
+export {NDT7_ENGINE_ID} from './engines/ndt7/Ndt7Engine';
