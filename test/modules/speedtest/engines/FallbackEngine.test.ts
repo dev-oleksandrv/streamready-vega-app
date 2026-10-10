@@ -79,6 +79,19 @@ describe('FallbackEngine', () => {
     }
   });
 
+  it('does not fall back once the primary reached a server', async () => {
+    const primary = engine('native', async (onEvent) => {
+      onEvent({type: 'server', server: {machine: 'mlab1.example'}});
+      throw new SpeedTestError('connect_failed');
+    });
+    const fallback = engine('js', async () => result('js'));
+    const outcome = await new FallbackEngine(primary, fallback, silentLogger)
+      .run({signal: new AbortController().signal, onEvent: () => {}})
+      .catch((e: unknown) => e);
+    expect(isSpeedTestError(outcome) && outcome.code).toBe('connect_failed');
+    expect(fallback.run).not.toHaveBeenCalled();
+  });
+
   it('never falls back once the signal is aborted', async () => {
     const controller = new AbortController();
     const primary = engine('native', async () => {

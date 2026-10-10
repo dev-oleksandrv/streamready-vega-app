@@ -22,8 +22,9 @@ The SDK has no TLS library for apps on the device: OpenSSL is not in the sysroot
 - `NativeNdt7Engine` implements `SpeedTestEngine`, so UI, stores and verdict don't change. `SpeedTestResult.engineId` records which engine ran.
 - Engine selection:
   - Use native when the module loads, otherwise the TypeScript engine.
-  - Within one test, `FallbackEngine` switches to the TypeScript engine only before any download data, and only for `connect_failed` (module call failed, or every server's port 80 was unreachable) or `no_servers` (no `ws://` URLs).
+  - Within one test, `FallbackEngine` switches to the TypeScript engine only before the native engine reached a server or moved download data, and only for `connect_failed` (module call failed, or every server's port 80 was unreachable) or `no_servers` (no `ws://` URLs).
   - Any later failure is reported as-is.
+- `emit()` keeps no order across calls, so events carry a `seq`. A late event still contributes its measurements. JS also guards each subtest with a watchdog (30 s download, 25 s upload) in case a `done` event is lost.
 - Signed URLs never appear in native logs, exceptions or events.
 
 ## Consequences

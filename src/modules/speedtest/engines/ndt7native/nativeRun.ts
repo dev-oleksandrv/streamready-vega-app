@@ -18,8 +18,26 @@ export type NativeDirection = 'download' | 'upload';
 
 export interface NativeRunOptions {
   signal: AbortSignal;
-  onProgress: (event: NativeRunEvent) => void;
+  /**
+   * Every progress event once. `fresh` is false for one that arrived after a
+   * later event (emit() does not keep order): its measurements still count,
+   * its byte counters are outdated.
+   */
+  onProgress: (event: NativeRunEvent, fresh: boolean) => void;
 }
+
+/**
+ * Upper bound for a run with no `done`: native limits (connect 5 s, I/O stall
+ * 7 s, download 15 s or upload 10 s, close 1 s) plus margin. Guards against a
+ * done event lost in the native bridge.
+ */
+export const NATIVE_WATCHDOG_MS: Readonly<Record<NativeDirection, number>> = {
+  download: 30_000,
+  upload: 25_000,
+};
+
+/** How long `done` waits for earlier events still in flight. */
+export const NATIVE_LATE_EVENT_GRACE_MS = 250;
 
 let nextRunId = 1;
 
@@ -41,8 +59,11 @@ export function runNative(
       return;
     }
     const runId = nextRunId++;
+    const seen = new Set<number>();
     let lastSeq = 0;
     let settled = false;
+    let done: NativeRunEvent | undefined;
+    let graceTimer: ReturnType<typeof setTimeout> | undefined;
 
     const subscription = events.addListener(NATIVE_EVENT, (payload) => {
       if (settled) {
@@ -55,29 +76,46 @@ export function runNative(
         fail(new SpeedTestError('protocol'));
         return;
       }
-      if (event.runId !== runId || event.seq <= lastSeq) {
+      if (event.runId !== runId || seen.has(event.seq)) {
         return;
       }
-      lastSeq = event.seq;
+      seen.add(event.seq);
       if (event.type === 'progress') {
+        const fresh = event.seq > lastSeq;
+        lastSeq = Math.max(lastSeq, event.seq);
         try {
-          onProgress(event);
+          onProgress(event, fresh);
         } catch (error) {
           fail(
             isSpeedTestError(error) ? error : new SpeedTestError('protocol'),
           );
+          return;
+        }
+        if (done && seen.size >= done.seq) {
+          succeed(done);
         }
         return;
       }
-      finish();
       if (event.error) {
+        finish();
         reject(new SpeedTestError(event.error));
-      } else {
-        resolve(event);
+        return;
       }
+      lastSeq = Math.max(lastSeq, event.seq);
+      // seq counts every event of the run, so missing ones are still in flight.
+      if (seen.size >= event.seq) {
+        succeed(event);
+        return;
+      }
+      done = event;
+      graceTimer = setTimeout(() => succeed(event), NATIVE_LATE_EVENT_GRACE_MS);
     });
     const onAbort = () => fail(new SpeedTestError('aborted'));
     signal.addEventListener('abort', onAbort);
+    const watchdog = setTimeout(
+      () => fail(new SpeedTestError('timeout')),
+      NATIVE_WATCHDOG_MS[direction],
+    );
 
     try {
       native.start(runId, direction, url);
@@ -89,8 +127,20 @@ export function runNative(
 
     function finish() {
       settled = true;
+      clearTimeout(watchdog);
+      if (graceTimer !== undefined) {
+        clearTimeout(graceTimer);
+      }
       subscription.remove();
       signal.removeEventListener('abort', onAbort);
+    }
+
+    function succeed(event: NativeRunEvent) {
+      if (settled) {
+        return;
+      }
+      finish();
+      resolve(event);
     }
 
     /** Ends the run from the JS side; the worker must stop too. */

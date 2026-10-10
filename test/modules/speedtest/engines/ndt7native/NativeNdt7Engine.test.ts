@@ -119,6 +119,58 @@ describe('NativeNdt7Engine', () => {
     });
   });
 
+  it('accepts a download that ended before any data', async () => {
+    const s = setup();
+    await flush();
+    s.fake.done(s.run(0), {
+      measurements: [measurement({MinRTT: 10_000})],
+    });
+    await flush();
+    s.fake.done(s.run(1), {
+      measurements: [measurement({BytesReceived: 1, ElapsedTime: 1})],
+    });
+    await expect(s.promise).resolves.toMatchObject({
+      downloadBps: 0,
+      idleLatencyMs: 10,
+      loadedLatencyMs: 10,
+    });
+  });
+
+  it('keeps measurements of late progress events but not their throughput', async () => {
+    const s = setup();
+    await flush();
+    const runId = s.run(0);
+    const progress = (seq: number, rtt: number) => ({
+      runId,
+      seq,
+      type: 'progress',
+      bytes: seq * 1000,
+      elapsedMs: seq * 250,
+      measurements: [measurement({MinRTT: 10_000, RTT: rtt})],
+    });
+    s.fake.emitRaw(progress(2, 20_000));
+    s.fake.emitRaw(progress(1, 60_000));
+    s.fake.emitRaw({
+      runId,
+      seq: 3,
+      type: 'done',
+      bytes: 3000,
+      elapsedMs: 750,
+      measurements: [measurement({RTT: 40_000})],
+    });
+    await flush();
+    s.fake.done(s.run(1), {
+      measurements: [measurement({BytesReceived: 1, ElapsedTime: 1})],
+    });
+    await expect(s.promise).resolves.toMatchObject({loadedLatencyMs: 40});
+    const downloadElapsed = s.events.flatMap((e) =>
+      e.type === 'throughput' && e.direction === 'download'
+        ? [e.elapsedMs]
+        : [],
+    );
+    expect(downloadElapsed).toEqual([500]);
+  });
+
   it('tries the next server when a download cannot connect', async () => {
     const s = setup();
     await flush();

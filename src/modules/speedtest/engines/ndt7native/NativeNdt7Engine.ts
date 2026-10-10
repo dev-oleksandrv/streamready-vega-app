@@ -137,10 +137,10 @@ export class NativeNdt7Engine implements SpeedTestEngine {
           target.plainDownloadUrl,
           {
             signal,
-            onProgress: (event) => {
+            onProgress: (event, fresh) => {
               connect();
               absorb(event);
-              if (event.elapsedMs > 0) {
+              if (fresh && event.elapsedMs > 0) {
                 onEvent({
                   type: 'throughput',
                   direction: 'download',

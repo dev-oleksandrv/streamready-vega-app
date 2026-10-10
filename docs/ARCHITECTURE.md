@@ -200,7 +200,7 @@ The engine uses a single stream, as the ndt7 design intends. Protocol reference:
 | `native` | `NativeNdt7Engine` only | debug screen |
 | `js` | `Ndt7Engine` only | debug screen |
 
-`FallbackEngine` reruns the test with the TypeScript engine only if the native engine failed before any download data with `connect_failed` or `no_servers` (ADR 0006).
+`FallbackEngine` reruns the test with the TypeScript engine only if the native engine failed before reaching a server or moving download data, with `connect_failed` or `no_servers` (ADR 0006).
 
 ### 6.5 Native ndt7 pipeline
 
@@ -210,6 +210,8 @@ The engine uses a single stream, as the ndt7 design intends. Protocol reference:
    2. performs the WebSocket handshake (subprotocol `net.measurementlab.ndt.v7`, `Sec-WebSocket-Accept` checked)
    3. runs the subtest on a blocking socket
 3. The worker emits `ndt7native` events about every 250 ms: `{runId, seq, type: 'progress' | 'done', bytes, elapsedMs, measurements, error?}`. Each event carries the server measurement texts received since the previous one. `done` repeats the totals.
+   - `emit()` keeps no order across calls. A late event still adds its measurements, and `done` waits up to 250 ms for events still in flight.
+   - A JS watchdog (30 s download, 25 s upload) fails the subtest with `timeout` if `done` never arrives.
 4. Download counts binary bytes without keeping them, answers pings, and ends at the server's close frame. The 15 s safety timeout gives `timeout`; 7 s without data gives `network_lost`.
 5. Upload sends masked binary frames from one pre-filled 1 MiB random buffer. Sizes start at 8 KiB and double while the size is at most 1/16 of the bytes sent, up to 1 MiB. The blocking send is the backpressure. After 10 s the client sends a close frame and collects the final measurements.
 6. TypeScript parses measurements with `parseMeasurement` and computes the result exactly as the TypeScript engine does (`DownloadLatency`, `UploadRate`).

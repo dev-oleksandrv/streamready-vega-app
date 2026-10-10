@@ -17,7 +17,7 @@ paths:
 - Engines honor `AbortSignal`: on abort, close sockets, clear timers, reject with `SpeedTestError('aborted')`.
 - Failures reject with `SpeedTestError` using the defined codes only: `locate_failed | no_servers | connect_failed | network_lost | timeout | protocol | aborted`. Adding a code requires updating the UI mapping and tests.
 - Dependencies (`createSocket`, `fetch`, `now`) come in through the constructor.
-- `NativeNdt7Engine` (ADR 0006) runs ndt7 in the `Ndt7Native` C++ Turbo Module over plain `ws://`. `FallbackEngine` switches to `Ndt7Engine` only before download data on `connect_failed` / `no_servers`. Selection lives in `app/providers/speedTestEngine.ts`.
+- `NativeNdt7Engine` (ADR 0006) runs ndt7 in the `Ndt7Native` C++ Turbo Module over plain `ws://`. `FallbackEngine` switches to `Ndt7Engine` only before the native engine reached a server or moved download data, on `connect_failed` / `no_servers`. Selection lives in `app/providers/speedTestEngine.ts`.
 
 ## ndt7 specifics
 

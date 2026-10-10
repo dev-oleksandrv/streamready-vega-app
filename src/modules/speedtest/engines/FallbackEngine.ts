@@ -18,7 +18,7 @@ const FALLBACK_CODES: ReadonlySet<SpeedTestErrorCode> = new Set([
 
 /**
  * Runs `primary`; runs `fallback` from scratch only when primary failed before
- * any download data with a FALLBACK_CODES error (ADR 0006). Later failures are
+ * reaching a server or moving download data, with a FALLBACK_CODES error (ADR 0006). Later failures are
  * reported as-is so a flaky link never triggers a second M-Lab test.
  */
 export class FallbackEngine implements SpeedTestEngine {
@@ -35,13 +35,17 @@ export class FallbackEngine implements SpeedTestEngine {
   }
 
   async run({signal, onEvent}: RunOptions): Promise<SpeedTestResult> {
-    let sawDownloadData = false;
+    // A reached server or any download data proves the primary path works here.
+    let primaryWorked = false;
     try {
       return await this.primary.run({
         signal,
         onEvent: (event) => {
-          if (event.type === 'throughput' && event.direction === 'download') {
-            sawDownloadData = true;
+          if (
+            event.type === 'server' ||
+            (event.type === 'throughput' && event.direction === 'download')
+          ) {
+            primaryWorked = true;
           }
           onEvent(event);
         },
@@ -49,7 +53,7 @@ export class FallbackEngine implements SpeedTestEngine {
     } catch (error) {
       if (
         signal.aborted ||
-        sawDownloadData ||
+        primaryWorked ||
         !isSpeedTestError(error) ||
         !FALLBACK_CODES.has(error.code)
       ) {
