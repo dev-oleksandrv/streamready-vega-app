@@ -17,3 +17,7 @@ export type {SpeedTestErrorCode} from './domain/errors';
 export {Ndt7Engine} from './engines/ndt7/Ndt7Engine';
 export type {DownloadMode, Ndt7EngineDeps} from './engines/ndt7/Ndt7Engine';
 export type {CreateSocket, Ndt7Socket} from './engines/ndt7/socket';
+export {
+  DEFAULT_UPLOAD_WINDOW_BYTES,
+  UPLOAD_WINDOW_OPTIONS,
+} from './engines/ndt7/protocol';

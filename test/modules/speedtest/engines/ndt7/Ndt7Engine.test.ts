@@ -27,6 +27,7 @@ function setup(
     .fn()
     .mockResolvedValue(jsonResponse(locateResponse)),
   downloadMode?: 'arraybuffer' | 'blob',
+  uploadWindowBytes?: number,
 ) {
   const factory = fakeSocketFactory();
   const engine = new Ndt7Engine({
@@ -35,6 +36,7 @@ function setup(
     now: () => Date.now(),
     clientVersion: '0.1.0',
     downloadMode,
+    uploadWindowBytes,
     logger: silentLogger,
   });
   const events: EngineEvent[] = [];
@@ -65,10 +67,22 @@ async function finishDownload(s: Setup, index = 0) {
   await tick();
 }
 
+/** Opens the upload socket at index and makes it fail like Vega's backed-up socket. */
+async function failUpload(s: Setup, index: number) {
+  s.sockets[index].open();
+  await tick();
+  s.sockets[index].fail();
+  await tick();
+}
+
 /** Drives a full successful run starting at the given download socket. */
 async function completeRun(s: Setup, index = 0) {
   await finishDownload(s, index);
-  const up = s.sockets[index + 1];
+  await finishUpload(s, index + 1);
+}
+
+async function finishUpload(s: Setup, index: number) {
+  const up = s.sockets[index];
   up.open();
   await tick();
   up.receive(measurement({BytesReceived: 1_000_000, ElapsedTime: 1_000_000}));
@@ -92,6 +106,7 @@ describe('Ndt7Engine', () => {
         country: 'ZZ',
       },
       finishedAt: Date.now(),
+      uploadWindowBytes: 128 * 1024,
     });
     expect(s.create.mock.calls.map((c) => c[0])).toEqual([
       'wss://ndt-1.example/ndt/v7/download?access_token=REDACTED',
@@ -164,6 +179,57 @@ describe('Ndt7Engine', () => {
     await tick();
     expect(await settled).toMatchObject({code: 'connect_failed'});
     expect(s.sockets).toHaveLength(2);
+  });
+
+  it('reports the upload window it used', async () => {
+    const s = setup();
+    const {promise} = s.run();
+    await tick();
+    await completeRun(s);
+    await expect(promise).resolves.toMatchObject({
+      uploadWindowBytes: 128 * 1024,
+    });
+  });
+
+  it('retries upload with the next smaller window when it fails', async () => {
+    const s = setup(undefined, undefined, 256 * 1024);
+    const {promise} = s.run();
+    await tick();
+    await finishDownload(s);
+    await failUpload(s, 1);
+    expect(s.create.mock.calls[2][0]).toBe(
+      'wss://ndt-1.example/ndt/v7/upload?access_token=REDACTED',
+    );
+    await failUpload(s, 2);
+    await finishUpload(s, 3);
+    await expect(promise).resolves.toMatchObject({
+      uploadBps: 8_000_000,
+      uploadWindowBytes: 64 * 1024,
+    });
+  });
+
+  it('rejects network_lost once the smallest window also fails', async () => {
+    const s = setup(undefined, undefined, 64 * 1024);
+    const {settled} = s.run();
+    await tick();
+    await finishDownload(s);
+    await failUpload(s, 1);
+    await failUpload(s, 2);
+    expect(await settled).toMatchObject({code: 'network_lost'});
+    // 64 KiB, then 32 KiB: no third upload socket.
+    expect(s.sockets).toHaveLength(3);
+  });
+
+  it('stops retrying when a retry cannot connect', async () => {
+    const s = setup();
+    const {settled} = s.run();
+    await tick();
+    await finishDownload(s);
+    await failUpload(s, 1);
+    s.sockets[2].fail();
+    await tick();
+    expect(await settled).toMatchObject({code: 'connect_failed'});
+    expect(s.sockets).toHaveLength(3);
   });
 
   it('rejects locate errors as-is', async () => {

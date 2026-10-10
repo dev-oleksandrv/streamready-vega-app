@@ -20,12 +20,19 @@ export const MIN_MESSAGE_BYTES = 8 * 1024;
 export const MAX_MESSAGE_BYTES = 1024 * 1024;
 export const SCALING_FACTOR = 16;
 /**
- * Vega's WebSocket never updates bufferedAmount, so upload pacing counts
- * bytes sent minus the server's BytesReceived instead.
+ * Upload windows the engine can use, smallest first. Vega fails a socket that
+ * backs up instead of buffering (the VVD failed at ~192 KiB), so a failed
+ * upload retries with the next smaller window.
  */
-export const MAX_IN_FLIGHT_BYTES = 8 * 1024 * 1024;
-/** Each send base64-encodes on the JS thread; this bounds the work between yields. */
-export const MAX_BYTES_PER_TICK = 1024 * 1024;
+export const UPLOAD_WINDOW_OPTIONS = [
+  32 * 1024,
+  64 * 1024,
+  128 * 1024,
+  256 * 1024,
+  512 * 1024,
+  1024 * 1024,
+] as const;
+export const DEFAULT_UPLOAD_WINDOW_BYTES = 128 * 1024;
 export const CAPPED_RETRY_MS = 10;
 export const NORMAL_CLOSE = 1000;
 

@@ -3,15 +3,23 @@ import {runUpload} from '~/modules/speedtest/engines/ndt7/upload';
 import {FakeWebSocket} from '../../../../support/FakeWebSocket';
 import {measurement} from '../../../../support/fixtures/ndt7';
 
-const MiB = 1024 * 1024;
+const KiB = 1024;
+const MiB = 1024 * KiB;
 
 beforeEach(() => jest.useFakeTimers());
 afterEach(() => jest.useRealTimers());
 
-function start(
+interface StartOptions {
+  signal?: AbortSignal;
+  windowBytes?: number;
+  prepare?: (socket: FakeWebSocket) => void;
+}
+
+function start({
   signal = new AbortController().signal,
-  prepare?: (socket: FakeWebSocket) => void,
-) {
+  windowBytes = 128 * KiB,
+  prepare,
+}: StartOptions = {}) {
   const socket = new FakeWebSocket('wss://ndt-1.example/ul', 'p');
   prepare?.(socket);
   const events: EngineEvent[] = [];
@@ -19,13 +27,14 @@ function start(
     now: () => Date.now(),
     signal,
     onEvent: (e) => events.push(e),
+    windowBytes,
   });
   // Tests that don't finish the run still must not leak an unhandled rejection.
   const settled = promise.catch((error: unknown) => error);
   return {socket, events, promise, settled};
 }
 
-/** Server acknowledges everything sent so far. */
+/** Server reports it received everything sent so far, at the given rate. */
 function ack(socket: FakeWebSocket, elapsedUs = 1_000_000) {
   socket.receive(
     measurement({BytesReceived: socket.totalSent, ElapsedTime: elapsedUs}),
@@ -33,14 +42,11 @@ function ack(socket: FakeWebSocket, elapsedUs = 1_000_000) {
 }
 
 describe('runUpload', () => {
-  it('sends at most 1 MiB per tick before yielding', () => {
+  it('sends one message per tick', () => {
     const {socket} = start();
-    // 16×8 KiB, 8×16 KiB, 8×32 KiB, 8×64 KiB: exactly 1 MiB.
-    expect(socket.sentSizes).toHaveLength(40);
-    expect(socket.totalSent).toBe(MiB);
+    expect(socket.sentSizes).toEqual([8 * KiB]);
     jest.advanceTimersByTime(0);
-    // At 128 KiB+ each tick still stops at the byte budget.
-    expect(socket.totalSent).toBe(2 * MiB);
+    expect(socket.sentSizes).toEqual([8 * KiB, 8 * KiB]);
   });
 
   it('fills messages with varied bytes', () => {
@@ -50,8 +56,8 @@ describe('runUpload', () => {
   });
 
   it('doubles message size up to 1 MiB and reuses one buffer per size', () => {
-    const {socket} = start();
-    for (let i = 0; i < 300; i++) {
+    const {socket} = start({windowBytes: 4 * MiB});
+    for (let i = 0; i < 400; i++) {
       ack(socket);
       jest.advanceTimersByTime(1);
     }
@@ -63,22 +69,47 @@ describe('runUpload', () => {
     expect(socket.sentSizes.filter((s) => s === 8192)).toHaveLength(16);
   });
 
-  it('pauses while 8 MiB are in flight and resumes after the server catches up', () => {
-    const {socket} = start();
-    jest.advanceTimersByTime(100);
+  it('caps message size at half the window', () => {
+    const {socket} = start({windowBytes: 64 * KiB});
+    for (let i = 0; i < 400; i++) {
+      ack(socket);
+      jest.advanceTimersByTime(1);
+    }
+    expect(Math.max(...socket.sentSizes)).toBe(32 * KiB);
+  });
+
+  it('keeps unconfirmed bytes within the window until the server reports progress', () => {
+    const {socket} = start({windowBytes: 128 * KiB});
+    jest.advanceTimersByTime(500);
     const capped = socket.totalSent;
-    expect(capped).toBeGreaterThanOrEqual(8 * MiB);
-    expect(capped).toBeLessThan(9 * MiB);
-    jest.advanceTimersByTime(100);
+    expect(capped).toBeLessThanOrEqual(128 * KiB);
+    expect(capped).toBeGreaterThan(64 * KiB);
+    jest.advanceTimersByTime(500);
     expect(socket.totalSent).toBe(capped);
     ack(socket);
     jest.advanceTimersByTime(10);
     expect(socket.totalSent).toBeGreaterThan(capped);
   });
 
+  it('extrapolates server progress from the last measured rate between reports', () => {
+    const {socket} = start({windowBytes: 64 * KiB});
+    jest.advanceTimersByTime(200);
+    const capped = socket.totalSent;
+    // Server confirms everything, at 8 Mbit/s = 1000 bytes/ms.
+    socket.receive(
+      measurement({BytesReceived: capped, ElapsedTime: (capped / 1000) * 1000}),
+    );
+    jest.advanceTimersByTime(100);
+    // ~100 KB drained by estimate, so well past one window.
+    expect(socket.totalSent - capped).toBeGreaterThan(64 * KiB);
+    expect(socket.totalSent - capped).toBeLessThanOrEqual(100_000 + 64 * KiB);
+  });
+
   it('also honors a numeric bufferedAmount', () => {
-    const {socket} = start(undefined, (s) => {
-      s.bufferedAmount = 8 * MiB;
+    const {socket} = start({
+      prepare: (s) => {
+        s.bufferedAmount = 128 * KiB;
+      },
     });
     jest.advanceTimersByTime(50);
     expect(socket.sentSizes).toEqual([]);
@@ -152,8 +183,10 @@ describe('runUpload', () => {
   });
 
   it('rejects network_lost when send throws', async () => {
-    const {promise} = start(undefined, (s) => {
-      s.throwOnSend = true;
+    const {promise} = start({
+      prepare: (s) => {
+        s.throwOnSend = true;
+      },
     });
     await expect(promise).rejects.toMatchObject({code: 'network_lost'});
     expect(jest.getTimerCount()).toBe(0);
@@ -161,7 +194,7 @@ describe('runUpload', () => {
 
   it('rejects aborted on abort and stops sending', async () => {
     const controller = new AbortController();
-    const {socket, promise} = start(controller.signal);
+    const {socket, promise} = start({signal: controller.signal});
     controller.abort();
     await expect(promise).rejects.toMatchObject({code: 'aborted'});
     const sent = socket.sentSizes.length;

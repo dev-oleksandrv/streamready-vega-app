@@ -3,8 +3,6 @@ import type {PhaseOptions} from './download';
 import {
   CAPPED_RETRY_MS,
   isCloseFrameEcho,
-  MAX_BYTES_PER_TICK,
-  MAX_IN_FLIGHT_BYTES,
   MAX_MESSAGE_BYTES,
   MIN_MESSAGE_BYTES,
   NORMAL_CLOSE,
@@ -13,6 +11,11 @@ import {
   UPLOAD_DURATION_MS,
 } from './protocol';
 import {closeQuietly, detach, type Ndt7Socket} from './socket';
+
+export interface UploadOptions extends PhaseOptions {
+  /** Most bytes allowed on the way to the server without its confirmation. */
+  windowBytes: number;
+}
 
 export interface UploadOutcome {
   bps: number;
@@ -40,7 +43,7 @@ function noiseBuffer(size: number): ArrayBuffer {
 
 export function runUpload(
   socket: Ndt7Socket,
-  {now, signal, onEvent}: PhaseOptions,
+  {now, signal, onEvent, windowBytes}: UploadOptions,
 ): Promise<UploadOutcome> {
   return new Promise((resolve, reject) => {
     if (signal.aborted) {
@@ -52,9 +55,15 @@ export function runUpload(
     const start = now();
     // One reusable buffer per message size: at most ~2 MiB in total.
     const buffers = new Map<number, ArrayBuffer>();
+    // A single message is a burst too, so it never exceeds half the window.
+    const maxSize = Math.max(
+      MIN_MESSAGE_BYTES,
+      Math.min(MAX_MESSAGE_BYTES, windowBytes / 2),
+    );
     let size = MIN_MESSAGE_BYTES;
     let bytesSent = 0;
     let serverBytes = 0;
+    let measuredAt = start;
     let lastBps: number | undefined;
     let settled = false;
     let pumpTimer: ReturnType<typeof setTimeout> | undefined;
@@ -79,6 +88,7 @@ export function runUpload(
           m.elapsedMs > 0
         ) {
           serverBytes = m.bytesReceived;
+          measuredAt = now();
           lastBps = (m.bytesReceived * 8000) / m.elapsedMs;
           onEvent({
             type: 'throughput',
@@ -110,11 +120,24 @@ export function runUpload(
       return buffer;
     }
 
+    /**
+     * Vega's WebSocket neither buffers nor reports bufferedAmount: it fails
+     * with "Failed sending data to the peer" once the socket backs up. The
+     * only progress signal is the server's measurement (~every 250 ms,
+     * Poisson, up to 625 ms), so between reports the server is assumed to
+     * keep draining at its last measured rate.
+     */
+    function unconfirmedBytes(): number {
+      const drainedSince =
+        lastBps === undefined ? 0 : ((now() - measuredAt) * lastBps) / 8000;
+      return Math.max(0, bytesSent - (serverBytes + drainedSince));
+    }
+
     function canSend(): boolean {
       const buffered = socket.bufferedAmount;
       return (
-        bytesSent - serverBytes < MAX_IN_FLIGHT_BYTES &&
-        (typeof buffered !== 'number' || buffered < MAX_IN_FLIGHT_BYTES)
+        unconfirmedBytes() + size <= windowBytes &&
+        (typeof buffered !== 'number' || buffered + size <= windowBytes)
       );
     }
 
@@ -123,24 +146,22 @@ export function runUpload(
       if (settled) {
         return;
       }
-      for (let tickBytes = 0; tickBytes < MAX_BYTES_PER_TICK; ) {
-        if (!canSend()) {
-          pumpTimer = setTimeout(pump, CAPPED_RETRY_MS);
-          return;
-        }
-        try {
-          socket.send(bufferFor(size));
-        } catch {
-          settle(new SpeedTestError('network_lost'));
-          return;
-        }
-        bytesSent += size;
-        tickBytes += size;
-        if (size < MAX_MESSAGE_BYTES && bytesSent >= SCALING_FACTOR * size) {
-          size *= 2;
-        }
+      if (!canSend()) {
+        pumpTimer = setTimeout(pump, CAPPED_RETRY_MS);
+        return;
       }
-      // Yield so incoming measurements and UI work get the JS thread.
+      try {
+        socket.send(bufferFor(size));
+      } catch {
+        settle(new SpeedTestError('network_lost'));
+        return;
+      }
+      bytesSent += size;
+      if (size < maxSize && bytesSent >= SCALING_FACTOR * size) {
+        size = Math.min(size * 2, maxSize);
+      }
+      // One send per tick, as ndt7-js does since bursts overflowed Safari's
+      // socket; it also leaves the JS thread to measurements and the UI.
       pumpTimer = setTimeout(pump, 0);
     }
 
