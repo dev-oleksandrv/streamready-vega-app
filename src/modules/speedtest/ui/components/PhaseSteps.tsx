@@ -1,4 +1,4 @@
-import React, {memo, useEffect, useRef} from 'react';
+import React, {memo, useEffect, useRef, useState} from 'react';
 import {Animated, Easing, StyleSheet, View} from 'react-native';
 
 import {colors, scale, Text} from '~/shared/ui';
@@ -19,11 +19,22 @@ interface StepFillProps {
   fill: number;
 }
 
-/** Full-width fill scaled from its left edge: scaleX runs on the native driver, width could not. */
+/**
+ * Full-width fill scaled from its left edge: scaleX runs on the native driver,
+ * width could not. The leading edge is square: a scaled radius would distort.
+ */
 const StepFill = ({fill}: StepFillProps) => {
-  const scaleX = useRef(new Animated.Value(fill)).current;
+  const [scaleX] = useState(() => new Animated.Value(fill));
+  const previous = useRef(fill);
 
   useEffect(() => {
+    const dropped = fill < previous.current;
+    previous.current = fill;
+    // A new run resets to 0: snap back instead of draining full bars.
+    if (dropped) {
+      scaleX.setValue(fill);
+      return;
+    }
     const glide = Animated.timing(scaleX, {
       toValue: fill,
       duration: FILL_MS,

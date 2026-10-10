@@ -1,4 +1,4 @@
-import React, {useEffect, useRef} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Animated, Easing, StyleSheet} from 'react-native';
 
 import {radii, scale} from '~/shared/ui';
@@ -15,7 +15,7 @@ export interface BlinkDotProps {
 const EASE_IN_OUT = Easing.bezier(0.42, 0, 0.58, 1);
 
 export const BlinkDot = ({color, blinking, periodMs = 1000}: BlinkDotProps) => {
-  const opacity = useRef(new Animated.Value(1)).current;
+  const [opacity] = useState(() => new Animated.Value(1));
 
   useEffect(() => {
     if (!blinking) {

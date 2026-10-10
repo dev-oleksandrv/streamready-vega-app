@@ -1,4 +1,4 @@
-import React, {useLayoutEffect, useMemo, useRef} from 'react';
+import React, {useLayoutEffect, useMemo, useState} from 'react';
 import {Animated, StyleSheet, View} from 'react-native';
 
 import {colors, scale, Text} from '~/shared/ui';
@@ -20,7 +20,7 @@ export const LiveReading = ({
   unit,
   blinking,
 }: LiveReadingProps) => {
-  const opacity = useRef(new Animated.Value(1)).current;
+  const [opacity] = useState(() => new Animated.Value(1));
   // Stable style: this view re-renders at 4 Hz during a test.
   const fade = useMemo(() => ({opacity}), [opacity]);
 

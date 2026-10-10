@@ -1,4 +1,4 @@
-import React, {memo, useEffect, useRef} from 'react';
+import React, {memo, useEffect, useState} from 'react';
 import {Animated, Easing, StyleSheet, View} from 'react-native';
 
 import {colors, scale} from '~/shared/ui';
@@ -20,7 +20,7 @@ interface BarProps {
  * driver, where an animated height could not.
  */
 const Bar = memo(function Bar({fraction, color}: BarProps) {
-  const scaleY = useRef(new Animated.Value(0)).current;
+  const [scaleY] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     const grow = Animated.timing(scaleY, {
@@ -65,6 +65,7 @@ export const ThroughputBars = memo(function ThroughputBars({
   );
 });
 
+// scaleY also scales the top radius, so very short bars look flatter; accepted for native-driven growth.
 const styles = StyleSheet.create({
   chart: {
     height: scale(200),
