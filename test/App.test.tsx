@@ -13,8 +13,16 @@ jest.mock('~/app/providers/geoProvider', () => ({
 }));
 
 describe('App', () => {
-  // The production device source logs the codename once in dev builds.
-  beforeEach(() => jest.spyOn(console, 'warn').mockImplementation(() => {}));
+  // The production device source logs the codename once in dev builds; only
+  // those lines are swallowed, any other warning still prints.
+  beforeEach(() => {
+    const warn = console.warn;
+    jest.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+      if (args[0] !== '[insights]') {
+        warn(...args);
+      }
+    });
+  });
   afterEach(() => jest.restoreAllMocks());
 
   it('boots into the privacy gate on first launch', async () => {
