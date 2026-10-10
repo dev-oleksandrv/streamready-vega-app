@@ -15,11 +15,30 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_link_options("LINKER:--no-undefined" "LINKER:-z,defs")
 endif()
 
+set(NDT7_SOURCES
+  kepler/ndt7/core/Base64.cpp
+  kepler/ndt7/core/FrameDecoder.cpp
+  kepler/ndt7/core/FrameEncoder.cpp
+  kepler/ndt7/core/Handshake.cpp
+  kepler/ndt7/core/Sha1.cpp
+  kepler/ndt7/core/Throttle.cpp
+  kepler/ndt7/core/UploadScaling.cpp
+  kepler/ndt7/core/WsUrl.cpp
+  kepler/ndt7/core/Xorshift.cpp
+  kepler/ndt7/net/CancelToken.cpp
+  kepler/ndt7/net/DownloadRun.cpp
+  kepler/ndt7/net/Entropy.cpp
+  kepler/ndt7/net/Socket.cpp
+  kepler/ndt7/net/Subtest.cpp
+  kepler/ndt7/net/UploadRun.cpp
+  kepler/ndt7/net/WsSession.cpp
+)
 set(HEADERS
   kepler/turbo-modules/generated/Ndt7NativeSpec.h
   kepler/turbo-modules/Ndt7Native.h
 )
 set(SOURCES
+  ${NDT7_SOURCES}
   kepler/turbo-modules/generated/Ndt7NativeSpec.cpp
   kepler/turbo-modules/Ndt7Native.cpp
   kepler/AutoLinkInit.cpp

@@ -4,9 +4,13 @@
 
 #include <atomic>
 #include <cstdint>
+#include <map>
+#include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
-#include <vector>
+
+#include "ndt7/net/CancelToken.h"
 
 namespace Ndt7TurboModule {
 
@@ -15,12 +19,26 @@ public:
     Ndt7Native();
     ~Ndt7Native() noexcept override;
 
+    // JS thread. Spawns one worker per subtest and returns at once.
     void start(int32_t runId, std::string direction, std::string url) override;
+    // JS thread. Wakes a worker blocked in send()/recv(); idempotent.
     void cancel(int32_t runId) override;
 
+    // Worker threads. emit() marshals onto the JS thread.
+    void emitRunEvent(const com::amazon::kepler::turbomodule::JSObject& payload);
+
 private:
-    // Spike only: proves emit() from a worker thread. Replaced in Task 8.
-    std::vector<std::thread> threads_;
+    struct Run {
+        ndt7::CancelToken token;
+        std::thread thread;
+        std::atomic<bool> finished{false};
+    };
+
+    void reapFinishedLocked();
+
+    std::mutex mutex_;
+    std::map<int32_t, std::shared_ptr<Run>> runs_;
+    std::atomic<bool> shuttingDown_{false};
 };
 
 }  // namespace Ndt7TurboModule
