@@ -175,6 +175,14 @@ describe('sessionStore', () => {
     expect(jest.getTimerCount()).toBe(0);
   });
 
+  it('success ends on the upload phase even if no phase event arrived', async () => {
+    const {store, fake} = setup();
+    store.getState().start();
+    fake.last().resolve();
+    await settle();
+    expect(store.getState().phase).toBe('upload');
+  });
+
   it.each([
     ['network_lost', 'connectionLost'],
     ['locate_failed', 'serversUnavailable'],

@@ -60,3 +60,5 @@ export {
 export {ServerPill} from './ui/components/ServerPill';
 export {TestErrorDialog} from './ui/components/TestErrorDialog';
 export {ThroughputBars} from './ui/components/ThroughputBars';
+export {TestScreen} from './ui/screens/TestScreen';
+export type {TestScreenProps} from './ui/screens/TestScreen';

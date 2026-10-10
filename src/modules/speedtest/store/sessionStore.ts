@@ -237,6 +237,8 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
               set({
                 status: 'done',
                 result,
+                // A finished run went through every phase; the screen shows the upload result.
+                phase: 'upload',
                 liveBps: result.uploadBps,
                 idleMs: result.idleLatencyMs,
                 loadedMs: result.loadedLatencyMs,
