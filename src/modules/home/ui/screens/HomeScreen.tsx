@@ -1,19 +1,32 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 
+import type {StartCheck} from '~/modules/speedtest';
 import {colors, FocusCard, scale, ScreenLayout, Text} from '~/shared/ui';
 
 import {homeContent} from '../../content';
+import {StartButton} from '../components/StartButton';
 
 export interface HomeScreenProps {
+  start: StartCheck;
+  /** Remaining whole seconds; meaningful when start.reason is 'cooldown'. */
+  cooldownSeconds: number;
+  /** e.g. "Vega OS · Wi‑Fi 5"; built by the route from insights labels. */
+  deviceSubtitle: string;
+  onStart: () => void;
+  onOpenDevice: () => void;
   onOpenPrivacy: () => void;
-  /** Temporary dev entry to the debug speed test; omitted in release builds. */
-  onOpenDebug?: () => void;
 }
 
-// Mock Home for Module 1: Start and the Device card arrive with the speed test.
-export const HomeScreen = ({onOpenPrivacy, onOpenDebug}: HomeScreenProps) => (
-  <ScreenLayout>
+export const HomeScreen = ({
+  start,
+  cooldownSeconds,
+  deviceSubtitle,
+  onStart,
+  onOpenDevice,
+  onOpenPrivacy,
+}: HomeScreenProps) => (
+  <ScreenLayout style={styles.grid}>
     <View style={styles.hero}>
       <Text weight="medium" style={styles.eyebrow}>
         {homeContent.eyebrow.toUpperCase()}
@@ -24,30 +37,34 @@ export const HomeScreen = ({onOpenPrivacy, onOpenDebug}: HomeScreenProps) => (
       <Text style={styles.sub}>{homeContent.sub}</Text>
       <View style={styles.cards}>
         <FocusCard
+          title={homeContent.deviceCard.title}
+          subtitle={deviceSubtitle}
+          onPress={onOpenDevice}
+        />
+        <FocusCard
           title={homeContent.privacyCard.title}
           subtitle={homeContent.privacyCard.subtitle}
           onPress={onOpenPrivacy}
-          hasTVPreferredFocus
         />
-        {onOpenDebug ? (
-          <FocusCard
-            title={homeContent.debugCard.title}
-            subtitle={homeContent.debugCard.subtitle}
-            onPress={onOpenDebug}
-          />
-        ) : null}
       </View>
+    </View>
+    <View style={styles.side}>
+      <StartButton
+        start={start}
+        cooldownSeconds={cooldownSeconds}
+        onStart={onStart}
+      />
     </View>
   </ScreenLayout>
 );
 
 const styles = StyleSheet.create({
+  grid: {flexDirection: 'row', gap: scale(80)},
   hero: {
     flex: 1,
     justifyContent: 'center',
     gap: scale(40),
     paddingBottom: scale(40),
-    maxWidth: scale(1184),
   },
   eyebrow: {
     fontSize: scale(26),
@@ -66,4 +83,10 @@ const styles = StyleSheet.create({
     maxWidth: scale(880),
   },
   cards: {flexDirection: 'row', gap: scale(24), marginTop: scale(24)},
+  side: {
+    width: scale(560),
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: scale(40),
+  },
 });

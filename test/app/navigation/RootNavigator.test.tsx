@@ -6,9 +6,11 @@ import {createConsentStore, type ConsentStatus} from '~/modules/privacy';
 import {createMemoryStorage, type KeyValueStorage} from '~/shared/lib/storage';
 import {createTestConsentStore} from '../../support/consent';
 import {pressBack as firePlatformBack} from '../../support/fakeBackHandler';
+import {createSessionStore} from '~/modules/speedtest';
 import {
   createTestInsightsStore,
   fakeGeo,
+  FakeNetworkMonitor,
   TEST_CONNECTION,
 } from '../../support/insights';
 import {
@@ -193,5 +195,42 @@ describe('back key', () => {
     );
     await screen.findByText('Will your TV stream in 4K?');
     expect(pressBack()).toBe(false);
+  });
+});
+
+describe('start', () => {
+  afterEach(() => jest.useRealTimers());
+
+  it('withdrawn consent shows the consent hint', async () => {
+    const {consentStore} = await start('accepted');
+    await screen.findByText('Press OK');
+    act(() => consentStore.getState().withdraw());
+    expect(await screen.findByText('Privacy consent withdrawn')).toBeTruthy();
+  });
+
+  it('offline shows the offline hint', async () => {
+    const networkMonitor = new FakeNetworkMonitor();
+    await start('accepted', undefined, undefined, {networkMonitor});
+    await screen.findByText('Press OK');
+    act(() => networkMonitor.emit({online: false, transport: 'none'}));
+    expect(await screen.findByText('You are offline')).toBeTruthy();
+  });
+
+  it('cooldown counts down to ready', async () => {
+    jest.useFakeTimers({doNotFake: ['nextTick', 'setImmediate']});
+    const sessionStore = createSessionStore();
+    sessionStore.getState().startCooldown(Date.now(), 3000);
+    await start('accepted', undefined, undefined, {sessionStore});
+    expect(await screen.findByText('0:03')).toBeTruthy();
+    act(() => jest.advanceTimersByTime(1000));
+    expect(screen.getByText('0:02')).toBeTruthy();
+    act(() => jest.advanceTimersByTime(2000));
+    expect(screen.getByText('Press OK')).toBeTruthy();
+  });
+
+  it('Start opens the debug test in dev', async () => {
+    await start('accepted');
+    fireEvent.press(await screen.findByRole('button', {name: 'Start'}));
+    expect(await screen.findByText('Speed test (debug)')).toBeTruthy();
   });
 });
