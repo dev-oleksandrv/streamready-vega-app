@@ -4,6 +4,7 @@
 #include "ndt7/net/DownloadRun.h"
 #include "ndt7/net/Entropy.h"
 #include "ndt7/net/Socket.h"
+#include "ndt7/net/UploadRun.h"
 #include "ndt7/net/WsSession.h"
 
 namespace ndt7 {
@@ -32,7 +33,7 @@ Outcome runOnSocket(Direction direction, int fd, const WsUrl& url, CancelToken& 
     if (direction == Direction::Download) {
         return runDownload(session, sink, limits, token);
     }
-    return {ErrorCode::Protocol, {}};  // upload is wired in Task 7
+    return runUpload(session, sink, limits, token, rng);
 }
 
 void runSubtest(Direction direction, const std::string& url, CancelToken& token, RunSink& sink,
