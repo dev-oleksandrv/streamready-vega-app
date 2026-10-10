@@ -17,4 +17,8 @@ describe('deviceProfile', () => {
   it.each([undefined, '', 'AFTOTHER'])('returns undefined for %p', (model) => {
     expect(deviceProfile(model, table)).toBeUndefined();
   });
+
+  it('knows the Fire TV Stick 4K Select by its QA-observed codename', () => {
+    expect(deviceProfile('AFTCA002')).toEqual(STICK);
+  });
 });

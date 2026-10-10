@@ -11,7 +11,10 @@ export interface DeviceProfile {
  * Keyed by getModel() codename. Vega has no marketing-name API, and no public
  * source lists codenames: add only codenames observed on a device during QA.
  */
-export const DEVICE_PROFILES: Readonly<Record<string, DeviceProfile>> = {};
+export const DEVICE_PROFILES: Readonly<Record<string, DeviceProfile>> = {
+  // Dual-band Wi‑Fi 5 (802.11ac); codename observed in device QA 2026-10-10.
+  AFTCA002: {name: 'Fire TV Stick 4K Select', wifi: 'Wi‑Fi 5', limitMbps: 300},
+};
 
 export function deviceProfile(
   model?: string,
