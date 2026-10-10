@@ -7,6 +7,8 @@ import {
   DOWNLOAD_URL_KEY,
   LOCATE_TIMEOUT_MS,
   LOCATE_URL,
+  PLAIN_DOWNLOAD_URL_KEY,
+  PLAIN_UPLOAD_URL_KEY,
   UPLOAD_URL_KEY,
 } from './protocol';
 
@@ -16,6 +18,10 @@ export interface Ndt7Target {
   downloadUrl: string;
   /** Signed: carries an access token. Never log. */
   uploadUrl: string;
+  /** Signed plain ws:// URL for the native engine. Never log. */
+  plainDownloadUrl?: string;
+  /** Signed plain ws:// URL for the native engine. Never log. */
+  plainUploadUrl?: string;
 }
 
 export interface LocateOptions {
@@ -50,7 +56,16 @@ function toTarget(entry: unknown): Ndt7Target | undefined {
   if (country) {
     server.country = country;
   }
-  return {server, downloadUrl, uploadUrl};
+  const target: Ndt7Target = {server, downloadUrl, uploadUrl};
+  const plainDownloadUrl = nonEmptyString(entry.urls[PLAIN_DOWNLOAD_URL_KEY]);
+  const plainUploadUrl = nonEmptyString(entry.urls[PLAIN_UPLOAD_URL_KEY]);
+  if (plainDownloadUrl) {
+    target.plainDownloadUrl = plainDownloadUrl;
+  }
+  if (plainUploadUrl) {
+    target.plainUploadUrl = plainUploadUrl;
+  }
+  return target;
 }
 
 export async function locate({

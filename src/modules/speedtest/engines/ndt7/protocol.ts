@@ -7,6 +7,9 @@ export const LOCATE_URL =
 export const CLIENT_NAME = 'streamready';
 export const DOWNLOAD_URL_KEY = 'wss:///ndt/v7/download';
 export const UPLOAD_URL_KEY = 'wss:///ndt/v7/upload';
+/** Plain ws:// URLs: the native engine has no TLS (ADR 0006). */
+export const PLAIN_DOWNLOAD_URL_KEY = 'ws:///ndt/v7/download';
+export const PLAIN_UPLOAD_URL_KEY = 'ws:///ndt/v7/upload';
 
 export const LOCATE_TIMEOUT_MS = 5_000;
 export const CONNECT_TIMEOUT_MS = 5_000;

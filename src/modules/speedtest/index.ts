@@ -21,3 +21,5 @@ export {
   DEFAULT_UPLOAD_WINDOW_BYTES,
   UPLOAD_WINDOW_OPTIONS,
 } from './engines/ndt7/protocol';
+export type {Ndt7NativeSpec} from './engines/ndt7native/NativeNdt7';
+export type {NativeEventSource} from './engines/ndt7native/nativeRun';
