@@ -66,9 +66,8 @@ Zustand, one store per module.
 | Store | State | Persisted |
 |---|---|---|
 | `privacy/consentStore` | `status: 'pending' \| 'accepted' \| 'withdrawn'` | yes (only this key) |
-| `insights/insightsStore` | `connection?`, `device?`, `status: 'idle' \| 'loading' \| 'ready' \| 'error'` | no |
-| `speedtest/sessionStore` | phase, live values, throttled samples, `result?`, `error?`, `cooldownUntil?` | no |
-| `app` network status | `online`, `transport: 'wifi' \| 'ethernet' \| 'unknown'` | no |
+| `insights/insightsStore` | `connection?`, `device?`, `network: {online, transport: 'wifi' \| 'ethernet' \| 'other' \| 'none', band?}`, `status: 'idle' \| 'loading' \| 'ready' \| 'error'` | no |
+| `speedtest/sessionStore` | phase, live values, throttled samples, `result?`, `error?`, `cooldownUntil?` (today only `cooldownUntil`; the Test module adds the rest) | no |
 
 Stores never import other modules' stores. Anything derived from several stores goes in `app/selectors.ts`.
 
@@ -96,7 +95,7 @@ Stores never import other modules' stores. Anything derived from several stores 
 
 `selectVisibleInsights` returns the insights only when consent is `accepted`. It is the only way the UI reads insights.
 
-If the geo fetch fails, geo insights are not rendered at all: the header shows no country and no IP, and the Device screen drops the Public IP and Country rows. Device-local rows always render.
+If the geo fetch fails, geo insights are not rendered at all: the header shows no country and no IP, and the Device screen drops the Public IP, Country and Provider rows. Device-local rows always render.
 
 ### 5.4 Starting a test
 
@@ -206,16 +205,18 @@ Device screen rows:
 
 | Row | Source |
 |---|---|
-| Model | Vega device API |
-| System | Vega device API |
+| Model | `getModel()` codename, mapped to a marketing name through `DEVICE_PROFILES` (ADR 0007); the codename when unknown |
+| System | "Vega OS {version}" from `getSystemVersion()`; "Vega OS" is fixed copy |
 | Connection | Transport and Wi‑Fi band |
 | Public IP | Geo insights (only if visible) |
 | Country | Geo insights (only if visible) |
-| Device limit | Static table keyed by model; "—" if the model is unknown |
-| Free memory | Vega device API |
+| Provider | Geo insights (only if visible) |
+| Device limit | `DEVICE_PROFILES`, keyed by codename; "—" if the model is unknown |
 | App version | App metadata |
 
-A row whose data the platform doesn't expose is omitted.
+A row whose data the platform doesn't expose is omitted. Vega has no memory API, so the design's Free memory row is replaced by Provider.
+
+The header's right side shows, left to right: the country chip and name, the public IP and a divider (only with visible insights), then the network dot and label. Network labels: Offline (red dot), Wi‑Fi · {2.4|5|6} GHz, Wi‑Fi (band unknown), Ethernet, Connected (any other transport). Network status comes from NetInfo (`keplerscript-netmgr-lib`) with reachability probes off, so nothing leaves the device before consent (ADR 0007).
 
 ## 8. Verdict
 

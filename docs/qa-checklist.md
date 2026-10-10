@@ -73,6 +73,17 @@ Other focus checks:
 - [ ] With outbound port 80 blocked (router or proxy), the test fails cleanly with the `interrupted` overlay; no hang.
 - [ ] Same checks on the VVD.
 
+## Home, header and Device (Module 3)
+
+- [ ] Header (consent accepted) shows the country chip and name, the IP and the network label; withdrawn shows only the network label.
+- [ ] Unplug Ethernet or turn off Wi‑Fi: the dot turns red with "Offline" within a few seconds; Start shows "You are offline". Reconnect: back to normal.
+- [ ] Start pulses only while focused and ready; moving focus to a card stops it.
+- [ ] Withdraw consent: Start shows "Privacy consent withdrawn" and does nothing on OK, but stays focusable.
+- [ ] After a successful debug run, Home shows "Next test in 0:ss" counting down to "Press OK".
+- [ ] Device card subtitle reads "Vega OS · …" and opens the Device screen; Back (button and key) returns Home.
+- [ ] Device rows match the device; geo rows disappear after withdrawing consent.
+- [ ] Dev logs (`[insights] device …`, `[insights] network …`): record the `getModel()` codename and whether `frequency` is present, on the stick and on the VVD. Seed `DEVICE_PROFILES` and finish ADR 0007 with the results.
+
 ## Performance
 
 - [ ] The live value and bars update smoothly, with no visible jank during the test.
