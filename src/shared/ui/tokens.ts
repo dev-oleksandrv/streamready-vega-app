@@ -6,6 +6,8 @@ export const colors = {
   border: '#22252A',
   borderStrong: '#2A2E34',
   track: '#1F2227',
+  /** Upload bars in the test chart. */
+  chartMuted: '#5C6068',
   text: '#F2F2EE',
   textMuted: '#8E929A',
   textSecondary: '#A4A8AF',
