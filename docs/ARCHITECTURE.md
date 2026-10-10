@@ -311,7 +311,7 @@ The 6 design scenarios (`good`, `goodSingle4K`, `fastButLaggy`, `limited`, `poor
 | Stop dialog | Keep testing |
 | Error overlay | Try again |
 
-- **Animations** use `Animated` with the native driver. The bar chart is plain `View`s with no chart library.
+- **Animations** use `Animated` with the native driver only (`transform`, `opacity`); RN 0.83 aborts when native and JS drivers mix on one view. The bar chart is `Animated.View` bars with no chart library: each scales from its bottom edge (`scaleY`) on a stepped scale (1/1.5/2/3/5/7.5 per decade, `speedtest/ui/chartScale.ts`), so rescales are rare and glide. Step fills glide with `scaleX`, and the live reading fades in on each phase change.
 - **No error codes:** technical error details never appear in the UI.
 
 ### 9.1 Test error overlay
@@ -319,7 +319,7 @@ The 6 design scenarios (`good`, `goodSingle4K`, `fastButLaggy`, `limited`, `poor
 The overlay uses the same component as the Stop dialog (`shared/ui/Dialog`).
 
 On error:
-- The test freezes: live values and bars are kept, and the animations stop.
+- The test freezes: live values and bars are kept, and the blinking dots stop.
 - Buttons are "Try again" (primary) and "Back to home".
 - A failure doesn't start the cooldown.
 
