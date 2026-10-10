@@ -34,3 +34,9 @@ export type {
 } from './store/insightsStore';
 export {createNetInfoMonitor} from './device/netInfoMonitor';
 export {createVegaDeviceSource} from './device/vegaDeviceSource';
+export {
+  InsightsProvider,
+  useInsights,
+  useInsightsStore,
+} from './ui/InsightsProvider';
+export type {InsightsProviderProps} from './ui/InsightsProvider';
