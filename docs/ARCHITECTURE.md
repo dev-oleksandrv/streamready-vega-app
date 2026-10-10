@@ -199,6 +199,7 @@ Code layout: `kepler/ndt7/core` (pure, host-tested), `kepler/ndt7/net` (POSIX so
   - Primary: `https://ipinfo.io/json`.
   - Fallback: `https://get.geojs.io/v1/ip/geo.json`.
   - Neither needs a token. Rate limits apply per client IP, so one fetch per launch is fine.
+  - One 5 s deadline covers the whole chain; each attempt gets at most 3 s, so an unreachable ipinfo still leaves time for geojs.
 - Insights are never fetched before consent.
 
 Device screen rows:

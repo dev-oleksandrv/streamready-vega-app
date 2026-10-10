@@ -36,4 +36,25 @@ describe('createGeoProvider', () => {
       'https://get.geojs.io/v1/ip/geo.json',
     );
   });
+
+  it('still tries geojs when ipinfo hangs', async () => {
+    jest.useFakeTimers();
+    const fetchFn = jest.fn((url: string, init?: RequestInit) =>
+      url.includes('ipinfo')
+        ? new Promise<Response>((_resolve, reject) =>
+            init?.signal?.addEventListener('abort', () =>
+              reject(new Error('aborted')),
+            ),
+          )
+        : Promise.resolve(
+            json({ip: '203.0.113.7', country_code: 'FR', country: 'France'}),
+          ),
+    ) as unknown as typeof fetch;
+    const pending = createGeoProvider(fetchFn).lookup(
+      new AbortController().signal,
+    );
+    jest.advanceTimersByTime(3000);
+    await expect(pending).resolves.toMatchObject({countryCode: 'FR'});
+    jest.useRealTimers();
+  });
 });
