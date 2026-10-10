@@ -6,7 +6,16 @@ import {createConsentStore, type ConsentStatus} from '~/modules/privacy';
 import {createMemoryStorage, type KeyValueStorage} from '~/shared/lib/storage';
 import {createTestConsentStore} from '../../support/consent';
 import {pressBack as firePlatformBack} from '../../support/fakeBackHandler';
-import {renderWithProviders} from '../../support/renderWithProviders';
+import {
+  createTestInsightsStore,
+  fakeGeo,
+  TEST_CONNECTION,
+} from '../../support/insights';
+import {
+  renderWithProviders,
+  type ProviderOptions,
+} from '../../support/renderWithProviders';
+import type {ConnectionInfo} from '~/modules/insights';
 
 /** Fires the hardware Back key; true when the app handled it. */
 function pressBack(): boolean {
@@ -19,11 +28,18 @@ function pressBack(): boolean {
 
 async function start(
   status: ConsentStatus,
-  onConsentAccepted = jest.fn().mockResolvedValue(undefined),
+  onConsentAccepted?: () => Promise<void>,
+  insightsStore = createTestInsightsStore(),
+  extra: Partial<ProviderOptions> = {},
 ) {
   const consentStore = await createTestConsentStore(status);
-  renderWithProviders(<RootNavigator />, {consentStore, onConsentAccepted});
-  return {consentStore, onConsentAccepted};
+  renderWithProviders(<RootNavigator />, {
+    consentStore,
+    onConsentAccepted,
+    insightsStore,
+    ...extra,
+  });
+  return {consentStore, onConsentAccepted, insightsStore};
 }
 
 describe('cold start', () => {
@@ -59,6 +75,38 @@ describe('cold start', () => {
     expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
   });
 
+  it('accepted: keeps the splash until insights settle, then shows home', async () => {
+    let resolveGeo!: (c: ConnectionInfo) => void;
+    const geo = fakeGeo();
+    geo.lookup.mockImplementation(
+      () => new Promise((resolve) => (resolveGeo = resolve)),
+    );
+    await start('accepted', undefined, createTestInsightsStore({geo}));
+    await act(async () => {});
+    expect(screen.getByTestId('splash')).toBeTruthy();
+    await act(async () => resolveGeo(TEST_CONNECTION));
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+    expect(geo.lookup).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepted: a failed lookup still shows home', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    await start(
+      'accepted',
+      undefined,
+      createTestInsightsStore({geo: fakeGeo(new Error('down'))}),
+    );
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+    jest.restoreAllMocks();
+  });
+
+  it('pending: no lookup at cold start', async () => {
+    const geo = fakeGeo();
+    await start('pending', undefined, createTestInsightsStore({geo}));
+    await screen.findByText('Before you start.');
+    expect(geo.lookup).not.toHaveBeenCalled();
+  });
+
   it('shows the global header', async () => {
     await start('accepted');
     expect(await screen.findByText('Internet Speed Test')).toBeTruthy();
@@ -67,13 +115,29 @@ describe('cold start', () => {
 
 describe('consent flow', () => {
   it('accept runs the task, then lands on home', async () => {
-    const {consentStore, onConsentAccepted} = await start('pending');
+    const onConsentAccepted = jest.fn().mockResolvedValue(undefined);
+    const {consentStore} = await start('pending', onConsentAccepted);
     fireEvent.press(
       await screen.findByRole('button', {name: 'Accept & continue'}),
     );
     expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
     expect(onConsentAccepted).toHaveBeenCalledTimes(1);
     expect(consentStore.getState().status).toBe('accepted');
+  });
+
+  it('accept refreshes insights by default', async () => {
+    const geo = fakeGeo();
+    const {insightsStore} = await start(
+      'pending',
+      undefined,
+      createTestInsightsStore({geo}),
+    );
+    fireEvent.press(
+      await screen.findByRole('button', {name: 'Accept & continue'}),
+    );
+    await screen.findByText('Will your TV stream in 4K?');
+    expect(geo.lookup).toHaveBeenCalledTimes(1);
+    expect(insightsStore.getState().connection).toEqual(TEST_CONNECTION);
   });
 
   it('accept lands on home even when the task rejects', async () => {

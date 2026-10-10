@@ -6,6 +6,7 @@ import {StyleSheet, View} from 'react-native';
 import {useConsent, useConsentHydrated} from '~/modules/privacy';
 import {colors} from '~/shared/ui';
 
+import {useColdStartInsights} from '../hooks/useColdStartInsights';
 import {AppHeader} from '../layout/AppHeader';
 import {SplashScreen} from '../screens/SplashScreen';
 import {DebugSpeedTestRoute} from './DebugSpeedTestRoute';
@@ -24,8 +25,9 @@ const screenOptions = {
 export const RootNavigator = () => {
   const hydrated = useConsentHydrated();
   const status = useConsent((s) => s.status);
+  const insightsSettled = useColdStartInsights(hydrated, status);
 
-  if (!hydrated) {
+  if (!hydrated || !insightsSettled) {
     return <SplashScreen />;
   }
 

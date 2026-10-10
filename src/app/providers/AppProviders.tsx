@@ -1,33 +1,71 @@
-import React, {useState, type ReactNode} from 'react';
+import React, {useCallback, useState, type ReactNode} from 'react';
 
+import {
+  createInsightsStore,
+  createNetInfoMonitor,
+  createVegaDeviceSource,
+  InsightsProvider,
+  type InsightsStore,
+  type NetworkMonitor,
+} from '~/modules/insights';
 import {
   ConsentProvider,
   createConsentStore,
   type ConsentStore,
 } from '~/modules/privacy';
+import {
+  createSessionStore,
+  SessionProvider,
+  type SessionStore,
+} from '~/modules/speedtest';
 import {createAsyncStorage} from '~/shared/lib/storage';
+
+import {createGeoProvider} from './geoProvider';
 
 export interface AppProvidersProps {
   children: ReactNode;
-  /** Test seam; production builds the persisted store. */
+  /** Test seams; production builds the real instances. */
   consentStore?: ConsentStore;
+  insightsStore?: InsightsStore;
+  networkMonitor?: NetworkMonitor;
+  sessionStore?: SessionStore;
+  /** Defaults to refreshing insights. */
   onConsentAccepted?: () => Promise<void>;
 }
-
-// Module 1 has nothing to fetch on Accept; the insights module plugs in here.
-const noopConsentTask = async () => {};
 
 export const AppProviders = ({
   children,
   consentStore,
-  onConsentAccepted = noopConsentTask,
+  insightsStore,
+  networkMonitor,
+  sessionStore,
+  onConsentAccepted,
 }: AppProvidersProps) => {
-  const [store] = useState(
+  const [consent] = useState(
     () => consentStore ?? createConsentStore(createAsyncStorage()),
   );
+  const [insights] = useState(
+    () =>
+      insightsStore ??
+      createInsightsStore({
+        geo: createGeoProvider(),
+        device: createVegaDeviceSource(),
+      }),
+  );
+  const [monitor] = useState(() => networkMonitor ?? createNetInfoMonitor());
+  const [session] = useState(() => sessionStore ?? createSessionStore());
+  const refreshInsights = useCallback(
+    () => insights.getState().refreshConnection(),
+    [insights],
+  );
+
   return (
-    <ConsentProvider store={store} onConsentAccepted={onConsentAccepted}>
-      {children}
+    <ConsentProvider
+      store={consent}
+      onConsentAccepted={onConsentAccepted ?? refreshInsights}>
+      <InsightsProvider store={insights} monitor={monitor}>
+        <SessionProvider store={session}>{children}</SessionProvider>
+      </InsightsProvider>
     </ConsentProvider>
   );
 };

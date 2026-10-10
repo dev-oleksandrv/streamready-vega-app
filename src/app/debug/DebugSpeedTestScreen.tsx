@@ -38,6 +38,8 @@ export interface DebugSpeedTestScreenProps {
   createEngine: () => SpeedTestEngine;
   /** Whether the Ndt7Native Turbo Module loaded on this build. */
   nativeAvailable: boolean;
+  /** Called once per successful run (starts the cooldown). */
+  onSuccess?: () => void;
 }
 
 type RunStatus = 'idle' | 'running' | 'done' | 'failed';
@@ -65,6 +67,7 @@ function describeServer(server?: ServerInfo): string {
 export const DebugSpeedTestScreen = ({
   createEngine,
   nativeAvailable,
+  onSuccess,
 }: DebugSpeedTestScreenProps) => {
   const [status, setStatus] = useState<RunStatus>('idle');
   const [snapshot, setSnapshot] = useState<DebugSnapshot>({});
@@ -146,6 +149,8 @@ export const DebugSpeedTestScreen = ({
       })
       .then(
         (value) => {
+          // A successful test starts the cooldown even if the screen is gone.
+          onSuccess?.();
           if (mountedRef.current) {
             setResult(value);
             setStatus('done');
@@ -163,7 +168,7 @@ export const DebugSpeedTestScreen = ({
         clearInterval(timer);
         flush();
       });
-  }, [createEngine]);
+  }, [createEngine, onSuccess]);
 
   const stop = useCallback(() => controllerRef.current?.abort(), []);
 
