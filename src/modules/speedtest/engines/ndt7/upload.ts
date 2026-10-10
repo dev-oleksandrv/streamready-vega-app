@@ -2,6 +2,7 @@ import {isSpeedTestError, SpeedTestError} from '../../domain/errors';
 import type {PhaseOptions} from './download';
 import {
   CAPPED_RETRY_MS,
+  isCloseFrameEcho,
   MAX_BYTES_PER_TICK,
   MAX_IN_FLIGHT_BYTES,
   MAX_MESSAGE_BYTES,
@@ -64,6 +65,10 @@ export function runUpload(
 
     socket.onmessage = ({data}) => {
       if (typeof data !== 'string') {
+        return;
+      }
+      if (isCloseFrameEcho(data)) {
+        complete();
         return;
       }
       try {

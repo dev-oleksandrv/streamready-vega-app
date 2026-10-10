@@ -122,6 +122,16 @@ describe('runUpload', () => {
     expect(await settled).toMatchObject({code: 'protocol'});
   });
 
+  it('completes on the close-frame echo before 10s', async () => {
+    const {socket, promise} = start();
+    socket.receive(
+      measurement({BytesReceived: 1_000_000, ElapsedTime: 1_000_000}),
+    );
+    socket.receive('\u0003');
+    await expect(promise).resolves.toMatchObject({bps: 8_000_000});
+    expect(jest.getTimerCount()).toBe(0);
+  });
+
   it('completes on a normal server close before 10s', async () => {
     const {socket, promise} = start();
     socket.receive(

@@ -53,6 +53,17 @@ function positiveMicrosToMs(value: unknown): number | undefined {
   return ms === undefined || ms === 0 ? undefined : ms;
 }
 
+/**
+ * Vega's WebSocket hands a close frame's payload to onmessage as text, then
+ * fires onclose seconds later with a code that isn't the frame's (seen: 1).
+ * The echo is the reliable "server ended the test" signal. The 2-byte status
+ * code (1000-4999) starts with a control character, and its second byte is
+ * usually dropped as invalid UTF-8.
+ */
+export function isCloseFrameEcho(text: string): boolean {
+  return text.length > 0 && text.length <= 2 && text.charCodeAt(0) < 0x20;
+}
+
 /** Parses a server Measurement text message. Messages without TCPInfo yield `{}`. */
 export function parseMeasurement(text: string): TcpSample {
   let parsed: unknown;

@@ -2,6 +2,7 @@ import type {EngineEvent} from '../../domain/engine';
 import {isSpeedTestError, SpeedTestError} from '../../domain/errors';
 import {
   DOWNLOAD_TIMEOUT_MS,
+  isCloseFrameEcho,
   NORMAL_CLOSE,
   parseMeasurement,
   SAMPLE_INTERVAL_MS,
@@ -91,6 +92,10 @@ export function runDownload(
         bytes += binarySize(data);
         return;
       }
+      if (isCloseFrameEcho(data)) {
+        settle();
+        return;
+      }
       try {
         const m = parseMeasurement(data);
         if (m.minRttMs !== undefined) {
@@ -156,6 +161,8 @@ export function runDownload(
         reject(new SpeedTestError('protocol'));
         return;
       }
+      // The close handshake may still be pending (see isCloseFrameEcho).
+      closeQuietly(socket, NORMAL_CLOSE);
       const elapsedMs = now() - start;
       resolve({
         bytes,

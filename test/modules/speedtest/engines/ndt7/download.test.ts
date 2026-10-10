@@ -81,6 +81,21 @@ describe('runDownload', () => {
     expect(socket.binaryType).toBe('arraybuffer');
   });
 
+  it('completes on the close-frame echo, timing the download up to it', async () => {
+    const {socket, promise} = start();
+    socket.receive(new ArrayBuffer(10_000));
+    socket.receive(measurement({MinRTT: 20_000, RTT: 30_000}));
+    jest.advanceTimersByTime(1_000);
+    // Vega: the server's close frame arrives as text; onclose follows seconds later with code 1.
+    socket.receive('\u0003');
+    await expect(promise).resolves.toMatchObject({
+      bytes: 10_000,
+      elapsedMs: 1_000,
+      idleLatencyMs: 20,
+    });
+    expect(socket.closeCalls).toEqual([1000]);
+  });
+
   it('rejects protocol when no MinRTT arrived', async () => {
     const {socket, promise} = start();
     socket.receive(new ArrayBuffer(1_000));
