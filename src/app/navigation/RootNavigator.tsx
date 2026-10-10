@@ -10,6 +10,7 @@ import {useColdStartInsights} from '../hooks/useColdStartInsights';
 import {AppHeader} from '../layout/AppHeader';
 import {SplashScreen} from '../screens/SplashScreen';
 import {DebugSpeedTestRoute} from './DebugSpeedTestRoute';
+import {DeviceRoute} from './DeviceRoute';
 import {HomeRoute} from './HomeRoute';
 import {PrivacyRoute} from './PrivacyRoute';
 import type {RootStackParamList} from './routes';
@@ -46,6 +47,7 @@ export const RootNavigator = () => {
             component={PrivacyRoute}
             initialParams={{mode: 'gate'}}
           />
+          <Stack.Screen name="Device" component={DeviceRoute} />
           {__DEV__ ? (
             <Stack.Screen
               name="DebugSpeedTest"

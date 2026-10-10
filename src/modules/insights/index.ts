@@ -40,3 +40,5 @@ export {
   useInsightsStore,
 } from './ui/InsightsProvider';
 export type {InsightsProviderProps} from './ui/InsightsProvider';
+export {DeviceScreen} from './ui/screens/DeviceScreen';
+export type {DeviceScreenProps} from './ui/screens/DeviceScreen';

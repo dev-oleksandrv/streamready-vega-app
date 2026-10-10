@@ -234,3 +234,35 @@ describe('start', () => {
     expect(await screen.findByText('Speed test (debug)')).toBeTruthy();
   });
 });
+
+describe('device screen', () => {
+  it('opens from home, shows geo, and Back returns home', async () => {
+    await start('accepted');
+    fireEvent.press(
+      await screen.findByRole('button', {name: 'Device & connection'}),
+    );
+    expect(await screen.findByText("You're on Vega OS.")).toBeTruthy();
+    expect(screen.getByText('Public IP')).toBeTruthy();
+    expect(pressBack()).toBe(true);
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+  });
+
+  it('withdraw hides geo on Device', async () => {
+    const {consentStore} = await start('accepted');
+    await screen.findByText('Will your TV stream in 4K?');
+    act(() => consentStore.getState().withdraw());
+    fireEvent.press(screen.getByRole('button', {name: 'Device & connection'}));
+    await screen.findByText("You're on Vega OS.");
+    expect(screen.queryByText('Public IP')).toBeNull();
+    expect(screen.queryByText('203.0.113.7')).toBeNull();
+  });
+
+  it('Back button returns home', async () => {
+    await start('accepted');
+    fireEvent.press(
+      await screen.findByRole('button', {name: 'Device & connection'}),
+    );
+    fireEvent.press(await screen.findByRole('button', {name: 'Back'}));
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+  });
+});
