@@ -32,3 +32,17 @@ jest.mock(
 // place: mocking the Animated module creates a require cycle with ScrollView.
 const {Animated} = require('react-native');
 Animated.loop = () => ({start: () => {}, stop: () => {}, reset: () => {}});
+
+// Native Vega packages: production adapters import them at module load. Tests
+// inject fakes into the adapters; these stubs only keep imports from touching
+// native code. fetch never settles, so a default monitor causes no store update.
+jest.mock('@amazon-devices/keplerscript-netmgr-lib', () => ({
+  configure: () => {},
+  fetch: () => new Promise(() => {}),
+  addEventListener: () => () => {},
+}));
+
+jest.mock('@amazon-devices/react-native-device-info', () => ({
+  __esModule: true,
+  default: {getModel: () => 'unknown', getSystemVersion: () => 'unknown'},
+}));

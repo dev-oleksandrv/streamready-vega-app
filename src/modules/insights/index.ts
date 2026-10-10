@@ -32,3 +32,5 @@ export type {
   InsightsStatus,
   InsightsStore,
 } from './store/insightsStore';
+export {createNetInfoMonitor} from './device/netInfoMonitor';
+export {createVegaDeviceSource} from './device/vegaDeviceSource';
