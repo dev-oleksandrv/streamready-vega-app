@@ -22,9 +22,11 @@
     "build:debug": "react-native build-vega --build-type Debug",
     "build:app": "npm-run-all build:release",
     "build": "npm-run-all build:release",
-    "release": "npm-run-all check build:app"
+    "release": "npm-run-all check build:app",
+    "codegen:ndt7": "keplerscript-turbomodule-api codegen src/modules/speedtest/engines/ndt7native/NativeNdt7.ts -o kepler/turbo-modules/ -s Ndt7TurboModule -c Ndt7Native"
   },
   "dependencies": {
+    "@amazon-devices/keplerscript-turbomodule-api": "1.2.5",
     "@amazon-devices/react-native-kepler": "~4.0.0",
     "@amazon-devices/react-native-safe-area-context": "~8.0.0",
     "@amazon-devices/react-native-screens": "~3.0.0",

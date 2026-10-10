@@ -4,5 +4,7 @@
     "types": ["jest", "@amazon-devices/react-native-kepler"], // Override "jest", "react-native" from @react-native/typescript-config
     "noImplicitOverride": true,
     "paths": {"~/*": ["./src/*"]}
-  }
+  },
+  // The native build copies its toolchain (with stray JS) into build/.
+  "exclude": ["node_modules", "build", ".tmp"]
 }

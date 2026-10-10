@@ -37,6 +37,9 @@ id = "/com.amazon.kepler.navigation__native_stack_8@INavigation__NativeStack_0"
 [[needs.module]]
 id = "/com.amazon.kepler.navigation__routers_8@INavigation__Routers_0"
 
+[[needs.service]]
+id = "com.amazon.networking"
+
 [components]
 [[components.interactive]]
 id = "dev.voronkov.speedtest.main"
