@@ -137,7 +137,6 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
     let timer: ReturnType<typeof setInterval> | null = null;
     let pending: RunValues = EMPTY_RUN;
     let changed = false;
-    let freshSample = false;
 
     const onEvent = (event: EngineEvent) => {
       // A late sample of the other direction would draw a wrong bar.
@@ -146,15 +145,13 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
       }
       pending = applyEvent(pending, event);
       changed = true;
-      if (event.type === 'throughput') {
-        freshSample = true;
-      }
     };
 
     const flush = () => {
       const {phase, liveBps} = pending;
+      // One bar per flush, not per sample: upload samples arrive in batches
+      // between blocking sends, and the chart must show both subtests by time.
       if (
-        freshSample &&
         (phase === 'download' || phase === 'upload') &&
         liveBps !== undefined &&
         pending.bars.length < MAX_BARS
@@ -164,8 +161,8 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
           bars: [...pending.bars, {direction: phase, bps: liveBps}],
           peakBps: Math.max(pending.peakBps, liveBps),
         };
+        changed = true;
       }
-      freshSample = false;
       if (changed) {
         changed = false;
         set(pending);
@@ -207,7 +204,6 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
         controller = current;
         pending = EMPTY_RUN;
         changed = false;
-        freshSample = false;
         set({
           ...EMPTY_RUN,
           status: 'running',

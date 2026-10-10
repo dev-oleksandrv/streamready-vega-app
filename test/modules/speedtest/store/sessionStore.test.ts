@@ -3,12 +3,14 @@ import {MAX_BARS} from '~/modules/speedtest/store/sessionStore';
 import {createFakeEngine, TEST_RESULT} from '../../../support/fakeEngine';
 
 const NOW = 1_000_000;
+let clock = NOW;
 
 function setup() {
+  clock = NOW;
   const fake = createFakeEngine();
   const store = createSessionStore({
     createEngine: fake.createEngine,
-    now: () => NOW,
+    now: () => clock,
     cooldownMs: 30_000,
     flushIntervalMs: 250,
   });
@@ -93,24 +95,51 @@ describe('sessionStore', () => {
     expect(updates).not.toHaveBeenCalled();
   });
 
-  it('adds one bar per flush with a fresh sample, colored by phase', () => {
+  it('adds one bar per flush while measuring, so the chart is time-based', () => {
     const {store, fake} = setup();
     store.getState().start();
     const run = fake.last();
     run.emit({type: 'phase', phase: 'download'});
+    jest.advanceTimersByTime(250); // no value yet: no bar
     run.emit(download(10e6, 250));
     run.emit(download(30e6, 500));
     jest.advanceTimersByTime(250);
-    jest.advanceTimersByTime(250); // no fresh sample: no bar
+    jest.advanceTimersByTime(250); // no new sample: repeats the last value
     run.emit({type: 'phase', phase: 'upload'});
+    jest.advanceTimersByTime(250); // upload has no value yet: no bar
     run.emit(upload(5e6, 400));
     jest.advanceTimersByTime(250);
     const s = store.getState();
     expect(s.bars).toEqual([
       {direction: 'download', bps: 30e6},
+      {direction: 'download', bps: 30e6},
       {direction: 'upload', bps: 5e6},
     ]);
     expect(s.peakBps).toBe(30e6);
+  });
+
+  it('gives a sparse upload as many bars as a dense download of the same length', () => {
+    const {store, fake} = setup();
+    store.getState().start();
+    const run = fake.last();
+    run.emit({type: 'phase', phase: 'download'});
+    for (let t = 250; t <= 2_000; t += 250) {
+      run.emit(download(50e6, t));
+      jest.advanceTimersByTime(250);
+    }
+    run.emit({type: 'phase', phase: 'upload'});
+    // Server measurements arrive in batches every ~500 ms while sends block.
+    for (let t = 250; t <= 2_000; t += 250) {
+      if (t % 500 === 0) {
+        run.emit(upload(10e6, t));
+      }
+      jest.advanceTimersByTime(250);
+    }
+    const bars = store.getState().bars;
+    const count = (direction: string) =>
+      bars.filter((bar) => bar.direction === direction).length;
+    expect(count('download')).toBe(8);
+    expect(count('upload')).toBe(7);
   });
 
   it('ignores a sample whose direction is not the current phase', () => {
@@ -276,6 +305,7 @@ describe('sessionStore', () => {
     const first = fake.last();
     store.getState().stop();
     store.getState().start();
+    clock = NOW + 5_000;
     first.emit({type: 'phase', phase: 'upload'});
     first.resolve();
     await settle();

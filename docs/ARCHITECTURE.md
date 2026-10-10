@@ -190,7 +190,7 @@ Code layout: `kepler/ndt7/core` (pure, host-tested), `kepler/ndt7/net` (POSIX so
 ### 6.3 Integration
 
 - `app/providers/speedTestEngine.ts` builds `NativeNdt7Engine` with its dependencies (native module, event emitter, `fetch`, `now`). If the native module is missing, every run fails with `connect_failed`.
-- The session store owns the run: it creates the engine for each run, buffers engine events and flushes them to React at about 4 Hz. Each flush with a fresh throughput sample adds one bar to the chart, up to 120 bars. Events and results from a stopped run are dropped.
+- The session store owns the run: it creates the engine for each run, buffers engine events and flushes them to React at about 4 Hz. During download and upload each flush adds one bar with the latest value, so the chart is time-based (upload samples arrive in batches between blocking sends), up to 120 bars. Events and results from a stopped run are dropped.
 - Stop test calls `AbortController.abort()`, which calls `Ndt7Native.cancel` (the socket is shut down) and rejects with `aborted`. The UI then returns Home silently.
 - If the app goes to the background (`AppState` `background`) mid-test, the test is aborted silently and the app returns Home. `inactive` (system overlays such as Alexa) does not abort.
 - If the device goes offline mid-test, the run fails as `connectionLost`.
