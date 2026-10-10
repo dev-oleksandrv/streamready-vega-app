@@ -14,6 +14,16 @@ export type {
 } from './domain/engine';
 export {isSpeedTestError, SpeedTestError} from './domain/errors';
 export type {SpeedTestErrorCode} from './domain/errors';
+export {errorVariant} from './domain/errorVariant';
+export type {TestErrorVariant} from './domain/errorVariant';
+export {
+  FULL_PROGRESS,
+  NO_PROGRESS,
+  NOMINAL_SUBTEST_MS,
+  progressForPhase,
+  subtestFraction,
+} from './domain/progress';
+export type {StepProgress} from './domain/progress';
 export type {Ndt7NativeSpec} from './engines/ndt7native/NativeNdt7';
 export type {NativeEventSource} from './engines/ndt7native/nativeRun';
 export {
