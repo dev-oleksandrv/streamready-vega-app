@@ -174,8 +174,7 @@ void WsSession::onPing(const uint8_t* payload, size_t length) {
 
 void WsSession::onClose(bool hasCode, uint16_t code) {
     closeReceived_ = true;
-    // 1005/1006 must never be sent back (§7.4.1); echo 1000 instead.
-    closeCode_ = hasCode && code != 1005 && code != 1006 ? code : 1000;
+    closeCode_ = closeEchoCode(hasCode, code);
 }
 
 }  // namespace ndt7

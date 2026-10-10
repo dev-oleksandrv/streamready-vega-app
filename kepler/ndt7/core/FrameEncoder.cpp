@@ -38,4 +38,13 @@ std::vector<uint8_t> encodeControlFrame(uint8_t opcode, const uint8_t* payload, 
     return frame;
 }
 
+uint16_t closeEchoCode(bool hasCode, uint16_t code) {
+    if (!hasCode) {
+        return 1000;
+    }
+    const bool defined = (code >= 1000 && code <= 1003) || (code >= 1007 && code <= 1014);
+    const bool application = code >= 3000 && code <= 4999;
+    return defined || application ? code : 1002;
+}
+
 }  // namespace ndt7

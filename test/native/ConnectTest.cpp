@@ -85,3 +85,21 @@ TEST(parse_direction) {
     CHECK(parseDirection("upload") == Direction::Upload);
     CHECK(!parseDirection("sideways").has_value());
 }
+
+// A blackholed first address (often IPv6) must not use the whole budget.
+TEST(connect_attempt_budget_splits_remaining_time) {
+    CHECK_EQ(connectAttemptBudgetMs(5000, 2), int64_t{2500});
+    CHECK_EQ(connectAttemptBudgetMs(5000, 1), int64_t{5000});
+    CHECK_EQ(connectAttemptBudgetMs(5000, 10), int64_t{1500});  // floor
+    CHECK_EQ(connectAttemptBudgetMs(1000, 4), int64_t{1000});   // never above what is left
+}
+
+TEST(connect_tcp_returns_at_once_when_cancelled) {
+    int port = 0;
+    const int listener = listenLoopback(port);
+    CancelToken token;
+    token.cancel();
+    const auto url = parseWsUrl("ws://127.0.0.1:" + std::to_string(port) + "/x");
+    CHECK_EQ(connectTcp(*url, 1000, token), -1);
+    ::close(listener);
+}

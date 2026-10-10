@@ -24,6 +24,13 @@ std::optional<WsUrl> parseWsUrl(const std::string& url) {
     if (url.compare(0, scheme.size(), scheme) != 0) {
         return std::nullopt;
     }
+    // The target goes into the request line verbatim: no spaces, CR/LF or controls.
+    for (char c : url) {
+        const auto byte = static_cast<unsigned char>(c);
+        if (byte <= 0x20 || byte == 0x7F) {
+            return std::nullopt;
+        }
+    }
     const size_t authorityStart = scheme.size();
     const size_t targetStart = url.find_first_of("/?", authorityStart);
     const std::string authority = url.substr(

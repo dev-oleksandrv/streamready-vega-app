@@ -41,6 +41,10 @@ TEST(url_rejects_invalid) {
         "ws://ndt-1.example:/x",      "ws://ndt-1.example:0/x",      "ws://ndt-1.example:99999/x",
         "ws://ndt-1.example:8a/x",    "ws://user@ndt-1.example/x",   "ws://[2001:db8::1/x",
         "",
+        "ws://ndt-1.example/x?a=b\r\nX-Injected: 1",
+        "ws://ndt-1.example/x y",
+        "ws://ndt-1.example/x\x7f",
+        "ws://ndt 1.example/x",
     };
     for (const char* text : invalid) {
         CHECK(!parseWsUrl(text).has_value());

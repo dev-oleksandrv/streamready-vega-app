@@ -159,3 +159,34 @@ TEST(upload_cancel_stops_sending) {
     server.join();
     CHECK(outcome.error == ErrorCode::Aborted);
 }
+
+TEST(upload_server_closes_first) {
+    SocketPair pair;
+    ClientFrame reply;
+    std::thread server([&] {
+        writeAll(pair.server, upgradeResponse(readRequest(pair.server)));
+        ClientFrame frame = readClientFrame(pair.server);
+        writeAll(pair.server, serverFrame(opcode::kText, "{\"TCPInfo\":{\"BytesReceived\":8192}}") +
+                                  serverFrame(opcode::kClose, closePayload(1000)));
+        while (frame.ok && frame.opcode != opcode::kClose) {
+            frame = readClientFrame(pair.server);
+        }
+        reply = frame;
+        ::shutdown(pair.server, SHUT_RDWR);
+    });
+    CancelToken token;
+    RecordingSink sink;
+    RunLimits limits = testLimits();
+    limits.uploadDurationMs = 5000;  // only the server's close can end it early
+    const auto started = std::chrono::steady_clock::now();
+    const Outcome outcome = runClient(pair, token, sink, limits);
+    const auto waited = std::chrono::steady_clock::now() - started;
+    server.join();
+    CHECK(outcome.error == ErrorCode::None);
+    CHECK(waited < std::chrono::milliseconds(3000));
+    CHECK(reply.ok && reply.opcode == opcode::kClose);
+    CHECK_EQ(reply.payload, closePayload(1000));
+    auto texts = sink.allMeasurements();
+    texts.insert(texts.end(), outcome.final.measurements.begin(), outcome.final.measurements.end());
+    CHECK_EQ(texts.size(), size_t{1});
+}

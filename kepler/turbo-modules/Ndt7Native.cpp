@@ -59,7 +59,10 @@ private:
 Ndt7Native::Ndt7Native() = default;
 
 Ndt7Native::~Ndt7Native() noexcept {
-    shuttingDown_ = true;
+    {
+        std::lock_guard<std::mutex> lock(emitMutex_);
+        shuttingDown_ = true;
+    }
     std::map<int32_t, std::shared_ptr<Run>> runs;
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -87,8 +90,9 @@ void Ndt7Native::start(int32_t runId, std::string direction, std::string url) {
         throw std::invalid_argument("ndt7: duplicate runId");
     }
     auto run = std::make_shared<Run>();
-    runs_[runId] = run;
     const ndt7::Direction subtest = *parsed;
+    // Thread first: if it cannot be created (std::system_error under memory
+    // pressure), no unreapable entry is left behind and JS sees the exception.
     run->thread = std::thread([this, run, runId, subtest, url = std::move(url)]() {
         try {
             EmitSink sink(*this, runId);
@@ -98,6 +102,7 @@ void Ndt7Native::start(int32_t runId, std::string direction, std::string url) {
         }
         run->finished = true;
     });
+    runs_[runId] = run;
 }
 
 void Ndt7Native::cancel(int32_t runId) {
@@ -114,6 +119,8 @@ void Ndt7Native::cancel(int32_t runId) {
 }
 
 void Ndt7Native::emitRunEvent(const JSObject& payload) {
+    // emit() only queues on a threadsafe function (non-blocking), so the lock is brief.
+    std::lock_guard<std::mutex> lock(emitMutex_);
     if (shuttingDown_) {
         return;
     }

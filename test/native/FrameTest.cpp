@@ -164,3 +164,18 @@ TEST(decoder_drains_oversized_text) {
     CHECK_EQ(r.texts.size(), size_t{1});
     CHECK_EQ(r.texts[0], "ok");
 }
+
+// RFC 6455 §7.4: echo a valid code, answer an invalid one with 1002, never send 1005/1006.
+TEST(close_echo_code) {
+    CHECK_EQ(closeEchoCode(false, 0), 1000);
+    CHECK_EQ(closeEchoCode(true, 1000), 1000);
+    CHECK_EQ(closeEchoCode(true, 1001), 1001);
+    CHECK_EQ(closeEchoCode(true, 1011), 1011);
+    CHECK_EQ(closeEchoCode(true, 4000), 4000);
+    CHECK_EQ(closeEchoCode(true, 999), 1002);
+    CHECK_EQ(closeEchoCode(true, 1004), 1002);
+    CHECK_EQ(closeEchoCode(true, 1005), 1002);
+    CHECK_EQ(closeEchoCode(true, 1006), 1002);
+    CHECK_EQ(closeEchoCode(true, 1015), 1002);
+    CHECK_EQ(closeEchoCode(true, 5000), 1002);
+}

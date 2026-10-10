@@ -38,7 +38,10 @@ private:
 
     std::mutex mutex_;
     std::map<int32_t, std::shared_ptr<Run>> runs_;
-    std::atomic<bool> shuttingDown_{false};
+    // Held across the shutdown check and emit(), so no worker can start an
+    // emit() on a napi env that the destructor is tearing down.
+    std::mutex emitMutex_;
+    bool shuttingDown_ = false;
 };
 
 }  // namespace Ndt7TurboModule
