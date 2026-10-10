@@ -31,11 +31,12 @@ src/
   modules/
     privacy/               # consent store (persisted), policy content, PrivacyScreen
     speedtest/
-      domain/              # SpeedTestEngine, EngineEvent, SpeedTestResult, SpeedTestError, units, canStartTest
+      domain/              # SpeedTestEngine, EngineEvent, SpeedTestResult, SpeedTestError, units, canStartTest, errorVariant, progress
       engines/ndt7/        # locate.ts, protocol.ts, measurements.ts, stats.ts
       engines/ndt7native/  # NativeNdt7 (Turbo Module spec), nativeEvents, nativeRun, NativeNdt7Engine
       store/               # sessionStore
-      ui/                  # TestScreen, ResultScreen, LatencyScreen + components
+      ui/                  # screens/TestScreen (Result, Latency next) + components, liveText
+      content.ts           # Test screen copy
     verdict/               # pure: thresholds, evaluate(), grade(), formatters, copy
     insights/              # GeoIpProvider + providers, device adapters, insightsStore, DeviceScreen
     home/                  # HomeScreen
@@ -67,7 +68,7 @@ Zustand, one store per module.
 |---|---|---|
 | `privacy/consentStore` | `status: 'pending' \| 'accepted' \| 'withdrawn'` | yes, in MMKV (only this key) |
 | `insights/insightsStore` | `connection?`, `device?`, `network: {online, transport: 'wifi' \| 'ethernet' \| 'other' \| 'none', band?}`, `status: 'idle' \| 'loading' \| 'ready' \| 'error'` | no |
-| `speedtest/sessionStore` | phase, live values, throttled samples, `result?`, `error?`, `cooldownUntil?` (today only `cooldownUntil`; the Test module adds the rest) | no |
+| `speedtest/sessionStore` | `status: 'idle' \| 'running' \| 'done' \| 'failed'`, `phase?`, `server?`, `liveBps?`, `idleMs?`, `loadedMs?`, `progress` (Ping/Download/Upload, 0–1), `bars` (≤ 120), `peakBps`, `result?`, `error?` (UI variant), `cooldownUntil?` | no |
 
 Stores never import other modules' stores. Anything derived from several stores goes in `app/selectors.ts`.
 
@@ -115,7 +116,8 @@ The app uses a native stack (`@amazon-devices/react-navigation__native-stack`) w
 
 | Where | Back does |
 |---|---|
-| Test | Opens the Stop dialog |
+| Test, running | Opens the Stop dialog |
+| Test, finished | Goes Home |
 | Stop dialog | Resumes the test |
 | Error overlay | Goes Home |
 | Result | Goes Home |
@@ -188,9 +190,11 @@ Code layout: `kepler/ndt7/core` (pure, host-tested), `kepler/ndt7/net` (POSIX so
 ### 6.3 Integration
 
 - `app/providers/speedTestEngine.ts` builds `NativeNdt7Engine` with its dependencies (native module, event emitter, `fetch`, `now`). If the native module is missing, every run fails with `connect_failed`.
-- The session store throttles engine events to about 4 Hz before React sees them. Each throttled sample becomes one bar in the chart, up to 120 bars.
+- The session store owns the run: it creates the engine for each run, buffers engine events and flushes them to React at about 4 Hz. Each flush with a fresh throughput sample adds one bar to the chart, up to 120 bars. Events and results from a stopped run are dropped.
 - Stop test calls `AbortController.abort()`, which calls `Ndt7Native.cancel` (the socket is shut down) and rejects with `aborted`. The UI then returns Home silently.
-- If the app goes to the background mid-test, the test is aborted silently.
+- If the app goes to the background (`AppState` `background`) mid-test, the test is aborted silently and the app returns Home. `inactive` (system overlays such as Alexa) does not abort.
+- If the device goes offline mid-test, the run fails as `connectionLost`.
+- Until the Result screen lands, a finished test stays on the Test screen with its final values and Back goes Home. The result stays in the session store for the Result screen.
 
 ## 7. Connection insights and device information
 
