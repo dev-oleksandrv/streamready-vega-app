@@ -1,24 +1,42 @@
-import React, {memo} from 'react';
-import {StyleSheet, View} from 'react-native';
+import React, {memo, useEffect, useRef} from 'react';
+import {Animated, Easing, StyleSheet, View} from 'react-native';
 
 import {colors, scale} from '~/shared/ui';
 
 import type {ThroughputBar} from '../../store/sessionStore';
+import {barFraction, chartTopBps} from '../chartScale';
 
-/** Headroom above the tallest bar, as in the design. */
-const HEADROOM = 1.15;
-const MIN_HEIGHT_PCT = 2;
+/** A new bar grows in, and a rescale glides, within one 250 ms flush. */
+const GROW_MS = 220;
+const EASE_OUT = Easing.out(Easing.cubic);
 
 interface BarProps {
-  heightPct: number;
+  fraction: number;
   color: string;
 }
 
-const Bar = memo(function Bar({heightPct, color}: BarProps) {
+/**
+ * Full-height bar scaled from its bottom edge: scaleY runs on the native
+ * driver, where an animated height could not.
+ */
+const Bar = memo(function Bar({fraction, color}: BarProps) {
+  const scaleY = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const grow = Animated.timing(scaleY, {
+      toValue: fraction,
+      duration: GROW_MS,
+      easing: EASE_OUT,
+      useNativeDriver: true,
+    });
+    grow.start();
+    return () => grow.stop();
+  }, [fraction, scaleY]);
+
   return (
-    <View
+    <Animated.View
       testID="throughput-bar"
-      style={[styles.bar, {height: `${heightPct}%`, backgroundColor: color}]}
+      style={[styles.bar, {backgroundColor: color, transform: [{scaleY}]}]}
     />
   );
 });
@@ -32,14 +50,14 @@ export const ThroughputBars = memo(function ThroughputBars({
   bars,
   peakBps,
 }: ThroughputBarsProps) {
-  const max = Math.max(peakBps, 1) * HEADROOM;
+  const topBps = chartTopBps(peakBps);
   return (
     <View style={styles.chart}>
       {bars.map((bar, index) => (
         <Bar
           // Bars are append-only, so the index is a stable key.
           key={index}
-          heightPct={Math.max(MIN_HEIGHT_PCT, (bar.bps / max) * 100)}
+          fraction={barFraction(bar.bps, topBps)}
           color={bar.direction === 'download' ? colors.lime : colors.chartMuted}
         />
       ))}
@@ -58,8 +76,10 @@ const styles = StyleSheet.create({
   },
   bar: {
     flex: 1,
+    height: '100%',
     maxWidth: scale(14),
     borderTopLeftRadius: scale(4),
     borderTopRightRadius: scale(4),
+    transformOrigin: 'bottom',
   },
 });
