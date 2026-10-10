@@ -41,7 +41,7 @@ src/
     home/                  # HomeScreen
   shared/
     ui/                    # tokens, scale(), Text, FocusButton, FocusCard, Dialog, ScreenLayout
-    lib/                   # http (timeout + AbortSignal), format, logger, storage adapter
+    lib/                   # http (timeout + AbortSignal), format, logger, storage adapter (MMKV, ADR 0008)
 test/                      # mirrors src/ 1:1
   support/                 # FakeNdt7Native, fixtures, renderWithProviders, store reset helpers
 assets/fonts/              # Geist, Geist Mono + OFL license (Vega loads fonts from the app root)
@@ -65,10 +65,9 @@ Zustand, one store per module.
 
 | Store | State | Persisted |
 |---|---|---|
-| `privacy/consentStore` | `status: 'pending' \| 'accepted' \| 'withdrawn'` | yes (only this key) |
-| `insights/insightsStore` | `connection?`, `device?`, `status: 'idle' \| 'loading' \| 'ready' \| 'error'` | no |
-| `speedtest/sessionStore` | phase, live values, throttled samples, `result?`, `error?`, `cooldownUntil?` | no |
-| `app` network status | `online`, `transport: 'wifi' \| 'ethernet' \| 'unknown'` | no |
+| `privacy/consentStore` | `status: 'pending' \| 'accepted' \| 'withdrawn'` | yes, in MMKV (only this key) |
+| `insights/insightsStore` | `connection?`, `device?`, `network: {online, transport: 'wifi' \| 'ethernet' \| 'other' \| 'none', band?}`, `status: 'idle' \| 'loading' \| 'ready' \| 'error'` | no |
+| `speedtest/sessionStore` | phase, live values, throttled samples, `result?`, `error?`, `cooldownUntil?` (today only `cooldownUntil`; the Test module adds the rest) | no |
 
 Stores never import other modules' stores. Anything derived from several stores goes in `app/selectors.ts`.
 
@@ -96,7 +95,7 @@ Stores never import other modules' stores. Anything derived from several stores 
 
 `selectVisibleInsights` returns the insights only when consent is `accepted`. It is the only way the UI reads insights.
 
-If the geo fetch fails, geo insights are not rendered at all: the header shows no country and no IP, and the Device screen drops the Public IP and Country rows. Device-local rows always render.
+If the geo fetch fails, geo insights are not rendered at all: the header shows no country and no IP, and the Device screen drops the Public IP, Country and Provider rows. Device-local rows always render.
 
 ### 5.4 Starting a test
 
@@ -200,22 +199,25 @@ Code layout: `kepler/ndt7/core` (pure, host-tested), `kepler/ndt7/net` (POSIX so
   - Primary: `https://ipinfo.io/json`.
   - Fallback: `https://get.geojs.io/v1/ip/geo.json`.
   - Neither needs a token. Rate limits apply per client IP, so one fetch per launch is fine.
+  - One 5 s deadline covers the whole chain; each attempt gets at most 3 s, so an unreachable ipinfo still leaves time for geojs.
 - Insights are never fetched before consent.
 
 Device screen rows:
 
 | Row | Source |
 |---|---|
-| Model | Vega device API |
-| System | Vega device API |
+| Model | `getModel()` codename, mapped to a marketing name through `DEVICE_PROFILES` (ADR 0007); the codename when unknown |
+| System | "Vega OS {version}" from `getSystemVersion()`; "Vega OS" is fixed copy |
 | Connection | Transport and Wi‑Fi band |
 | Public IP | Geo insights (only if visible) |
 | Country | Geo insights (only if visible) |
-| Device limit | Static table keyed by model; "—" if the model is unknown |
-| Free memory | Vega device API |
+| Provider | Geo insights (only if visible) |
+| Device limit | `DEVICE_PROFILES`, keyed by codename; "—" if the model is unknown |
 | App version | App metadata |
 
-A row whose data the platform doesn't expose is omitted.
+A row whose data the platform doesn't expose is omitted. Vega has no memory API, so the design's Free memory row is replaced by Provider.
+
+The header's right side shows, left to right: the country chip and name, the public IP and a divider (only with visible insights), then the network dot and label. Network labels: Offline (red dot), Wi‑Fi · {2.4|5|6} GHz, Wi‑Fi (band unknown), Ethernet, Connected (any other transport). Network status comes from NetInfo (`keplerscript-netmgr-lib`) with reachability probes off, so nothing leaves the device before consent (ADR 0007).
 
 ## 8. Verdict
 
@@ -332,7 +334,7 @@ While the device is offline, `connectionLost` shows a disabled Try again and the
 - Screen flows to cover: cold start (pending, accepted, withdrawn), accept including a failed insights fetch, withdrawing consent, the Stop dialog, the 3 error variants, the cooldown.
 - No snapshot tests. No real network, timers or device APIs in tests.
 - Fixtures use documentation IPs (`203.0.113.0/24`, `2001:db8::/32`), fake UUIDs, and no `access_token` values.
-- D-pad focus and real-device behavior are checked manually with [qa-checklist.md](qa-checklist.md).
+- D-pad focus and real-device behavior are checked manually on a device.
 
 ## 11. Decisions
 

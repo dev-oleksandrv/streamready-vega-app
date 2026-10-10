@@ -6,7 +6,18 @@ import {createConsentStore, type ConsentStatus} from '~/modules/privacy';
 import {createMemoryStorage, type KeyValueStorage} from '~/shared/lib/storage';
 import {createTestConsentStore} from '../../support/consent';
 import {pressBack as firePlatformBack} from '../../support/fakeBackHandler';
-import {renderWithProviders} from '../../support/renderWithProviders';
+import {createSessionStore} from '~/modules/speedtest';
+import {
+  createTestInsightsStore,
+  fakeGeo,
+  FakeNetworkMonitor,
+  TEST_CONNECTION,
+} from '../../support/insights';
+import {
+  renderWithProviders,
+  type ProviderOptions,
+} from '../../support/renderWithProviders';
+import type {ConnectionInfo} from '~/modules/insights';
 
 /** Fires the hardware Back key; true when the app handled it. */
 function pressBack(): boolean {
@@ -19,11 +30,18 @@ function pressBack(): boolean {
 
 async function start(
   status: ConsentStatus,
-  onConsentAccepted = jest.fn().mockResolvedValue(undefined),
+  onConsentAccepted?: () => Promise<void>,
+  insightsStore = createTestInsightsStore(),
+  extra: Partial<ProviderOptions> = {},
 ) {
   const consentStore = await createTestConsentStore(status);
-  renderWithProviders(<RootNavigator />, {consentStore, onConsentAccepted});
-  return {consentStore, onConsentAccepted};
+  renderWithProviders(<RootNavigator />, {
+    consentStore,
+    onConsentAccepted,
+    insightsStore,
+    ...extra,
+  });
+  return {consentStore, onConsentAccepted, insightsStore};
 }
 
 describe('cold start', () => {
@@ -59,6 +77,38 @@ describe('cold start', () => {
     expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
   });
 
+  it('accepted: keeps the splash until insights settle, then shows home', async () => {
+    let resolveGeo!: (c: ConnectionInfo) => void;
+    const geo = fakeGeo();
+    geo.lookup.mockImplementation(
+      () => new Promise((resolve) => (resolveGeo = resolve)),
+    );
+    await start('accepted', undefined, createTestInsightsStore({geo}));
+    await act(async () => {});
+    expect(screen.getByTestId('splash')).toBeTruthy();
+    await act(async () => resolveGeo(TEST_CONNECTION));
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+    expect(geo.lookup).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepted: a failed lookup still shows home', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    await start(
+      'accepted',
+      undefined,
+      createTestInsightsStore({geo: fakeGeo(new Error('down'))}),
+    );
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+    jest.restoreAllMocks();
+  });
+
+  it('pending: no lookup at cold start', async () => {
+    const geo = fakeGeo();
+    await start('pending', undefined, createTestInsightsStore({geo}));
+    await screen.findByText('Before you start.');
+    expect(geo.lookup).not.toHaveBeenCalled();
+  });
+
   it('shows the global header', async () => {
     await start('accepted');
     expect(await screen.findByText('Internet Speed Test')).toBeTruthy();
@@ -67,13 +117,29 @@ describe('cold start', () => {
 
 describe('consent flow', () => {
   it('accept runs the task, then lands on home', async () => {
-    const {consentStore, onConsentAccepted} = await start('pending');
+    const onConsentAccepted = jest.fn().mockResolvedValue(undefined);
+    const {consentStore} = await start('pending', onConsentAccepted);
     fireEvent.press(
       await screen.findByRole('button', {name: 'Accept & continue'}),
     );
     expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
     expect(onConsentAccepted).toHaveBeenCalledTimes(1);
     expect(consentStore.getState().status).toBe('accepted');
+  });
+
+  it('accept refreshes insights by default', async () => {
+    const geo = fakeGeo();
+    const {insightsStore} = await start(
+      'pending',
+      undefined,
+      createTestInsightsStore({geo}),
+    );
+    fireEvent.press(
+      await screen.findByRole('button', {name: 'Accept & continue'}),
+    );
+    await screen.findByText('Will your TV stream in 4K?');
+    expect(geo.lookup).toHaveBeenCalledTimes(1);
+    expect(insightsStore.getState().connection).toEqual(TEST_CONNECTION);
   });
 
   it('accept lands on home even when the task rejects', async () => {
@@ -129,5 +195,81 @@ describe('back key', () => {
     );
     await screen.findByText('Will your TV stream in 4K?');
     expect(pressBack()).toBe(false);
+  });
+});
+
+describe('start', () => {
+  afterEach(() => jest.useRealTimers());
+
+  it('withdrawn consent shows the consent hint', async () => {
+    const {consentStore} = await start('accepted');
+    await screen.findByText('Press OK');
+    act(() => consentStore.getState().withdraw());
+    expect(await screen.findByText('Privacy consent withdrawn')).toBeTruthy();
+  });
+
+  it('offline shows the offline hint', async () => {
+    const networkMonitor = new FakeNetworkMonitor();
+    await start('accepted', undefined, undefined, {networkMonitor});
+    await screen.findByText('Press OK');
+    act(() => networkMonitor.emit({online: false, transport: 'none'}));
+    expect(await screen.findByText('You are offline')).toBeTruthy();
+  });
+
+  it('cooldown counts down to ready', async () => {
+    jest.useFakeTimers({doNotFake: ['nextTick', 'setImmediate']});
+    const sessionStore = createSessionStore();
+    sessionStore.getState().startCooldown(Date.now(), 3000);
+    await start('accepted', undefined, undefined, {sessionStore});
+    expect(await screen.findByText('0:03')).toBeTruthy();
+    act(() => jest.advanceTimersByTime(1000));
+    expect(screen.getByText('0:02')).toBeTruthy();
+    act(() => jest.advanceTimersByTime(2000));
+    expect(screen.getByText('Press OK')).toBeTruthy();
+  });
+
+  it('a cooldown far in the future (clock went back) does not block Start', async () => {
+    const sessionStore = createSessionStore();
+    sessionStore.getState().startCooldown(Date.now(), 3_600_000);
+    await start('accepted', undefined, undefined, {sessionStore});
+    expect(await screen.findByText('Press OK')).toBeTruthy();
+  });
+
+  it('Start opens the debug test in dev', async () => {
+    await start('accepted');
+    fireEvent.press(await screen.findByRole('button', {name: 'Start'}));
+    expect(await screen.findByText('Speed test (debug)')).toBeTruthy();
+  });
+});
+
+describe('device screen', () => {
+  it('opens from home, shows geo, and Back returns home', async () => {
+    await start('accepted');
+    fireEvent.press(
+      await screen.findByRole('button', {name: 'Device & connection'}),
+    );
+    expect(await screen.findByText("You're on Vega OS.")).toBeTruthy();
+    expect(screen.getByText('Public IP')).toBeTruthy();
+    expect(pressBack()).toBe(true);
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+  });
+
+  it('withdraw hides geo on Device', async () => {
+    const {consentStore} = await start('accepted');
+    await screen.findByText('Will your TV stream in 4K?');
+    act(() => consentStore.getState().withdraw());
+    fireEvent.press(screen.getByRole('button', {name: 'Device & connection'}));
+    await screen.findByText("You're on Vega OS.");
+    expect(screen.queryByText('Public IP')).toBeNull();
+    expect(screen.queryByText('203.0.113.7')).toBeNull();
+  });
+
+  it('Back button returns home', async () => {
+    await start('accepted');
+    fireEvent.press(
+      await screen.findByRole('button', {name: 'Device & connection'}),
+    );
+    fireEvent.press(await screen.findByRole('button', {name: 'Back'}));
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
   });
 });

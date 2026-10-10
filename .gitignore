@@ -16,6 +16,9 @@ npm-debug.log
 # Working specs and plans (polished docs live in docs/ARCHITECTURE.md and docs/adr/)
 docs/superpowers/
 
+# Local on-device QA checklist (not published)
+docs/qa-checklist.md
+
 # Superpowers execution workspace
 .superpowers/
 

@@ -32,3 +32,5 @@ An ADR records one significant decision: the context, what was decided, and what
 - [0004 Tokenless geo-IP providers](0004-tokenless-geo-ip-providers.md)
 - [0005 Consent-gated insights](0005-consent-gated-insights.md)
 - [0006 Native ndt7 engine (C++ Turbo Module)](0006-native-ndt7-engine.md)
+- [0007 Vega device and network adapters](0007-vega-device-and-network-adapters.md)
+- [0008 MMKV for persisted consent](0008-mmkv-for-persisted-consent.md)

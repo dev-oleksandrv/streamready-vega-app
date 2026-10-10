@@ -6,9 +6,11 @@ import {StyleSheet, View} from 'react-native';
 import {useConsent, useConsentHydrated} from '~/modules/privacy';
 import {colors} from '~/shared/ui';
 
+import {useColdStartInsights} from '../hooks/useColdStartInsights';
 import {AppHeader} from '../layout/AppHeader';
 import {SplashScreen} from '../screens/SplashScreen';
 import {DebugSpeedTestRoute} from './DebugSpeedTestRoute';
+import {DeviceRoute} from './DeviceRoute';
 import {HomeRoute} from './HomeRoute';
 import {PrivacyRoute} from './PrivacyRoute';
 import type {RootStackParamList} from './routes';
@@ -24,8 +26,9 @@ const screenOptions = {
 export const RootNavigator = () => {
   const hydrated = useConsentHydrated();
   const status = useConsent((s) => s.status);
+  const insightsSettled = useColdStartInsights(hydrated, status);
 
-  if (!hydrated) {
+  if (!hydrated || !insightsSettled) {
     return <SplashScreen />;
   }
 
@@ -44,6 +47,7 @@ export const RootNavigator = () => {
             component={PrivacyRoute}
             initialParams={{mode: 'gate'}}
           />
+          <Stack.Screen name="Device" component={DeviceRoute} />
           {__DEV__ ? (
             <Stack.Screen
               name="DebugSpeedTest"

@@ -4,7 +4,7 @@ import {
   hydrateConsentStore,
 } from '~/modules/privacy';
 import {
-  createAsyncStorage,
+  createMmkvStorage,
   createMemoryStorage,
   type KeyValueStorage,
 } from '~/shared/lib/storage';
@@ -132,12 +132,36 @@ describe('consentStore', () => {
     warn.mockRestore();
   });
 
-  it('keeps the in-memory status when the backend rejects a write', async () => {
-    const adapter = createAsyncStorage({
-      getItem: jest.fn().mockResolvedValue(null),
-      setItem: jest.fn().mockRejectedValue(new Error('disk full')),
-      removeItem: jest.fn().mockResolvedValue(undefined),
+  it('accepted consent survives a relaunch on the same MMKV backend', async () => {
+    const data = new Map<string, string>();
+    const backend = () => ({
+      getString: (key: string) => data.get(key),
+      set: (key: string, value: string) => {
+        data.set(key, value);
+      },
+      delete: (key: string) => {
+        data.delete(key);
+      },
     });
+    const first = createConsentStore(createMmkvStorage(backend));
+    await hydrateConsentStore(first);
+    first.getState().accept();
+    await Promise.resolve();
+
+    const relaunched = createConsentStore(createMmkvStorage(backend));
+    await hydrateConsentStore(relaunched);
+    expect(relaunched.getState().status).toBe('accepted');
+  });
+
+  it('keeps the in-memory status when the backend rejects a write', async () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const adapter = createMmkvStorage(() => ({
+      getString: () => undefined,
+      set: () => {
+        throw new Error('disk full');
+      },
+      delete: () => {},
+    }));
     // Capture the write promises zustand fires without awaiting.
     const writes: Promise<void>[] = [];
     const storage: KeyValueStorage = {

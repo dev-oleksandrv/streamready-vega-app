@@ -178,4 +178,25 @@ describe('DebugSpeedTestScreen', () => {
     }
     expect(jest.getTimerCount()).toBe(0);
   });
+
+  it('calls onSuccess after a successful run only', async () => {
+    const onSuccess = jest.fn();
+    const {createEngine, control} = fakeEngine();
+    render(
+      <DebugSpeedTestScreen
+        createEngine={createEngine}
+        nativeAvailable
+        onSuccess={onSuccess}
+      />,
+    );
+    fireEvent.press(screen.getByRole('button', {name: 'Start'}));
+    await act(async () => control.reject(new SpeedTestError('network_lost')));
+    expect(screen.getByText('failed')).toBeTruthy();
+    expect(onSuccess).not.toHaveBeenCalled();
+
+    fireEvent.press(screen.getByRole('button', {name: 'Start'}));
+    await act(async () => control.resolve(result));
+    expect(screen.getByText('done')).toBeTruthy();
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+  });
 });

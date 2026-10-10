@@ -166,12 +166,21 @@ importers:
 
   .:
     dependencies:
+      '@amazon-devices/keplerscript-netmgr-lib':
+        specifier: ~2.0.20
+        version: 2.0.20(02d38abd86199c428f4a09754a8afa42)
       '@amazon-devices/keplerscript-turbomodule-api':
         specifier: 1.2.5
         version: 1.2.5(@babel/preset-env@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)
+      '@amazon-devices/react-native-device-info':
+        specifier: ~2.1.9000000001
+        version: 2.1.9000000001(@amazon-devices/react-native-kepler@4.0.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/node@26.6.4)(@types/react@19.3.0)(react-native@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1))(react@19.2.0)(supports-color@8.1.1))(@babel/preset-env@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)
       '@amazon-devices/react-native-kepler':
         specifier: ~4.0.0
         version: 4.0.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/node@26.6.4)(@types/react@19.3.0)(react-native@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1))(react@19.2.0)(supports-color@8.1.1)
+      '@amazon-devices/react-native-mmkv':
+        specifier: ~1.0.11
+        version: 1.0.11(@babel/preset-env@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1))(react@19.2.0)(supports-color@8.1.1)
       '@amazon-devices/react-native-safe-area-context':
         specifier: ~8.0.0
         version: 8.0.9000000001(react-native@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1))(react@19.2.0)
@@ -294,9 +303,21 @@ packages:
     resolution: {integrity: sha512-HCIVhMLv0gLzYkIh6wEgs+i5xceBqsFZY5MMw2lKr5ws+ZXdXr4uKx2WIB6eF/GaOjXH3o7ih5EZLLliWqZV/g==}
     hasBin: true
 
+  '@amazon-devices/keplerscript-netmgr-lib@2.0.20':
+    resolution: {integrity: sha512-C90g4Ufw17panNBguSmRZRw07Ji5/QFBhBFfOm1+yDQDhmIXC0ugVdzq2NOWhIgXvYiuVO5jA78l4F5fCHR2Ug==}
+    peerDependencies:
+      '@amazon-devices/react-native-kepler': '*'
+      react: '*'
+      react-native: '*'
+
   '@amazon-devices/keplerscript-turbomodule-api@1.2.5':
     resolution: {integrity: sha512-zg4vQ7iZLZkoajyjxYtGs293y3+FfpM5de63Xx6sPdIubNLh6Cjf5o7vxPnJ4+SnXOk4IlcSndnGIpJ7vtgJiw==}
     hasBin: true
+
+  '@amazon-devices/react-native-device-info@2.1.9000000001':
+    resolution: {integrity: sha512-1Tsbl0WREGmFqKUEF5ZTp8L8R0ctj3r4GtYmrjHWUx293YUTzXHdwBPNpuw0O1q13BmOzu1Fq315OVlfnn22rw==}
+    peerDependencies:
+      '@amazon-devices/react-native-kepler': '>=2.0.0'
 
   '@amazon-devices/react-native-kepler@4.0.1':
     resolution: {integrity: sha512-0jalzgQ3iqa39GKbuDzrUvodk8PpN68uoxQU8VF7r2oUrdOpNllMEDd5IB5llBb5Wt74YeIpKnGwXOyh55XD8A==}
@@ -308,6 +329,12 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@amazon-devices/react-native-mmkv@1.0.11':
+    resolution: {integrity: sha512-VMxW52YbdfKOs8nHbWc8aDjvUCcwPpNrk24pFP7UKeS1AUTZo3MnTfyMwM0zxf7ii9y+UmgjriIoM2pcQufmZg==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
 
   '@amazon-devices/react-native-safe-area-context@8.0.9000000001':
     resolution: {integrity: sha512-tCkHcz/c87S8jvsWGUkvugHrb0+Qhquaqgth33rnO91GOXxXxmddX9lxn+2l54yiATtS3otP1fyaRjE2KW6sMg==}
@@ -4653,6 +4680,16 @@ snapshots:
       - supports-color
     optional: true
 
+  '@amazon-devices/keplerscript-netmgr-lib@2.0.20(02d38abd86199c428f4a09754a8afa42)':
+    dependencies:
+      '@amazon-devices/keplerscript-turbomodule-api': 1.2.5(@babel/preset-env@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)
+      '@amazon-devices/react-native-kepler': 4.0.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/node@26.6.4)(@types/react@19.3.0)(react-native@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1))(react@19.2.0)(supports-color@8.1.1)
+      react: 19.2.0
+      react-native: 0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - '@babel/preset-env'
+      - supports-color
+
   '@amazon-devices/keplerscript-turbomodule-api@1.2.5(@babel/preset-env@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)':
     dependencies:
       '@babel/parser': 7.29.9
@@ -4661,6 +4698,14 @@ snapshots:
       jscodeshift: 0.14.0(@babel/preset-env@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)
       nullthrows: 1.1.1
       yargs: 17.7.3
+    transitivePeerDependencies:
+      - '@babel/preset-env'
+      - supports-color
+
+  '@amazon-devices/react-native-device-info@2.1.9000000001(@amazon-devices/react-native-kepler@4.0.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/node@26.6.4)(@types/react@19.3.0)(react-native@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1))(react@19.2.0)(supports-color@8.1.1))(@babel/preset-env@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)':
+    dependencies:
+      '@amazon-devices/keplerscript-turbomodule-api': 1.2.5(@babel/preset-env@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)
+      '@amazon-devices/react-native-kepler': 4.0.1(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/node@26.6.4)(@types/react@19.3.0)(react-native@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1))(react@19.2.0)(supports-color@8.1.1)
     transitivePeerDependencies:
       - '@babel/preset-env'
       - supports-color
@@ -4715,6 +4760,15 @@ snapshots:
       - react-native
       - supports-color
       - utf-8-validate
+
+  '@amazon-devices/react-native-mmkv@1.0.11(@babel/preset-env@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(react-native@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1))(react@19.2.0)(supports-color@8.1.1)':
+    dependencies:
+      '@amazon-devices/keplerscript-turbomodule-api': 1.2.5(@babel/preset-env@7.29.7(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(supports-color@8.1.1)
+      react: 19.2.0
+      react-native: 0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1)
+    transitivePeerDependencies:
+      - '@babel/preset-env'
+      - supports-color
 
   '@amazon-devices/react-native-safe-area-context@8.0.9000000001(react-native@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(@react-native-community/cli@20.0.0(supports-color@8.1.1)(typescript@5.8.3))(@react-native/metro-config@0.83.0(@babel/core@7.29.7(supports-color@8.1.1))(supports-color@8.1.1))(@types/react@19.3.0)(react@19.2.0)(supports-color@8.1.1))(react@19.2.0)':
     dependencies:
