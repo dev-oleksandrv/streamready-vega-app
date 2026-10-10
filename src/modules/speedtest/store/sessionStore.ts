@@ -36,7 +36,7 @@ export interface SessionDeps {
   /** Called once per run. */
   createEngine: () => SpeedTestEngine;
   now: () => number;
-  /** Starts after a successful run only. */
+  /** Starts after a successful run, or when the user stops a running one. */
   cooldownMs: number;
   flushIntervalMs: number;
 }
@@ -61,7 +61,7 @@ export interface SessionState extends RunValues {
   error?: TestErrorVariant;
   cooldownUntil?: number;
   start: () => void;
-  /** Silent abort: the user stopped or left. */
+  /** Silent abort when the user stops or leaves; starts the cooldown like a finished test. */
   stop: () => void;
   /** Ends a running test with this failure, e.g. 'network_lost' when the device goes offline. */
   fail: (code: SpeedTestErrorCode) => void;
@@ -261,7 +261,11 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
         }
         endRun()?.abort();
         pending = EMPTY_RUN;
-        set({...EMPTY_RUN, status: 'idle'});
+        set({
+          ...EMPTY_RUN,
+          status: 'idle',
+          cooldownUntil: deps.now() + deps.cooldownMs,
+        });
       },
 
       fail: (code) => {

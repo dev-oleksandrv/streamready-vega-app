@@ -100,7 +100,7 @@ describe('TestScreen', () => {
     expect(screen.queryByText('Stop the test?')).toBeNull();
   });
 
-  it('Stop test aborts silently and exits', async () => {
+  it('Stop test aborts silently, starts the cooldown and exits', async () => {
     const {fake, store, onExit} = setup();
     pressBack();
     fireEvent.press(screen.getByRole('button', {name: 'Stop test'}));
@@ -108,6 +108,7 @@ describe('TestScreen', () => {
     expect(onExit).toHaveBeenCalledTimes(1);
     await settle();
     expect(store.getState().error).toBeUndefined();
+    expect(store.getState().cooldownUntil).toBe(30_000);
   });
 
   it('success freezes on Finished; Back exits; cooldown is set', async () => {
@@ -221,11 +222,12 @@ describe('TestScreen', () => {
     expect(onExit).toHaveBeenCalledTimes(1);
   });
 
-  it('background mid-test aborts silently and exits', () => {
+  it('background mid-test aborts silently, starts the cooldown and exits', () => {
     const {fake, store, onExit} = setup();
     act(() => emitAppState('background'));
     expect(fake.last().signal.aborted).toBe(true);
     expect(store.getState().status).toBe('idle');
+    expect(store.getState().cooldownUntil).toBe(30_000);
     expect(onExit).toHaveBeenCalledTimes(1);
   });
 

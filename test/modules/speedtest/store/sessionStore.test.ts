@@ -296,6 +296,7 @@ describe('sessionStore', () => {
     expect(s.status).toBe('idle');
     expect(s.error).toBeUndefined();
     expect(s.phase).toBeUndefined();
+    expect(s.cooldownUntil).toBe(NOW + 30_000);
     expect(jest.getTimerCount()).toBe(0);
   });
 
@@ -312,7 +313,8 @@ describe('sessionStore', () => {
     jest.advanceTimersByTime(250);
     expect(store.getState().status).toBe('running');
     expect(store.getState().phase).toBeUndefined();
-    expect(store.getState().cooldownUntil).toBeUndefined();
+    // Only stop()'s cooldown: the stale success did not set a new one.
+    expect(store.getState().cooldownUntil).toBe(NOW + 30_000);
   });
 
   it('fail aborts the run and shows the variant at once', async () => {

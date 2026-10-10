@@ -267,11 +267,11 @@ describe('test screen', () => {
     expect(fake.createEngine).toHaveBeenCalledTimes(1);
   });
 
-  it('Back → Stop test returns home without a cooldown', async () => {
+  it('Back → Stop test returns home with the cooldown', async () => {
     await openTest();
     expect(pressBack()).toBe(true);
     fireEvent.press(screen.getByRole('button', {name: 'Stop test'}));
-    expect(await screen.findByText('Press OK')).toBeTruthy();
+    expect(await screen.findByText('0:30')).toBeTruthy();
   });
 
   it('a finished test stays on screen; Back shows the home cooldown', async () => {
@@ -282,11 +282,11 @@ describe('test screen', () => {
     expect(await screen.findByText('0:30')).toBeTruthy();
   });
 
-  it('going to the background aborts and returns home', async () => {
+  it('going to the background aborts and returns home with the cooldown', async () => {
     const {fake} = await openTest();
     act(() => emitAppState('background'));
     expect(fake.last().signal.aborted).toBe(true);
-    expect(await screen.findByText('Press OK')).toBeTruthy();
+    expect(await screen.findByText('0:30')).toBeTruthy();
   });
 
   it('going offline shows connection lost; Back to home returns home', async () => {

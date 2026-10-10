@@ -108,7 +108,7 @@ If the geo fetch fails, geo insights are not rendered at all: the header shows n
 | `consent` | "Privacy consent withdrawn" |
 | `cooldown` | A "Next test in 0:ss" countdown |
 
-The cooldown is 30s and starts only after a successful test.
+The cooldown is 30s. It starts after a successful test, and when the user stops a running test (Stop test, or leaving the app). A failed test doesn't start it.
 
 ### 5.5 Navigation and Back key
 
