@@ -110,6 +110,23 @@ describe('DebugSpeedTestScreen', () => {
     expect(screen.getByText(/^max 400 ms · avg \d+ ms$/)).toBeTruthy();
   });
 
+  it('measures an idle baseline stall while no test runs', () => {
+    const {createEngine} = fakeEngine();
+    render(
+      <DebugSpeedTestScreen createEngine={createEngine} nativeAvailable />,
+    );
+    act(() => {
+      jest.advanceTimersByTime(100);
+      // The JS thread is blocked for 300 ms with no test running.
+      jest.setSystemTime(Date.now() + 300);
+      jest.advanceTimersByTime(100);
+      jest.advanceTimersByTime(250);
+    });
+    expect(screen.getByText('JS stall (idle)')).toBeTruthy();
+    expect(screen.getByText(/^max 300 ms · avg \d+ ms$/)).toBeTruthy();
+    expect(createEngine).not.toHaveBeenCalled();
+  });
+
   it('shows the raw error code on failure', async () => {
     const {createEngine, control} = fakeEngine();
     render(

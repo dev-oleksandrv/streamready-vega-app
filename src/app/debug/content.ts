@@ -24,6 +24,7 @@ export const debugContent = {
     window: 'Upload window used',
     engineUsed: 'Engine used',
     nativeModule: 'Native module',
+    stallIdle: 'JS stall (idle)',
     stallDownload: 'JS stall (download)',
     stallUpload: 'JS stall (upload)',
     error: 'Error',

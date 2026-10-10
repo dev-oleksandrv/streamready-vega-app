@@ -30,11 +30,17 @@ import {
 } from './stallMeter';
 
 interface PhaseStalls {
+  /** No test running, same 4 Hz re-render: the screen's own baseline. */
+  idle: StallStats;
   download: StallStats;
   upload: StallStats;
 }
 
-const noStalls: PhaseStalls = {download: emptyStall, upload: emptyStall};
+const noStalls: PhaseStalls = {
+  idle: emptyStall,
+  download: emptyStall,
+  upload: emptyStall,
+};
 
 export interface DebugSpeedTestScreenProps {
   createEngine: (config: SpeedTestEngineConfig) => SpeedTestEngine;
@@ -93,12 +99,41 @@ export const DebugSpeedTestScreen = ({
   const controllerRef = useRef<AbortController | null>(null);
   const latestRef = useRef<DebugSnapshot>({});
   const mountedRef = useRef(true);
+  const runningRef = useRef(false);
 
   useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
       controllerRef.current?.abort();
+    };
+  }, []);
+
+  // The probe runs for the screen's lifetime so the idle row gives a baseline
+  // to compare the download/upload stalls against.
+  useEffect(() => {
+    let lastProbe = Date.now();
+    const probe = setInterval(() => {
+      const probedAt = Date.now();
+      const late = probedAt - lastProbe - STALL_PROBE_INTERVAL_MS;
+      lastProbe = probedAt;
+      const phase = runningRef.current ? latestRef.current.phase : 'idle';
+      if (phase === 'idle' || phase === 'download' || phase === 'upload') {
+        stallsRef.current = {
+          ...stallsRef.current,
+          [phase]: recordStall(stallsRef.current[phase], late),
+        };
+      }
+    }, STALL_PROBE_INTERVAL_MS);
+    // While a test runs, start()'s flush renders at the same rate.
+    const idleFlush = setInterval(() => {
+      if (!runningRef.current) {
+        setStalls(stallsRef.current);
+      }
+    }, FLUSH_INTERVAL_MS);
+    return () => {
+      clearInterval(probe);
+      clearInterval(idleFlush);
     };
   }, []);
 
@@ -112,22 +147,9 @@ export const DebugSpeedTestScreen = ({
     setErrorCode(undefined);
     setElapsedMs(0);
     setStatus('running');
-    stallsRef.current = noStalls;
-    setStalls(noStalls);
-
-    let lastProbe = Date.now();
-    const probe = setInterval(() => {
-      const probedAt = Date.now();
-      const late = probedAt - lastProbe - STALL_PROBE_INTERVAL_MS;
-      lastProbe = probedAt;
-      const phase = latestRef.current.phase;
-      if (phase === 'download' || phase === 'upload') {
-        stallsRef.current = {
-          ...stallsRef.current,
-          [phase]: recordStall(stallsRef.current[phase], late),
-        };
-      }
-    }, STALL_PROBE_INTERVAL_MS);
+    runningRef.current = true;
+    stallsRef.current = {...noStalls, idle: stallsRef.current.idle};
+    setStalls(stallsRef.current);
 
     const flush = () => {
       if (mountedRef.current) {
@@ -160,8 +182,8 @@ export const DebugSpeedTestScreen = ({
         },
       )
       .finally(() => {
+        runningRef.current = false;
         clearInterval(timer);
-        clearInterval(probe);
         flush();
       });
   }, [createEngine, engine, mode, uploadWindow]);
@@ -216,61 +238,70 @@ export const DebugSpeedTestScreen = ({
             disabled={jsOnlyDisabled}
           />
         </View>
+        {/* Two columns: one column of 15 rows does not fit 1080p. */}
         <View style={styles.rows}>
-          <DebugRow label={copy.rows.status} value={status} />
-          <DebugRow
-            label={copy.rows.phase}
-            value={snapshot.phase ?? copy.empty}
-          />
-          <DebugRow
-            label={copy.rows.server}
-            value={describeServer(result?.server ?? snapshot.server)}
-          />
-          <DebugRow
-            label={copy.rows.download}
-            value={mbps(result?.downloadBps ?? snapshot.downloadBps)}
-          />
-          <DebugRow
-            label={copy.rows.upload}
-            value={mbps(result?.uploadBps ?? snapshot.uploadBps)}
-          />
-          <DebugRow
-            label={copy.rows.idle}
-            value={ms(result?.idleLatencyMs ?? snapshot.idleMs)}
-          />
-          <DebugRow
-            label={copy.rows.loaded}
-            value={ms(result?.loadedLatencyMs ?? snapshot.loadedMs)}
-          />
-          <DebugRow
-            label={copy.rows.elapsed}
-            value={copy.seconds((elapsedMs / 1000).toFixed(1))}
-          />
-          <DebugRow
-            label={copy.rows.window}
-            value={
-              result?.uploadWindowBytes === undefined
-                ? copy.empty
-                : copy.kib(result.uploadWindowBytes)
-            }
-          />
-          <DebugRow
-            label={copy.rows.engineUsed}
-            value={result?.engineId ?? copy.empty}
-          />
-          <DebugRow
-            label={copy.rows.nativeModule}
-            value={nativeAvailable ? copy.present : copy.missing}
-          />
-          <DebugRow
-            label={copy.rows.stallDownload}
-            value={stallText(stalls.download)}
-          />
-          <DebugRow
-            label={copy.rows.stallUpload}
-            value={stallText(stalls.upload)}
-          />
-          <DebugRow label={copy.rows.error} value={errorCode ?? copy.empty} />
+          <View style={styles.column}>
+            <DebugRow label={copy.rows.status} value={status} />
+            <DebugRow label={copy.rows.error} value={errorCode ?? copy.empty} />
+            <DebugRow
+              label={copy.rows.phase}
+              value={snapshot.phase ?? copy.empty}
+            />
+            <DebugRow
+              label={copy.rows.download}
+              value={mbps(result?.downloadBps ?? snapshot.downloadBps)}
+            />
+            <DebugRow
+              label={copy.rows.upload}
+              value={mbps(result?.uploadBps ?? snapshot.uploadBps)}
+            />
+            <DebugRow
+              label={copy.rows.idle}
+              value={ms(result?.idleLatencyMs ?? snapshot.idleMs)}
+            />
+            <DebugRow
+              label={copy.rows.loaded}
+              value={ms(result?.loadedLatencyMs ?? snapshot.loadedMs)}
+            />
+            <DebugRow
+              label={copy.rows.elapsed}
+              value={copy.seconds((elapsedMs / 1000).toFixed(1))}
+            />
+          </View>
+          <View style={styles.column}>
+            <DebugRow
+              label={copy.rows.server}
+              value={describeServer(result?.server ?? snapshot.server)}
+            />
+            <DebugRow
+              label={copy.rows.engineUsed}
+              value={result?.engineId ?? copy.empty}
+            />
+            <DebugRow
+              label={copy.rows.nativeModule}
+              value={nativeAvailable ? copy.present : copy.missing}
+            />
+            <DebugRow
+              label={copy.rows.window}
+              value={
+                result?.uploadWindowBytes === undefined
+                  ? copy.empty
+                  : copy.kib(result.uploadWindowBytes)
+              }
+            />
+            <DebugRow
+              label={copy.rows.stallIdle}
+              value={stallText(stalls.idle)}
+            />
+            <DebugRow
+              label={copy.rows.stallDownload}
+              value={stallText(stalls.download)}
+            />
+            <DebugRow
+              label={copy.rows.stallUpload}
+              value={stallText(stalls.upload)}
+            />
+          </View>
         </View>
       </View>
     </ScreenLayout>
@@ -281,5 +312,6 @@ const styles = StyleSheet.create({
   content: {flex: 1, gap: scale(40)},
   title: {fontSize: scale(56)},
   actions: {flexDirection: 'row', gap: scale(24)},
-  rows: {gap: scale(16)},
+  rows: {flexDirection: 'row', gap: scale(64)},
+  column: {flex: 1, gap: scale(16)},
 });
