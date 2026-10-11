@@ -5,4 +5,6 @@ export type RootStackParamList = {
   Privacy: {mode: PrivacyMode};
   Device: undefined;
   Test: undefined;
+  Result: undefined;
+  Latency: undefined;
 };

@@ -22,22 +22,30 @@ function pressBack(): boolean {
 const settle = () => act(async () => {});
 const tick = () => act(() => jest.advanceTimersByTime(250));
 
-function setup(online = true) {
-  const fake = createFakeEngine();
-  const store: SessionStore = createSessionStore({
-    createEngine: fake.createEngine,
-    now: () => 0,
-    cooldownMs: 30_000,
-  });
+type FakeEngine = ReturnType<typeof createFakeEngine>;
+
+function setup(
+  online = true,
+  prepared?: {store: SessionStore; fake: FakeEngine},
+) {
+  const fake = prepared?.fake ?? createFakeEngine();
+  const store: SessionStore =
+    prepared?.store ??
+    createSessionStore({
+      createEngine: fake.createEngine,
+      now: () => 0,
+      cooldownMs: 30_000,
+    });
   const onExit = jest.fn();
+  const onDone = jest.fn();
   const view = (isOnline: boolean) => (
     <SessionProvider store={store}>
-      <TestScreen online={isOnline} onExit={onExit} />
+      <TestScreen online={isOnline} onExit={onExit} onDone={onDone} />
     </SessionProvider>
   );
   const utils = render(view(online));
   const setOnline = (isOnline: boolean) => utils.rerender(view(isOnline));
-  return {fake, store, onExit, setOnline, unmount: utils.unmount};
+  return {fake, store, onExit, onDone, setOnline, unmount: utils.unmount};
 }
 
 beforeEach(() => jest.useFakeTimers());
@@ -251,5 +259,44 @@ describe('TestScreen', () => {
     const {fake, unmount} = setup();
     unmount();
     expect(fake.last().signal.aborted).toBe(true);
+  });
+});
+
+describe('TestScreen onDone', () => {
+  it('fires once when the run finishes', async () => {
+    const {fake, onDone} = setup();
+    await act(async () => fake.last().resolve());
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not fire on a failure', async () => {
+    const {fake, onDone} = setup();
+    await act(async () => fake.last().reject('timeout'));
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it('does not fire on a stop', () => {
+    const {store, onDone} = setup();
+    act(() => store.getState().stop());
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
+  it('does not fire for a store left done by a previous run', async () => {
+    const fake = createFakeEngine();
+    const store = createSessionStore({
+      createEngine: fake.createEngine,
+      now: () => 0,
+      cooldownMs: 0,
+    });
+    store.getState().start();
+    await act(async () => fake.last().resolve());
+    expect(store.getState().status).toBe('done');
+
+    const {onDone} = setup(true, {store, fake});
+    await settle();
+    expect(store.getState().status).toBe('running');
+    expect(onDone).not.toHaveBeenCalled();
+    await act(async () => fake.last().resolve());
+    expect(onDone).toHaveBeenCalledTimes(1);
   });
 });
