@@ -15,6 +15,10 @@ export interface FocusButtonProps {
   disabled?: boolean;
   loading?: boolean;
   hasTVPreferredFocus?: boolean;
+  /** Result-row size: 32 px side padding instead of 40. */
+  compact?: boolean;
+  /** Scaled px; keeps the width steady while the label changes (cooldown). */
+  minWidth?: number;
   testID?: string;
 }
 
@@ -25,6 +29,8 @@ export const FocusButton = ({
   disabled = false,
   loading = false,
   hasTVPreferredFocus,
+  compact = false,
+  minWidth,
   testID,
 }: FocusButtonProps) => {
   const [focused, setFocused] = useState(false);
@@ -49,6 +55,8 @@ export const FocusButton = ({
       onPress={handlePress}
       style={[
         styles.base,
+        compact && styles.compact,
+        minWidth !== undefined && {minWidth, justifyContent: 'center'},
         {
           borderColor: look.borderColor,
           backgroundColor: look.backgroundColor,
@@ -76,6 +84,7 @@ const styles = StyleSheet.create({
     borderRadius: scale(radii.pill),
     borderWidth: scale(focus.borderWidth),
   },
+  compact: {paddingHorizontal: scale(32)},
   label: {
     fontSize: scale(28),
   },
