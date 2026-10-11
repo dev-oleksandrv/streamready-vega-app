@@ -15,7 +15,7 @@ An icon library such as `lucide-react-native` was considered:
 
 ## Decision
 
-- Add `@amazon-devices/react-native-svg` (~3.0.0, the RN 0.83 line). It is system-deployed and autolinked, so the manifest needs no entries.
+- Add `@amazon-devices/react-native-svg` (the 3.0.x line for RN 0.83, wrapping `react-native-svg` 15.11.1). It is system-deployed and autolinked, so the app does not bundle it. Instead, `manifest.toml` needs `[[needs.module]] id = "/com.amazon.kepler.svg_3@ISVG_0"`, which the Vega build adds.
 - Draw icons in-house in `shared/ui/icons/` with `Svg` and `Path` only: a 24-unit grid, stroke 2.5, round caps and joins, and the color passed as the stroke.
 - No icon library.
 

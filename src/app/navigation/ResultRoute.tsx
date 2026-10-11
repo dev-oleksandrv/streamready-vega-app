@@ -2,7 +2,7 @@ import {useIsFocused} from '@amazon-devices/react-navigation__native';
 import type {NativeStackScreenProps} from '@amazon-devices/react-navigation__native-stack';
 import React, {useCallback, useEffect} from 'react';
 
-import {deviceProfile, useInsights} from '~/modules/insights';
+import {useInsights} from '~/modules/insights';
 import {useConsent} from '~/modules/privacy';
 import {ResultScreen, useSession} from '~/modules/speedtest';
 
@@ -21,15 +21,12 @@ export const ResultRoute = ({
   const storedCooldown = useSession((s) => s.cooldownUntil);
   const consent = useConsent((s) => s.status);
   const network = useInsights((s) => s.network);
-  const deviceLimitMbps = useInsights(
-    (s) => deviceProfile(s.device?.model)?.limitMbps,
-  );
-  const verdict = useResultVerdict(result);
+  const view = useResultVerdict(result);
   // Latency stacks on top of Result; no ticking while hidden.
   const now = useCooldownClock(storedCooldown, useIsFocused());
   const cooldownUntil = boundedCooldown(storedCooldown, now);
 
-  const missing = !result || !verdict;
+  const missing = !result || !view;
   // Nothing to show (state lost); Home is always the stack root here.
   useEffect(() => {
     if (missing) {
@@ -44,14 +41,14 @@ export const ResultRoute = ({
     [navigation],
   );
 
-  if (!result || !verdict) {
+  if (!result || !view) {
     return null;
   }
   return (
     <ResultScreen
       result={result}
-      verdict={verdict}
-      deviceLimitMbps={deviceLimitMbps}
+      verdict={view.verdict}
+      deviceLimitMbps={view.deviceLimitMbps}
       now={now}
       startCheck={selectStartCheck({consent, network, cooldownUntil, now})}
       cooldownSeconds={cooldownSeconds(cooldownUntil, now)}

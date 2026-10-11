@@ -60,14 +60,26 @@ export function selectVerdict(
   });
 }
 
+export interface ResultVerdict {
+  verdict: Verdict;
+  /** The ceiling behind `verdict.nearDeviceLimit`, for the note's "~N Mbps". */
+  deviceLimitMbps?: number;
+}
+
+/** One device-profile lookup feeds both the verdict and the limit note. */
 export function useResultVerdict(
   result?: SpeedTestResult,
-): Verdict | undefined {
+): ResultVerdict | undefined {
   const network = useInsights((s) => s.network);
   const model = useInsights((s) => s.device?.model);
-  return useMemo(
-    () =>
-      result ? selectVerdict(result, network, deviceProfile(model)) : undefined,
-    [result, network, model],
-  );
+  return useMemo(() => {
+    if (!result) {
+      return undefined;
+    }
+    const profile = deviceProfile(model);
+    return {
+      verdict: selectVerdict(result, network, profile),
+      deviceLimitMbps: profile?.limitMbps,
+    };
+  }, [result, network, model]);
 }

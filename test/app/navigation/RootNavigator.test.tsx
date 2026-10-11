@@ -9,6 +9,7 @@ import {pressBack as firePlatformBack} from '../../support/fakeBackHandler';
 import {createSessionStore} from '~/modules/speedtest';
 import {
   createTestInsightsStore,
+  fakeDeviceSource,
   fakeGeo,
   FakeNetworkMonitor,
   TEST_CONNECTION,
@@ -302,13 +303,20 @@ describe('test screen', () => {
 });
 
 describe('result and latency', () => {
-  async function finishTest(cooldownMs = 30_000) {
+  async function finishTest(
+    cooldownMs = 30_000,
+    insightsStore = createTestInsightsStore(),
+    networkMonitor = new FakeNetworkMonitor(),
+  ) {
     const fake = createFakeEngine();
     const sessionStore = createSessionStore({
       createEngine: fake.createEngine,
       cooldownMs,
     });
-    await start('accepted', undefined, undefined, {sessionStore});
+    await start('accepted', undefined, insightsStore, {
+      sessionStore,
+      networkMonitor,
+    });
     fireEvent.press(await screen.findByRole('button', {name: 'Start'}));
     await screen.findByText('Finding nearest server…');
     await act(async () => fake.last().resolve());
@@ -317,6 +325,22 @@ describe('result and latency', () => {
   }
 
   afterEach(() => act(() => emitAppState('active')));
+
+  it('a known stick on Wi‑Fi near its limit shows the limit note', async () => {
+    await finishTest(
+      30_000,
+      createTestInsightsStore({device: fakeDeviceSource({model: 'AFTCA002'})}),
+      new FakeNetworkMonitor({online: true, transport: 'wifi', band: '5'}),
+    );
+    expect(
+      await screen.findByText("Near your stick's Wi‑Fi limit (~300 Mbps)"),
+    ).toBeTruthy();
+  });
+
+  it('an unknown device shows no limit note', async () => {
+    await finishTest();
+    expect(screen.queryByText(/Near your stick/)).toBeNull();
+  });
 
   it('Why it lags opens latency; Back returns to the result', async () => {
     await finishTest();
@@ -348,6 +372,17 @@ describe('result and latency', () => {
     fireEvent.press(screen.getByRole('button', {name: 'Test again'}));
     expect(await screen.findByText('Finding nearest server…')).toBeTruthy();
     expect(fake.createEngine).toHaveBeenCalledTimes(2);
+  });
+
+  it('Home → Start after a result runs a new test', async () => {
+    const {fake} = await finishTest(0);
+    fireEvent.press(screen.getByRole('button', {name: 'Back'}));
+    fireEvent.press(await screen.findByRole('button', {name: 'Start'}));
+    expect(await screen.findByText('Finding nearest server…')).toBeTruthy();
+    expect(fake.createEngine).toHaveBeenCalledTimes(2);
+    // Still on Test: Back opens the Stop dialog instead of leaving.
+    expect(pressBack()).toBe(true);
+    expect(screen.getByText('Stop the test?')).toBeTruthy();
   });
 
   it('a missing result leaves for home', async () => {
