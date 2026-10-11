@@ -31,3 +31,5 @@ export {
 } from './ui/SessionProvider';
 export {TestScreen} from './ui/screens/TestScreen';
 export type {TestScreenProps} from './ui/screens/TestScreen';
+export {ResultScreen} from './ui/screens/ResultScreen';
+export type {ResultScreenProps} from './ui/screens/ResultScreen';
