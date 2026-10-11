@@ -21,6 +21,7 @@ import {
 import type {ConnectionInfo} from '~/modules/insights';
 import {createFakeEngine} from '../../support/fakeEngine';
 import {emitAppState} from '../../support/fakeAppState';
+import {hideNativeSplash} from '../../support/fakeSplashScreen';
 
 /** Fires the hardware Back key; true when the app handled it. */
 function pressBack(): boolean {
@@ -48,6 +49,37 @@ async function start(
 }
 
 describe('cold start', () => {
+  beforeEach(() => hideNativeSplash.mockClear());
+
+  it('keeps the native splash until consent is loaded', async () => {
+    let release!: (v: string | null) => void;
+    const storage: KeyValueStorage = {
+      ...createMemoryStorage(),
+      getItem: () => new Promise((resolve) => (release = resolve)),
+    };
+    renderWithProviders(<RootNavigator />, {
+      consentStore: createConsentStore(storage),
+    });
+    expect(hideNativeSplash).not.toHaveBeenCalled();
+    await act(async () => release(null));
+    await screen.findByText('Before you start.');
+    expect(hideNativeSplash).toHaveBeenCalledTimes(1);
+  });
+
+  it('accepted: keeps the native splash until insights settle', async () => {
+    let resolveGeo!: (c: ConnectionInfo) => void;
+    const geo = fakeGeo();
+    geo.lookup.mockImplementation(
+      () => new Promise((resolve) => (resolveGeo = resolve)),
+    );
+    await start('accepted', undefined, createTestInsightsStore({geo}));
+    await act(async () => {});
+    expect(hideNativeSplash).not.toHaveBeenCalled();
+    await act(async () => resolveGeo(TEST_CONNECTION));
+    await screen.findByText('Will your TV stream in 4K?');
+    expect(hideNativeSplash).toHaveBeenCalledTimes(1);
+  });
+
   it('shows the splash until consent is loaded', async () => {
     let release!: (v: string | null) => void;
     const storage: KeyValueStorage = {

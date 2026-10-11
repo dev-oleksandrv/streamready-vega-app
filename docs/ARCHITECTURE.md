@@ -46,6 +46,9 @@ src/
 test/                      # mirrors src/ 1:1
   support/                 # FakeNdt7Native, fixtures, renderWithProviders, store reset helpers
 assets/fonts/              # Geist, Geist Mono + OFL license (Vega loads fonts from the app root)
+assets/image/app_icon.png  # manifest icon: 512x512 PNG (a larger icon hides the app from Your Apps)
+assets/raw/SplashScreenImages.zip  # native splash: _loop/loop00000.png (1920x1080) + desc.txt
+store-assets/              # Appstore listing images, uploaded in the Developer Console; not bundled
 ```
 
 Each module exposes its public API through `index.ts`. Not every module needs every folder.
@@ -76,7 +79,7 @@ Stores never import other modules' stores. Anything derived from several stores 
 
 ### 5.1 Cold start
 
-1. The splash screen shows while the persisted consent loads.
+1. The native splash (`assets/raw/SplashScreenImages.zip`, the wordmark on the app background) shows from launch while the persisted consent loads. `useNativeSplash` keeps it up until the steps below allow it to hide; underneath it the app renders only a blank background.
 2. If consent is `pending` or `withdrawn`, the splash hides and the Privacy modal shows. A user who leaves the app with consent withdrawn sees the modal again on the next launch.
 3. If consent is `accepted`, the app fetches insights. The splash hides when that fetch settles, whether it succeeds or fails. The fetch has a hard timeout of about 5s.
 

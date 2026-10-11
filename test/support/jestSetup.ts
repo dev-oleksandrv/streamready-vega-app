@@ -36,6 +36,13 @@ jest.mock(
   },
 );
 
+// The native splash manager is a TurboModule the preset does not mock.
+// Hide is a shared spy so tests can assert when the native splash goes away.
+jest.mock(
+  '@amazon-devices/react-native-kepler/Libraries/SplashScreenManager/SplashScreenManager',
+  () => require('./fakeSplashScreen').fakeSplashScreenManager,
+);
+
 // Infinite loops (Spinner) would tick on real timers and update outside act().
 // Animations are not under test, so loops start and stop as no-ops. Patched in
 // place: mocking the Animated module creates a require cycle with ScrollView.

@@ -7,6 +7,7 @@ import {useConsent, useConsentHydrated} from '~/modules/privacy';
 import {colors} from '~/shared/ui';
 
 import {useColdStartInsights} from '../hooks/useColdStartInsights';
+import {useNativeSplash} from '../hooks/useNativeSplash';
 import {AppHeader} from '../layout/AppHeader';
 import {SplashScreen} from '../screens/SplashScreen';
 import {DeviceRoute} from './DeviceRoute';
@@ -29,8 +30,10 @@ export const RootNavigator = () => {
   const hydrated = useConsentHydrated();
   const status = useConsent((s) => s.status);
   const insightsSettled = useColdStartInsights(hydrated, status);
+  const ready = hydrated && insightsSettled;
+  useNativeSplash(ready);
 
-  if (!hydrated || !insightsSettled) {
+  if (!ready) {
     return <SplashScreen />;
   }
 
