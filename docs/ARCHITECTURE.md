@@ -35,13 +35,13 @@ src/
       engines/ndt7/        # locate.ts, protocol.ts, measurements.ts, stats.ts
       engines/ndt7native/  # NativeNdt7 (Turbo Module spec), nativeEvents, nativeRun, NativeNdt7Engine
       store/               # sessionStore
-      ui/                  # screens/TestScreen (Result, Latency next) + components, liveText
+      ui/                  # screens/TestScreen, ResultScreen, LatencyScreen + components, liveText, resultText, toneColor
       content.ts           # Test screen copy
-    verdict/               # pure: thresholds, evaluate(), grade(), formatters, copy
+    verdict/               # pure: domain/thresholds, grade, evaluate; content.ts (copy)
     insights/              # GeoIpProvider + providers, device adapters, insightsStore, DeviceScreen
     home/                  # HomeScreen
   shared/
-    ui/                    # tokens, scale(), Text, FocusButton, FocusCard, Dialog, ScreenLayout
+    ui/                    # tokens, scale(), Text, FocusButton, FocusCard, Dialog, ScreenLayout, icons (SVG, ADR 0009)
     lib/                   # http (timeout + AbortSignal), format, logger, storage adapter (MMKV, ADR 0008)
 test/                      # mirrors src/ 1:1
   support/                 # FakeNdt7Native, fixtures, renderWithProviders, store reset helpers
@@ -112,15 +112,15 @@ The cooldown is 30s. It starts after a successful test, and when the user stops 
 
 ### 5.5 Navigation and Back key
 
-The app uses a native stack (`@amazon-devices/react-navigation__native-stack`) with the screens Home, Test, Result, Latency, Device and Privacy. Privacy has two modes: `gate` (cold start, Accept only) and `view` (opened from Home). Accepting from the gate resets the stack to Home. Module screens take callbacks as props; route adapters in `app/navigation/` wire them to the stack.
+The app uses a native stack (`@amazon-devices/react-navigation__native-stack`) with the screens Home, Test, Result, Latency, Device and Privacy. Privacy has two modes: `gate` (cold start, Accept only) and `view` (opened from Home). Accepting from the gate resets the stack to Home. A finished test replaces Test with Result, so the stack is Home → Result; Test again replaces Result with Test. Module screens take callbacks as props; route adapters in `app/navigation/` wire them to the stack.
 
 | Where | Back does |
 |---|---|
 | Test, running | Opens the Stop dialog |
-| Test, finished | Goes Home |
 | Stop dialog | Resumes the test |
 | Error overlay | Goes Home |
 | Result | Goes Home |
+| Latency | Returns to Result |
 | Privacy (gate) | Falls through to the system |
 | Other screens | Pops the stack |
 | Home | Falls through to the system |
@@ -194,7 +194,7 @@ Code layout: `kepler/ndt7/core` (pure, host-tested), `kepler/ndt7/net` (POSIX so
 - Stop test calls `AbortController.abort()`, which calls `Ndt7Native.cancel` (the socket is shut down) and rejects with `aborted`. The UI then returns Home silently.
 - If the app goes to the background (`AppState` `background`) mid-test, the test is aborted silently and the app returns Home. `inactive` (system overlays such as Alexa) does not abort.
 - If the device goes offline mid-test, the run fails as `connectionLost`.
-- Until the Result screen lands, a finished test stays on the Test screen with its final values and Back goes Home. The result stays in the session store for the Result screen.
+- A finished test opens the Result screen at once. The result stays in the session store until the next run starts.
 
 ## 7. Connection insights and device information
 
@@ -254,6 +254,19 @@ If the tier is `good` and the lag grade is D or F, the tier drops to `limited`.
 
 **`nearDeviceLimit`** is true only when the device limit is known, the transport is Wi‑Fi, and download ≥ 60% of the limit.
 
+**Displayed values:** thresholds compare what the screen shows. Download is rounded like the Mbps text (`roundMbps`), so 24.96 Mbps shows "25.0" and passes 4K. Bloat is the difference of the whole-ms idle and loaded values, never below 0.
+
+| Outcome | When |
+|---|---|
+| `twoUhd` | good, dl ≥ 50 |
+| `oneUhd` | good, dl < 50 |
+| `laggy` | dl ≥ 25, dropped to limited by grade D or F |
+| `limited` | 5 ≤ dl < 25 |
+| `hdOnly` | 3 ≤ dl < 5 |
+| `buffering` | dl < 3 |
+
+`app/selectors.ts` builds the verdict (`selectVerdict`) from the session result, the device profile and the transport. The Result and Latency screens only receive it as props.
+
 **Number format:** values ≥ 100 are rounded to whole numbers. Values below 100 show 1 decimal.
 
 ### 8.2 Copy
@@ -306,12 +319,14 @@ The 6 design scenarios (`good`, `goodSingle4K`, `fastButLaggy`, `limited`, `poor
 |---|---|
 | Home | Start |
 | Result | Test again |
+| Latency | Back to result |
 | Privacy (pending) | Accept |
 | Privacy (decided) | Back |
 | Stop dialog | Keep testing |
 | Error overlay | Try again |
 
 - **Animations** use `Animated` with the native driver only (`transform`, `opacity`); RN 0.83 aborts when native and JS drivers mix on one view. The bar chart is `Animated.View` bars with no chart library: each scales from its bottom edge (`scaleY`) on a stepped scale (1/1.5/2/3/5/7.5 per decade, `speedtest/ui/chartScale.ts`), so rescales are rare and glide. Step fills glide with `scaleX`, and the live reading fades in on each phase change.
+- **Icons** are in-house SVG paths in `shared/ui/icons` (ADR 0009); Geist has no ✓ or ✕ glyph.
 - **No error codes:** technical error details never appear in the UI.
 
 ### 9.1 Test error overlay
@@ -348,3 +363,6 @@ While the device is offline, `connectionLost` shows a disabled Try again and the
 - [0004 Tokenless geo-IP providers](adr/0004-tokenless-geo-ip-providers.md)
 - [0005 Consent-gated insights](adr/0005-consent-gated-insights.md)
 - [0006 Native ndt7 engine (C++ Turbo Module)](adr/0006-native-ndt7-engine.md)
+- [0007 Vega device and network adapters](adr/0007-vega-device-and-network-adapters.md)
+- [0008 MMKV for persisted consent](adr/0008-mmkv-for-persisted-consent.md)
+- [0009 Vega SVG for in-house icons](adr/0009-vega-svg-for-icons.md)
