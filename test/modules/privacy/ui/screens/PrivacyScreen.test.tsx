@@ -7,6 +7,7 @@ import {
   type ConsentStatus,
   type PrivacyMode,
 } from '~/modules/privacy';
+import {POLICY_SECTIONS} from '~/modules/privacy/content';
 import {createTestConsentStore} from '../../../../support/consent';
 
 const deferred = () => {
@@ -48,19 +49,19 @@ describe('PrivacyScreen', () => {
     jest.restoreAllMocks();
   });
 
-  it('renders all six policy sections', async () => {
+  it('renders every policy section', async () => {
     await renderScreen('view', 'accepted');
-    ['01', '02', '03', '04', '05', '06'].forEach((n) =>
-      expect(screen.getByText(n)).toBeTruthy(),
-    );
-    expect(screen.getByText('Magna aliqua')).toBeTruthy();
+    POLICY_SECTIONS.forEach(({n, title}) => {
+      expect(screen.getByText(n)).toBeTruthy();
+      expect(screen.getByText(title)).toBeTruthy();
+    });
   });
 
   describe('gate', () => {
     it('shows the gate headline, prompt and only Accept', async () => {
       await renderScreen('gate', 'pending');
       expect(screen.getByText('Before you start.')).toBeTruthy();
-      expect(screen.getByText(/we need your consent/)).toBeTruthy();
+      expect(screen.getByText(/I need your consent/)).toBeTruthy();
       expect(screen.getAllByRole('button')).toHaveLength(1);
     });
 

@@ -1,31 +1,66 @@
-const LOREM =
-  'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.';
-
 export interface PolicySectionContent {
   n: string;
   title: string;
   body: string;
 }
 
-// Placeholder policy text from the design; replaced before release.
+// Mirrors what the code does: M-Lab locate + ndt7 (speedtest), ipinfo.io and
+// GeoJS (insights), MMKV consent (privacy). Update it with any change to those.
 export const POLICY_SECTIONS: readonly PolicySectionContent[] = [
-  {n: '01', title: 'Lorem ipsum dolor', body: LOREM},
+  {
+    n: '01',
+    title: 'In short',
+    body: 'StreamReady has no accounts, ads, analytics or tracking. To test your connection, the app talks to three outside services: M-Lab runs the speed test, and ipinfo.io and GeoJS look up your connection details. All three see your public IP address. M-Lab publishes it with your test results, permanently. Nothing leaves your TV until you accept.',
+  },
   {
     n: '02',
-    title: 'Consectetur adipiscing',
-    body: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.',
+    title: 'Who I am',
+    body: 'StreamReady is a free, open-source app (Apache-2.0) made by me, Oleksandr Voronkov. I decide what the app does with your data.\nEmail: help@voronkov.dev\nIssues: github.com/dev-oleksandrv/streamready-vega-app/issues\nEach outside service named here is responsible for how it handles the data it receives.',
   },
-  {n: '03', title: 'Sed do eiusmod', body: LOREM},
+  {
+    n: '03',
+    title: 'What a speed test sends to M-Lab',
+    body: 'When you press Start, the app asks Measurement Lab (M-Lab) for a nearby test server, then measures download, upload and latency against it. M-Lab receives:\n• your public IP address\n• the date and time of the test\n• the app name and version\n• the test measurements: speed, latency, connection statistics, and the network route between your TV and the server\nThe test traffic is random data, not anything from your TV. It travels unencrypted.',
+  },
   {
     n: '04',
-    title: 'Tempor incididunt',
-    body: 'Sunt in culpa qui officia deserunt mollit anim id est laborum. Curabitur pretium tincidunt lacus, nulla gravida orci a odio.',
+    title: 'M-Lab publishes test data',
+    body: 'M-Lab is an open internet research project of Superbloom (New York, USA). It publishes every test, including your IP address and the test time, as public open data, and keeps it indefinitely. Anyone can download it. M-Lab stores data on Google Cloud, possibly in several countries, including the USA.\nTo have past results anonymized, email privacy@measurementlab.net. M-Lab asks for proof, such as a letter from your internet provider, that the IP address was yours at the time.\nFull policy: measurementlab.net/privacy',
   },
-  {n: '05', title: 'Ut labore et dolore', body: LOREM},
+  {
+    n: '05',
+    title: 'Connection lookup',
+    body: 'After you accept, and each time the app starts, it asks ipinfo.io where your public IP address is located. If that fails, it asks GeoJS (geojs.io) instead. The service receives your IP address and standard request details. It returns your country, city and internet provider, which the app shows on screen. This location is approximate, at city level, not your address.\nIPinfo Inc. (USA) and GeoJS handle requests under their own policies: ipinfo.io/privacy-policy and geojs.io/privacy',
+  },
   {
     n: '06',
-    title: 'Magna aliqua',
-    body: 'Nullam varius, turpis et commodo pharetra, est eros bibendum elit, nec luctus magna felis sollicitudin mauris.',
+    title: 'What stays on your TV',
+    body: '• Your consent choice, saved so you are not asked again.\n• Device model, OS version and Wi‑Fi band, read to show on the Device screen. They are never sent. The app does not read your network name.\n• Test results and connection details, kept in memory only and cleared when you close the app. There is no test history.\nI run no servers, so I never receive your data.',
+  },
+  {
+    n: '07',
+    title: "What I don't do",
+    body: "No accounts, ads, analytics, crash reports or cross-app tracking. I don't sell or share data. No automated decisions about you: the 4K verdict is calculated on your TV from your own results.\nAmazon, as the Fire TV platform, may collect data under its own privacy notice. This app does not add to that.",
+  },
+  {
+    n: '08',
+    title: 'Why, and on what basis',
+    body: "Purpose: measure your connection, tell you whether it can stream 4K, and show your connection details.\nLegal basis: your consent (GDPR Art. 6(1)(a)). Without consent, the app can't run tests or lookups. Nothing else changes.",
+  },
+  {
+    n: '09',
+    title: 'Your choices and rights',
+    body: '• Withdraw consent at any time: Home → Privacy Policy → Withdraw consent. The app stops sending data immediately. Data already sent stays with those services.\n• Uninstalling the app deletes everything it stored on your TV.\n• Depending on where you live (GDPR, UK GDPR, CCPA and others), you may have the right to access, correct, delete or restrict your data, or to object to its use. I hold no data about you, so send those requests to M-Lab, IPinfo or GeoJS directly.\n• You can complain to your local data protection authority.',
+  },
+  {
+    n: '10',
+    title: 'Children',
+    body: "StreamReady is not directed at children under 16, and I don't knowingly process children's data.",
+  },
+  {
+    n: '11',
+    title: 'Changes',
+    body: 'If what the app does with data changes, I will update this policy in the app. Every version is public in the source code.',
   },
 ];
 
@@ -38,7 +73,7 @@ export const privacyContent = {
   scrollKeys: '▲ ▼',
   scrollHint: 'Scroll',
   gatePrompt:
-    'To run speed tests, we need your consent to process the data described here.',
+    'To run speed tests, I need your consent to process the data described here.',
   accept: 'Accept & continue',
   back: 'Back',
   withdraw: 'Withdraw consent',
