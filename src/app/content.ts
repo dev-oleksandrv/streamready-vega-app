@@ -1,4 +1,4 @@
 export const appContent = {
-  wordmark: 'StreamReady',
+  wordmark: {lead: 'Stream', accent: 'Ready'},
   tagline: 'Internet Speed Test',
 } as const;

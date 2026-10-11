@@ -1,15 +1,13 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 
-import {colors, scale, Text} from '~/shared/ui';
+import {colors, scale} from '~/shared/ui';
 
-import {appContent} from '../content';
+import {Wordmark} from '../layout/Wordmark';
 
 export const SplashScreen = () => (
   <View style={styles.root} testID="splash">
-    <Text weight="semibold" style={styles.wordmark}>
-      {appContent.wordmark}
-    </Text>
+    <Wordmark style={styles.wordmark} />
   </View>
 );
 
