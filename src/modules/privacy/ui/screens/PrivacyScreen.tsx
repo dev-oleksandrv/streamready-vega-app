@@ -75,7 +75,6 @@ export const PrivacyScreen = ({
             ? privacyContent.headline.gate
             : privacyContent.headline.view}
         </Text>
-        <Text style={styles.updated}>{privacyContent.lastUpdated}</Text>
         <View style={styles.hintRow}>
           <View style={styles.keys}>
             <Text mono style={styles.keysText}>
@@ -111,7 +110,6 @@ const styles = StyleSheet.create({
     lineHeight: scale(96),
     letterSpacing: scale(-4.32),
   },
-  updated: {fontSize: scale(26), color: colors.textMuted},
   hintRow: {flexDirection: 'row', alignItems: 'center', gap: scale(12)},
   keys: {
     paddingVertical: scale(2),

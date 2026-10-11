@@ -34,7 +34,7 @@ async function renderScreen(
       <PrivacyScreen mode={mode} onAccepted={onAccepted} onBack={onBack} />
     </ConsentProvider>,
   );
-  await screen.findByText(/Last updated/);
+  await screen.findByText(/PRIVACY POLICY/);
   return {store, onAccepted, onBack};
 }
 
