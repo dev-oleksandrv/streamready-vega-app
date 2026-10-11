@@ -36,7 +36,7 @@ The maintainer drives the process. Propose, then wait for a decision.
   - Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `build`, `ci`, `chore`, `revert`.
   - Scope (optional): `speedtest`, `ndt7`, `verdict`, `insights`, `privacy`, `home`, `app`, `shared`, `deps`.
   - Subject: imperative, lowercase, no trailing period, ≤ 72 chars. Breaking changes: `!` plus a `BREAKING CHANGE:` footer.
-- Claude may create branches and commit. Claude must **never push, force-push, rewrite history, or merge into `main`**.
+- Claude may create branches and commit. Claude must **never push, force-push, rewrite history, or merge into `main`**, except when the maintainer invokes `/ship` (`.claude/skills/ship/`): it pushes the current branch, opens a PR, and merges it once CI is green.
 - `docs/superpowers/` (working specs and plans) is gitignored. Only polished docs (`docs/ARCHITECTURE.md`, `docs/adr/`) are versioned. `docs/qa-checklist.md` is a local, gitignored device checklist.
 
 ## Open source: no secrets, no personal data
