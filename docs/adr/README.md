@@ -34,3 +34,4 @@ An ADR records one significant decision: the context, what was decided, and what
 - [0006 Native ndt7 engine (C++ Turbo Module)](0006-native-ndt7-engine.md)
 - [0007 Vega device and network adapters](0007-vega-device-and-network-adapters.md)
 - [0008 MMKV for persisted consent](0008-mmkv-for-persisted-consent.md)
+- [0009 Vega SVG for in-house icons](0009-vega-svg-for-icons.md)

@@ -18,9 +18,11 @@ export interface TestScreenProps {
   online: boolean;
   /** Leaves the screen (Home). */
   onExit: () => void;
+  /** The run this screen started finished: show the result. */
+  onDone: () => void;
 }
 
-export const TestScreen = ({online, onExit}: TestScreenProps) => {
+export const TestScreen = ({online, onExit, onDone}: TestScreenProps) => {
   const store = useSessionStore();
   const status = useSession((s) => s.status);
   const phase = useSession((s) => s.phase);
@@ -39,6 +41,14 @@ export const TestScreen = ({online, onExit}: TestScreenProps) => {
     store.getState().start();
     return () => store.getState().stop();
   }, [store]);
+
+  // Reads the live state: on mount the render still sees 'done' from the
+  // previous run, but the start effect above has already moved it to running.
+  useEffect(() => {
+    if (status === 'done' && store.getState().status === 'done') {
+      onDone();
+    }
+  }, [status, store, onDone]);
 
   // Also re-checked on every status change, so a retry while offline fails at once.
   useEffect(() => {

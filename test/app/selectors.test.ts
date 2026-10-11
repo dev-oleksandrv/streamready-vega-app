@@ -1,5 +1,10 @@
-import {selectStartCheck, selectVisibleInsights} from '~/app/selectors';
+import {
+  selectStartCheck,
+  selectVerdict,
+  selectVisibleInsights,
+} from '~/app/selectors';
 import {INITIAL_NETWORK} from '~/modules/insights';
+import {TEST_RESULT} from '../support/fakeEngine';
 import {TEST_CONNECTION} from '../support/insights';
 
 describe('selectVisibleInsights', () => {
@@ -49,5 +54,33 @@ describe('selectStartCheck', () => {
     expect(selectStartCheck({...base, cooldownUntil: 1000})).toEqual({
       ok: true,
     });
+  });
+});
+
+describe('selectVerdict', () => {
+  const wifi = {online: true, transport: 'wifi' as const, band: '5' as const};
+  const profile = {
+    name: 'Fire TV Stick 4K Select',
+    wifi: 'Wi‑Fi 5',
+    limitMbps: 300,
+  };
+
+  it('known device on Wi‑Fi near the limit', () => {
+    const v = selectVerdict(TEST_RESULT, wifi, profile);
+    expect(v.outcome).toBe('twoUhd');
+    expect(v.nearDeviceLimit).toBe(true);
+  });
+
+  it('unknown device is never near the limit', () => {
+    expect(selectVerdict(TEST_RESULT, wifi, undefined).nearDeviceLimit).toBe(
+      false,
+    );
+  });
+
+  it('ethernet is never near the limit', () => {
+    expect(
+      selectVerdict(TEST_RESULT, {online: true, transport: 'ethernet'}, profile)
+        .nearDeviceLimit,
+    ).toBe(false);
   });
 });

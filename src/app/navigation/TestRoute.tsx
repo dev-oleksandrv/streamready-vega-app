@@ -12,5 +12,7 @@ export const TestRoute = ({
   const online = useInsights((s) => s.network.online);
   // Home is always the stack root once the test can start.
   const exit = useCallback(() => navigation.popToTop(), [navigation]);
-  return <TestScreen online={online} onExit={exit} />;
+  // Replaces Test, so Back on the result goes Home.
+  const done = useCallback(() => navigation.replace('Result'), [navigation]);
+  return <TestScreen online={online} onExit={exit} onDone={done} />;
 };

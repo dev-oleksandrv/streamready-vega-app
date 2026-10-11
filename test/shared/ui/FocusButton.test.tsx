@@ -1,7 +1,7 @@
 import {fireEvent, render, screen} from '@testing-library/react-native';
 import React from 'react';
 
-import {colors, FocusButton} from '~/shared/ui';
+import {colors, FocusButton, scale} from '~/shared/ui';
 import {flatStyle} from '../../support/style';
 
 describe('FocusButton', () => {
@@ -46,5 +46,18 @@ describe('FocusButton', () => {
       borderColor: 'transparent',
       transform: [{scale: 1}],
     });
+  });
+
+  it('compact uses the 32 px side padding', () => {
+    render(<FocusButton label="Back" compact onPress={() => {}} />);
+    const button = screen.getByRole('button', {name: 'Back'});
+    expect(flatStyle(button).paddingHorizontal).toBe(scale(32));
+  });
+
+  it('minWidth sets the width floor and centers the label', () => {
+    render(<FocusButton label="Go" minWidth={120} onPress={() => {}} />);
+    const style = flatStyle(screen.getByRole('button', {name: 'Go'}));
+    expect(style.minWidth).toBe(120);
+    expect(style.justifyContent).toBe('center');
   });
 });

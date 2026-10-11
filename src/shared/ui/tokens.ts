@@ -21,6 +21,8 @@ export const colors = {
   onLime: '#0B0C0E',
   amber: '#FFC24B',
   coral: '#FF7A66',
+  /** Background of a failed stream check. */
+  failSurface: '#2A1D1B',
   offline: '#FF4D4D',
   overlay: 'rgba(5,6,8,0.78)',
 } as const;

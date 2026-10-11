@@ -72,3 +72,14 @@ jest.mock('@amazon-devices/react-native-mmkv', () => ({
     }
   },
 }));
+
+// The Vega SVG port logs every native component it registers at import, in
+// every test that touches shared/ui. Host elements keep the props under test.
+jest.mock('@amazon-devices/react-native-svg', () => {
+  const React = require('react');
+  const host =
+    (name: string) =>
+    ({children, ...props}: {children?: unknown}) =>
+      React.createElement(name, props, children);
+  return {__esModule: true, Svg: host('Svg'), Path: host('Path')};
+});

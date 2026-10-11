@@ -9,6 +9,7 @@ import {pressBack as firePlatformBack} from '../../support/fakeBackHandler';
 import {createSessionStore} from '~/modules/speedtest';
 import {
   createTestInsightsStore,
+  fakeDeviceSource,
   fakeGeo,
   FakeNetworkMonitor,
   TEST_CONNECTION,
@@ -274,10 +275,13 @@ describe('test screen', () => {
     expect(await screen.findByText('0:30')).toBeTruthy();
   });
 
-  it('a finished test stays on screen; Back shows the home cooldown', async () => {
+  it('a finished test opens the result; Back shows the home cooldown', async () => {
     const {fake} = await openTest();
     await act(async () => fake.last().resolve());
-    expect(screen.getByText('Finished')).toBeTruthy();
+    expect(await screen.findByText('Ready for 4K.')).toBeTruthy();
+    expect(
+      screen.getByRole('button', {name: 'Test again in 30s'}),
+    ).toBeTruthy();
     expect(pressBack()).toBe(true);
     expect(await screen.findByText('0:30')).toBeTruthy();
   });
@@ -295,6 +299,112 @@ describe('test screen', () => {
     expect(await screen.findByText('Connection lost.')).toBeTruthy();
     fireEvent.press(screen.getByRole('button', {name: 'Back to home'}));
     expect(await screen.findByText('You are offline')).toBeTruthy();
+  });
+});
+
+describe('result and latency', () => {
+  async function finishTest(
+    cooldownMs = 30_000,
+    insightsStore = createTestInsightsStore(),
+    networkMonitor = new FakeNetworkMonitor(),
+  ) {
+    const fake = createFakeEngine();
+    const sessionStore = createSessionStore({
+      createEngine: fake.createEngine,
+      cooldownMs,
+    });
+    await start('accepted', undefined, insightsStore, {
+      sessionStore,
+      networkMonitor,
+    });
+    fireEvent.press(await screen.findByRole('button', {name: 'Start'}));
+    await screen.findByText('Finding nearest server…');
+    await act(async () => fake.last().resolve());
+    await screen.findByText('Ready for 4K.');
+    return {fake, sessionStore};
+  }
+
+  afterEach(() => act(() => emitAppState('active')));
+
+  it('a known stick on Wi‑Fi near its limit shows the limit note', async () => {
+    await finishTest(
+      30_000,
+      createTestInsightsStore({device: fakeDeviceSource({model: 'AFTCA002'})}),
+      new FakeNetworkMonitor({online: true, transport: 'wifi', band: '5'}),
+    );
+    expect(
+      await screen.findByText("Near your stick's Wi‑Fi limit (~300 Mbps)"),
+    ).toBeTruthy();
+  });
+
+  it('an unknown device shows no limit note', async () => {
+    await finishTest();
+    expect(screen.queryByText(/Near your stick/)).toBeNull();
+  });
+
+  it('Why it lags opens latency; Back returns to the result', async () => {
+    await finishTest();
+    fireEvent.press(screen.getByRole('button', {name: 'Why it lags'}));
+    expect(
+      await screen.findByText('Grade B. Smooth, even when busy.'),
+    ).toBeTruthy();
+    expect(pressBack()).toBe(true);
+    expect(await screen.findByText('Ready for 4K.')).toBeTruthy();
+  });
+
+  it('Back to result returns to the result', async () => {
+    await finishTest();
+    fireEvent.press(screen.getByRole('button', {name: 'Why it lags'}));
+    fireEvent.press(
+      await screen.findByRole('button', {name: 'Back to result'}),
+    );
+    expect(await screen.findByText('Ready for 4K.')).toBeTruthy();
+  });
+
+  it('Back button goes home with the cooldown', async () => {
+    await finishTest();
+    fireEvent.press(screen.getByRole('button', {name: 'Back'}));
+    expect(await screen.findByText('0:30')).toBeTruthy();
+  });
+
+  it('Test again runs a new test once the cooldown is over', async () => {
+    const {fake} = await finishTest(0);
+    fireEvent.press(screen.getByRole('button', {name: 'Test again'}));
+    expect(await screen.findByText('Finding nearest server…')).toBeTruthy();
+    expect(fake.createEngine).toHaveBeenCalledTimes(2);
+  });
+
+  it('Home → Start after a result runs a new test', async () => {
+    const {fake} = await finishTest(0);
+    fireEvent.press(screen.getByRole('button', {name: 'Back'}));
+    fireEvent.press(await screen.findByRole('button', {name: 'Start'}));
+    expect(await screen.findByText('Finding nearest server…')).toBeTruthy();
+    expect(fake.createEngine).toHaveBeenCalledTimes(2);
+    // Still on Test: Back opens the Stop dialog instead of leaving.
+    expect(pressBack()).toBe(true);
+    expect(screen.getByText('Stop the test?')).toBeTruthy();
+  });
+
+  it('a missing result leaves for home', async () => {
+    const {sessionStore} = await finishTest(0);
+    // Lost state: a new run clears the result while Result is shown.
+    act(() => sessionStore.getState().start());
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+    // Home stays mounted under the stack; Back falling through proves it is on top.
+    expect(pressBack()).toBe(false);
+    // No Test screen owns that run; end it so its flush timer stops.
+    act(() => sessionStore.getState().stop());
+  });
+
+  it('a missing result on latency leaves for home', async () => {
+    const {sessionStore} = await finishTest(0);
+    fireEvent.press(screen.getByRole('button', {name: 'Why it lags'}));
+    await screen.findByText('Grade B. Smooth, even when busy.');
+    act(() => sessionStore.getState().start());
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+    // Home stays mounted under the stack; Back falling through proves it is on top.
+    expect(pressBack()).toBe(false);
+    act(() => sessionStore.getState().stop());
   });
 });
 
