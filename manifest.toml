@@ -46,6 +46,9 @@ id = "/com.amazon.kepler.keplerscript_netmgr_lib_2@INetmgrTurbomodule_0"
 [[needs.module]]
 id = "/com.amazon.kepler.device_info_2@IDeviceInfo_1"
 
+[[needs.module]]
+id = "/com.amazon.kepler.svg_3@ISVG_0"
+
 [wants]
 # NetInfo (keplerscript-netmgr-lib). The net-info privilege is declared, never requested:
 # without it only SSID/BSSID are masked. See ADR 0007.
