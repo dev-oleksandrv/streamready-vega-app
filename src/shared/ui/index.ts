@@ -12,3 +12,6 @@ export type {FocusButtonProps} from './FocusButton';
 export {FocusCard} from './FocusCard';
 export {Dialog} from './Dialog';
 export {ScreenLayout} from './ScreenLayout';
+export {CheckIcon} from './icons/CheckIcon';
+export type {IconProps} from './icons/CheckIcon';
+export {CrossIcon} from './icons/CrossIcon';
