@@ -35,7 +35,6 @@ export const privacyContent = {
     gate: 'Before you start.',
     view: 'Your data, in plain words.',
   },
-  lastUpdated: 'Last updated · September 2026',
   scrollKeys: '▲ ▼',
   scrollHint: 'Scroll',
   gatePrompt:
