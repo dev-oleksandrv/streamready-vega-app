@@ -21,6 +21,8 @@ Speed tests run against Measurement Lab (M-Lab) servers. M-Lab publishes test re
 
 StreamReady asks for consent before running any test or IP lookup, and consent can be withdrawn at any time.
 
+The full policy, the same text the app shows, is in [PRIVACY.md](PRIVACY.md).
+
 ## Requirements
 
 - [Vega SDK](https://developer.amazon.com/docs/vega/latest/)
