@@ -6,6 +6,7 @@ import {colors, radii, scale, Text} from '~/shared/ui';
 
 import {appContent} from '../content';
 import {useVisibleConnection} from '../selectors';
+import {Wordmark} from './Wordmark';
 
 /** Global top band: brand left; visible insights and network status right. Never focusable. */
 export const AppHeader = () => {
@@ -15,9 +16,7 @@ export const AppHeader = () => {
   return (
     <View style={styles.bar} pointerEvents="none">
       <View style={styles.brand}>
-        <Text weight="semibold" style={styles.wordmark}>
-          {appContent.wordmark}
-        </Text>
+        <Wordmark style={styles.wordmark} />
         <Text style={styles.tagline}>{appContent.tagline}</Text>
       </View>
       <View style={styles.status}>
