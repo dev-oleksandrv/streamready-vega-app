@@ -1,5 +1,5 @@
 import type {NativeStackScreenProps} from '@amazon-devices/react-navigation__native-stack';
-import React, {useCallback, useEffect} from 'react';
+import React, {useCallback} from 'react';
 
 import {LatencyScreen, useSession} from '~/modules/speedtest';
 
@@ -11,17 +11,10 @@ export const LatencyRoute = ({
 }: NativeStackScreenProps<RootStackParamList, 'Latency'>) => {
   const result = useSession((s) => s.result);
   const verdict = useResultVerdict(result);
-
-  const missing = !result || !verdict;
-  // Nothing to show (state lost); Home is always the stack root here.
-  useEffect(() => {
-    if (missing) {
-      navigation.popToTop();
-    }
-  }, [missing, navigation]);
-
   const back = useCallback(() => navigation.goBack(), [navigation]);
 
+  // Latency only opens on top of Result, whose route leaves for Home when the
+  // result is gone; until then there is nothing to draw.
   if (!result || !verdict) {
     return null;
   }

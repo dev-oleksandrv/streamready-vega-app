@@ -355,7 +355,20 @@ describe('result and latency', () => {
     // Lost state: a new run clears the result while Result is shown.
     act(() => sessionStore.getState().start());
     expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+    // Home stays mounted under the stack; Back falling through proves it is on top.
+    expect(pressBack()).toBe(false);
     // No Test screen owns that run; end it so its flush timer stops.
+    act(() => sessionStore.getState().stop());
+  });
+
+  it('a missing result on latency leaves for home', async () => {
+    const {sessionStore} = await finishTest(0);
+    fireEvent.press(screen.getByRole('button', {name: 'Why it lags'}));
+    await screen.findByText('Grade B. Smooth, even when busy.');
+    act(() => sessionStore.getState().start());
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+    // Home stays mounted under the stack; Back falling through proves it is on top.
+    expect(pressBack()).toBe(false);
     act(() => sessionStore.getState().stop());
   });
 });
