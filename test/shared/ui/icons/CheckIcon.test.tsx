@@ -9,6 +9,8 @@ describe('CheckIcon', () => {
     const icon = screen.getByTestId('icon');
     expect(icon.props.width).toBe(28);
     expect(icon.props.height).toBe(28);
-    expect(screen.UNSAFE_getAllByProps({stroke: '#0B0C0E'}).length).toBeGreaterThan(0);
+    expect(
+      screen.UNSAFE_getAllByProps({stroke: '#0B0C0E'}).length,
+    ).toBeGreaterThan(0);
   });
 });

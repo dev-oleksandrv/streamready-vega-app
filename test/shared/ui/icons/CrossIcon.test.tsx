@@ -9,6 +9,8 @@ describe('CrossIcon', () => {
     const icon = screen.getByTestId('icon');
     expect(icon.props.width).toBe(28);
     expect(icon.props.height).toBe(28);
-    expect(screen.UNSAFE_getAllByProps({stroke: '#FF7A66'}).length).toBeGreaterThan(0);
+    expect(
+      screen.UNSAFE_getAllByProps({stroke: '#FF7A66'}).length,
+    ).toBeGreaterThan(0);
   });
 });

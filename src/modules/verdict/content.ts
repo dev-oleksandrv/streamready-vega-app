@@ -49,5 +49,6 @@ export const verdictContent = {
   outcomes,
   checks,
   needs: (mbps: number) => `Needs ${mbps} Mbps`,
-  latencyHeadline: (grade: LagGrade) => `Grade ${grade}. ${LATENCY_LINE[grade]}`,
+  latencyHeadline: (grade: LagGrade) =>
+    `Grade ${grade}. ${LATENCY_LINE[grade]}`,
 } as const;
