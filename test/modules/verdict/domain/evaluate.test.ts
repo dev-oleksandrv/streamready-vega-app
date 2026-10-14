@@ -176,6 +176,12 @@ describe('evaluate: near device limit', () => {
   });
 });
 
+describe('evaluate: transport', () => {
+  test.each([true, false])('passes onWifi %s through', (onWifi) => {
+    expect(evaluate(input(10, 10, 20, {onWifi})).onWifi).toBe(onWifi);
+  });
+});
+
 describe('evaluate: odd inputs', () => {
   it('negative bloat grades A', () => {
     const v = evaluate(input(30, 40, 20));

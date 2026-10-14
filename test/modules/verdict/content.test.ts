@@ -22,6 +22,41 @@ describe('verdictContent', () => {
   });
 
   test.each([
+    [
+      'twoUhd',
+      true,
+      'Two 4K streams at once, no buffering expected. Your connection is in great shape.',
+    ],
+    [
+      'twoUhd',
+      false,
+      'Two 4K streams at once, no buffering expected. Your connection is in great shape.',
+    ],
+    [
+      'limited',
+      true,
+      'Speed is enough for 1080p. For 4K, move the stick closer to the router or switch to 5 GHz.',
+    ],
+    [
+      'limited',
+      false,
+      'Speed is enough for 1080p. For 4K, pause other downloads on your network or check your internet plan.',
+    ],
+    [
+      'hdOnly',
+      false,
+      'Only HD is likely to play smoothly. Your internet plan is too slow or your network is busy.',
+    ],
+    [
+      'buffering',
+      false,
+      'Even HD needs more. Your internet plan is too slow or your network is busy.',
+    ],
+  ] as const)('%s sub, on Wi‑Fi: %s', (outcome, onWifi, text) => {
+    expect(verdictContent.outcomeSub(outcome, onWifi)).toBe(text);
+  });
+
+  test.each([
     ['A', 'Grade A. Smooth, even when busy.'],
     ['B', 'Grade B. Smooth, even when busy.'],
     ['C', 'Grade C. Lag spikes when busy.'],

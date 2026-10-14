@@ -283,6 +283,14 @@ If the tier is `good` and the lag grade is D or F, the tier drops to `limited`.
 | poor, dl ≥ 3 | HD only. Full HD may buffer. | Only HD is likely to play smoothly. Your Wi‑Fi is overloaded or too weak where the TV is. |
 | poor, dl < 3 | Streaming will buffer. | Even HD needs more. Your Wi‑Fi is overloaded or too weak where the TV is. |
 
+Not on Wi‑Fi (Ethernet or unknown transport), the Wi‑Fi advice would point at the wrong cause, so three subs change (`verdictContent.outcomeSub`):
+
+| Case | Sub, not on Wi‑Fi |
+|---|---|
+| limited | Speed is enough for 1080p. For 4K, pause other downloads on your network or check your internet plan. |
+| poor, dl ≥ 3 | Only HD is likely to play smoothly. Your internet plan is too slow or your network is busy. |
+| poor, dl < 3 | Even HD needs more. Your internet plan is too slow or your network is busy. |
+
 Latency screen headlines:
 
 | Grade | Headline |
