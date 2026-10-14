@@ -31,11 +31,11 @@ export const testContent = {
     },
     serversUnavailable: {
       title: 'Test servers are busy.',
-      body: "We couldn't reach a test server right now. This usually clears up in a minute.",
+      body: "Couldn't reach a test server right now. This usually clears up in a minute.",
     },
     interrupted: {
       title: "The test didn't finish.",
-      body: 'Something interrupted the measurement before we got a reliable result. Running it again usually works.',
+      body: 'Something interrupted the measurement before a reliable result came in. Running it again usually works.',
     },
   },
   result: {
