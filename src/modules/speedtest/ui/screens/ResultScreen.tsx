@@ -63,7 +63,9 @@ export const ResultScreen = ({
             style={[styles.headline, {color: toneColor(verdict.tone)}]}>
             {outcome.headline}
           </Text>
-          <Text style={styles.sub}>{outcome.sub}</Text>
+          <Text style={styles.sub}>
+            {verdictContent.outcomeSub(verdict.outcome, verdict.onWifi)}
+          </Text>
         </View>
         <View style={styles.checks}>
           {checkRows.map((row, index) => (

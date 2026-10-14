@@ -20,7 +20,7 @@ describe('deviceRows', () => {
       profile: STICK,
       network: {online: true, transport: 'wifi', band: '5'},
       connection,
-      appVersion: '0.1.0',
+      appVersion: '1.0.0',
     });
     expect(rows.map((r) => [r.label, r.value])).toEqual([
       ['Model', 'Fire TV Stick 4K Select'],
@@ -30,7 +30,7 @@ describe('deviceRows', () => {
       ['Country', 'Germany'],
       ['Provider', 'Example Net'],
       ['Device limit', '~300 Mbps'],
-      ['App version', '0.1.0'],
+      ['App version', '1.0.0'],
     ]);
   });
 
@@ -38,14 +38,14 @@ describe('deviceRows', () => {
     const rows = deviceRows({
       device: {model: 'AFTOTHER'},
       network: {online: true, transport: 'ethernet'},
-      appVersion: '0.1.0',
+      appVersion: '1.0.0',
     });
     expect(rows.map((r) => [r.label, r.value])).toEqual([
       ['Model', 'AFTOTHER'],
       ['System', 'Vega OS'],
       ['Connection', 'Ethernet'],
       ['Device limit', '—'],
-      ['App version', '0.1.0'],
+      ['App version', '1.0.0'],
     ]);
   });
 
@@ -53,7 +53,7 @@ describe('deviceRows', () => {
     const rows = deviceRows({
       network: {online: false, transport: 'none'},
       connection: {ip: '203.0.113.7', countryCode: 'DE', country: 'Germany'},
-      appVersion: '0.1.0',
+      appVersion: '1.0.0',
     });
     expect(rows.map((r) => r.label)).toEqual([
       'System',

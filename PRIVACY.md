@@ -2,6 +2,8 @@
 
 This is the same policy the app shows on its Privacy Policy screen. Its history is in this file's git log.
 
+Last updated: 14 October 2026.
+
 ## 01. In short
 
 StreamReady has no accounts, ads, analytics or tracking. To test your connection, the app talks to three outside services: M-Lab runs the speed test, and ipinfo.io and GeoJS look up your connection details. All three see your public IP address. M-Lab publishes it with your test results, permanently. Nothing leaves your TV until you accept.
@@ -44,7 +46,7 @@ IPinfo Inc. (USA) and GeoJS handle requests under their own policies: ipinfo.io/
 ## 06. What stays on your TV
 
 - Your consent choice, saved so you are not asked again.
-- Device model, OS version and Wi‑Fi band, read to show on the Device screen. They are never sent. The app does not read your network name.
+- Device model, OS version and Wi‑Fi band, read to show on the Device screen. The app does not put them in its requests, but the Fire TV system may add basic device details to standard request headers. The app does not read your network name.
 - Test results and connection details, kept in memory only and cleared when you close the app. There is no test history.
 
 I run no servers, so I never receive your data.
@@ -53,7 +55,7 @@ I run no servers, so I never receive your data.
 
 No accounts, ads, analytics, crash reports or cross-app tracking. I don't sell or share data. No automated decisions about you: the 4K verdict is calculated on your TV from your own results.
 
-Amazon, as the Fire TV platform, may collect data under its own privacy notice. This app does not add to that.
+Amazon, as the Fire TV platform, may collect data such as app usage and crash reports under its own privacy notice.
 
 ## 08. Why, and on what basis
 
@@ -75,3 +77,5 @@ StreamReady is not directed at children under 16, and I don't knowingly process 
 ## 11. Changes
 
 If what the app does with data changes, I will update this policy in the app. Every version is public in the source code.
+
+Last updated: 14 October 2026.

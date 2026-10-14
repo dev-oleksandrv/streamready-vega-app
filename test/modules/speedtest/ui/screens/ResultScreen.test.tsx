@@ -75,6 +75,16 @@ describe('ResultScreen', () => {
     ).toBeTruthy();
   });
 
+  it('gives wired advice when not on Wi‑Fi', () => {
+    const result = resultFor(12.4, 18, 61);
+    setup({verdict: evaluate({...result, onWifi: false})}, result);
+    expect(
+      screen.getByText(
+        'Speed is enough for 1080p. For 4K, pause other downloads on your network or check your internet plan.',
+      ),
+    ).toBeTruthy();
+  });
+
   it('hides the note below the limit', () => {
     setup({}, resultFor(38.2, 18, 61));
     expect(screen.queryByText(/Near your stick/)).toBeNull();

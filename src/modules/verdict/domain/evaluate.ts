@@ -49,6 +49,8 @@ export interface Verdict {
   gradeTone: Tone;
   bloatMs: number;
   nearDeviceLimit: boolean;
+  /** Picks the Wi‑Fi or the wired advice in the sub. */
+  onWifi: boolean;
 }
 
 /** The download the user sees, so a shown "25.0" never fails the 25 Mbps check. */
@@ -104,5 +106,6 @@ export function evaluate(input: VerdictInput): Verdict {
       input.deviceLimitMbps !== undefined &&
       input.onWifi &&
       dl >= NEAR_LIMIT_RATIO * input.deviceLimitMbps,
+    onWifi: input.onWifi,
   };
 }
