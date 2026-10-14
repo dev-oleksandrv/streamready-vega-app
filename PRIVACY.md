@@ -46,7 +46,7 @@ IPinfo Inc. (USA) and GeoJS handle requests under their own policies: ipinfo.io/
 ## 06. What stays on your TV
 
 - Your consent choice, saved so you are not asked again.
-- Device model, OS version and Wi‑Fi band, read to show on the Device screen. They are never sent. The app does not read your network name.
+- Device model, OS version and Wi‑Fi band, read to show on the Device screen. The app does not put them in its requests, but the Fire TV system may add basic device details to standard request headers. The app does not read your network name.
 - Test results and connection details, kept in memory only and cleared when you close the app. There is no test history.
 
 I run no servers, so I never receive your data.
