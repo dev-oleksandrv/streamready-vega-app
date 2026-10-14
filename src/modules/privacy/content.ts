@@ -40,7 +40,7 @@ export const POLICY_SECTIONS: readonly PolicySectionContent[] = [
   {
     n: '07',
     title: "What I don't do",
-    body: "No accounts, ads, analytics, crash reports or cross-app tracking. I don't sell or share data. No automated decisions about you: the 4K verdict is calculated on your TV from your own results.\nAmazon, as the Fire TV platform, may collect data under its own privacy notice. This app does not add to that.",
+    body: "No accounts, ads, analytics, crash reports or cross-app tracking. I don't sell or share data. No automated decisions about you: the 4K verdict is calculated on your TV from your own results.\nAmazon, as the Fire TV platform, may collect data such as app usage and crash reports under its own privacy notice.",
   },
   {
     n: '08',
@@ -60,12 +60,12 @@ export const POLICY_SECTIONS: readonly PolicySectionContent[] = [
   {
     n: '11',
     title: 'Changes',
-    body: 'If what the app does with data changes, I will update this policy in the app. Every version is public in the source code.',
+    body: 'If what the app does with data changes, I will update this policy in the app. Every version is public in the source code.\nLast updated: 14 October 2026.',
   },
 ];
 
 export const privacyContent = {
-  eyebrow: 'Privacy policy',
+  eyebrow: 'Privacy Policy',
   headline: {
     gate: 'Before you start.',
     view: 'Your data, in plain words.',
@@ -73,7 +73,7 @@ export const privacyContent = {
   scrollKeys: '▲ ▼',
   scrollHint: 'Scroll',
   gatePrompt:
-    'To run speed tests, I need your consent to process the data described here.',
+    'To run speed tests, I need your consent to send the data described here.',
   accept: 'Accept & continue',
   back: 'Back',
   withdraw: 'Withdraw consent',
