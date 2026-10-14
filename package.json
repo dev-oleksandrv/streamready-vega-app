@@ -1,6 +1,9 @@
 {
   "name": "@voronkov/streamready",
   "version": "1.0.0",
+  "metadata": {
+    "build_number": 0
+  },
   "private": true,
   "license": "Apache-2.0",
   "packageManager": "pnpm@12.6.0",
@@ -22,7 +25,7 @@
     "build:debug": "react-native build-vega --build-type Debug",
     "build:app": "npm-run-all build:release",
     "build": "npm-run-all build:release",
-    "release": "npm-run-all check build:app",
+    "release": "scripts/release.sh",
     "codegen:ndt7": "keplerscript-turbomodule-api codegen src/modules/speedtest/engines/ndt7native/NativeNdt7.ts -o kepler/turbo-modules/ -s Ndt7TurboModule -c Ndt7Native",
     "test:native": "scripts/test-native.sh"
   },
