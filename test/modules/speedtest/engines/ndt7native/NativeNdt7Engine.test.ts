@@ -23,7 +23,7 @@ function setup(body: unknown = locateResponse) {
       .fn()
       .mockResolvedValue(jsonResponse(body)) as unknown as typeof fetch,
     now: () => 1_000,
-    clientVersion: '0.1.0',
+    clientVersion: '1.0.0',
     logger: silentLogger,
   });
   const events: EngineEvent[] = [];

@@ -1,5 +1,5 @@
 /** Keep in sync with `version` in manifest.toml; sent to M-Lab as client_version. */
-export const APP_VERSION = '0.1.0';
+export const APP_VERSION = '1.0.0';
 
 /** Starts after a successful test, or when the user stops one (Stop test, leaving the app). */
 export const COOLDOWN_MS = 30_000;

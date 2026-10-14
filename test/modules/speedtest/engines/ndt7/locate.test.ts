@@ -8,7 +8,7 @@ import {
 function run(fetchFn: jest.Mock, signal = new AbortController().signal) {
   return locate({
     fetch: fetchFn as unknown as typeof fetch,
-    clientVersion: '0.1.0',
+    clientVersion: '1.0.0',
     signal,
   });
 }
@@ -18,7 +18,7 @@ describe('locate', () => {
     const fetchFn = jest.fn().mockResolvedValue(jsonResponse(locateResponse));
     await run(fetchFn);
     expect(fetchFn.mock.calls[0][0]).toBe(
-      'https://locate.measurementlab.net/v2/nearest/ndt/ndt7?client_name=streamready&client_version=0.1.0',
+      'https://locate.measurementlab.net/v2/nearest/ndt/ndt7?client_name=streamready&client_version=1.0.0',
     );
   });
 

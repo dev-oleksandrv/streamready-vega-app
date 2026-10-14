@@ -8,7 +8,7 @@ const props = (over: Partial<DeviceScreenProps> = {}): DeviceScreenProps => ({
   device: {model: 'AFTOTHER', osVersion: '1.2'},
   network: {online: true, transport: 'wifi', band: '5'},
   connection: TEST_CONNECTION,
-  appVersion: '0.1.0',
+  appVersion: '1.0.0',
   onBack: jest.fn(),
   ...over,
 });
@@ -28,7 +28,7 @@ describe('DeviceScreen', () => {
       'Germany',
       'Example Net',
       '—',
-      '0.1.0',
+      '1.0.0',
     ]) {
       expect(screen.getByText(text)).toBeTruthy();
     }
