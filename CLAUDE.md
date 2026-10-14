@@ -17,7 +17,8 @@ pnpm run lint          # eslint
 pnpm run typecheck     # tsc --noEmit
 pnpm run format        # prettier
 pnpm run build:debug   # Vega debug build
-pnpm run build:release # Vega release build
+pnpm run build:release # Vega release build (build number 0: not uploadable)
+pnpm run release       # store release: version wizard, check, bump build number, build, verify, branch + commit + tag (--bump patch|minor|major|keep)
 ```
 
 ## Working agreement
