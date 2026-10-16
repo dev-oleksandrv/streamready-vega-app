@@ -7,6 +7,8 @@ interface EventFields {
   elapsedMs?: number;
   measurements?: string[];
   error?: string;
+  /** The TV's own TCP RTT, as native sends it (µs). */
+  client?: {minRttUs: number; rttUs: number};
 }
 
 /** Scriptable stand-in for the Ndt7Native Turbo Module and its event emitter. */
@@ -54,6 +56,12 @@ export function fakeNdt7Native() {
       elapsedMs: fields.elapsedMs ?? 0,
       measurements: fields.measurements ?? [],
       ...(fields.error === undefined ? {} : {error: fields.error}),
+      ...(fields.client === undefined
+        ? {}
+        : {
+            clientMinRttUs: fields.client.minRttUs,
+            clientRttUs: fields.client.rttUs,
+          }),
     });
   };
 

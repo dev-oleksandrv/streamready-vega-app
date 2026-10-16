@@ -18,4 +18,20 @@ describe('createSpeedTestEngine', () => {
       .catch((e: unknown) => e);
     expect(isSpeedTestError(error) && error.code).toBe('connect_failed');
   });
+
+  it('asks detectTunnel once when a run starts', async () => {
+    const detectTunnel = jest.fn(() => false);
+    const engine = createSpeedTestEngine(
+      fakeNdt7Native().native,
+      events,
+      detectTunnel,
+    );
+    const controller = new AbortController();
+    const run = engine
+      .run({signal: controller.signal, onEvent: () => {}})
+      .catch(() => {});
+    controller.abort();
+    await run;
+    expect(detectTunnel).toHaveBeenCalledTimes(1);
+  });
 });

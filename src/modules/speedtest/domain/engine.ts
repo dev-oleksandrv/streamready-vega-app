@@ -23,6 +23,8 @@ export interface SpeedTestResult {
   uploadBps: number;
   idleLatencyMs: number;
   loadedLatencyMs: number;
+  /** 'device' when a VPN was connected: the server then measures the VPN exit, not the TV (ADR 0011). */
+  latencySource: 'server' | 'device';
   server: ServerInfo;
   finishedAt: number;
 }

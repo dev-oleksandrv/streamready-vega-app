@@ -18,6 +18,7 @@ function resultFor(dlMbps: number, idle = 14, loaded = 52): SpeedTestResult {
     uploadBps: 23_800_000,
     idleLatencyMs: idle,
     loadedLatencyMs: loaded,
+    latencySource: 'server',
     server: {machine: 'mlab1-tst01.example', city: 'Frankfurt', country: 'DE'},
     finishedAt,
   };

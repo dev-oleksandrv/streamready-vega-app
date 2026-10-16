@@ -18,6 +18,22 @@ describe('parseNativeEvent', () => {
     ).toEqual({...valid, type: 'done', error: 'network_lost'});
   });
 
+  it('parses client rtt in microseconds to ms', () => {
+    expect(
+      parseNativeEvent({...valid, clientMinRttUs: 27_827, clientRttUs: 35_567}),
+    ).toEqual({...valid, client: {minRttMs: 27.827, rttMs: 35.567}});
+  });
+
+  it.each([
+    ['zero rtt', {clientMinRttUs: 1000, clientRttUs: 0}],
+    ['negative', {clientMinRttUs: -1, clientRttUs: 1000}],
+    ['NaN', {clientMinRttUs: Number.NaN, clientRttUs: 1000}],
+    ['string', {clientMinRttUs: '1', clientRttUs: 1000}],
+    ['only one field', {clientRttUs: 1000}],
+  ])('drops malformed client rtt (%s) without failing', (_l, extra) => {
+    expect(parseNativeEvent({...valid, ...extra})).toEqual(valid);
+  });
+
   it.each([
     ['not an object', 'x'],
     ['missing runId', {...valid, runId: undefined}],

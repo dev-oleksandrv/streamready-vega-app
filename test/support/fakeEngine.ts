@@ -12,6 +12,7 @@ export const TEST_RESULT: SpeedTestResult = {
   uploadBps: 23_800_000,
   idleLatencyMs: 14,
   loadedLatencyMs: 52,
+  latencySource: 'server',
   server: {machine: 'mlab1-tst01.example', city: 'Testville', country: 'ZZ'},
   finishedAt: 0,
 };

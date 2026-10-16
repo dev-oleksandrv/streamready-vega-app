@@ -7,7 +7,10 @@ type LatencyEvent = Extract<EngineEvent, {type: 'latency'}>;
 export const bitsPerSecond = (bytes: number, elapsedMs: number) =>
   elapsedMs > 0 ? (bytes * 8000) / elapsedMs : 0;
 
-/** Idle latency = lowest MinRTT; loaded latency = median RTT (ADR 0002). */
+/**
+ * Idle latency = lowest MinRTT; loaded latency = median RTT (ADR 0006). Fed by
+ * the server's TCPInfo, or by the TV's own TCP_INFO under a VPN (ADR 0011).
+ */
 export class DownloadLatency {
   private minRtt: number | undefined;
   private readonly rtts: number[] = [];
