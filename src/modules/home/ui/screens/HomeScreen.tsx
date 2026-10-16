@@ -13,18 +13,23 @@ export interface HomeScreenProps {
   cooldownSeconds: number;
   /** e.g. "Vega OS · Wi‑Fi 5"; built by the route from insights labels. */
   deviceSubtitle: string;
+  /** e.g. "12 saved results"; built by the route from the history store. */
+  historySubtitle: string;
   onStart: () => void;
   onOpenDevice: () => void;
   onOpenPrivacy: () => void;
+  onOpenHistory: () => void;
 }
 
 export const HomeScreen = ({
   start,
   cooldownSeconds,
   deviceSubtitle,
+  historySubtitle,
   onStart,
   onOpenDevice,
   onOpenPrivacy,
+  onOpenHistory,
 }: HomeScreenProps) => (
   <ScreenLayout style={styles.grid}>
     <View style={styles.hero}>
@@ -45,6 +50,11 @@ export const HomeScreen = ({
           title={homeContent.privacyCard.title}
           subtitle={homeContent.privacyCard.subtitle}
           onPress={onOpenPrivacy}
+        />
+        <FocusCard
+          title={homeContent.historyCard.title}
+          subtitle={historySubtitle}
+          onPress={onOpenHistory}
         />
       </View>
     </View>

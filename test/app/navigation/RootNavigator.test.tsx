@@ -23,6 +23,8 @@ import {createFakeEngine} from '../../support/fakeEngine';
 import {emitAppState} from '../../support/fakeAppState';
 import {hideNativeSplash} from '../../support/fakeSplashScreen';
 import {fakeBackHandler} from '../../support/fakeBackHandler';
+import type {HistoryStore} from '~/modules/history';
+import {createTestHistoryStore, historyEntry} from '../../support/history';
 
 const EXIT_TITLE = 'Leave StreamReady?';
 
@@ -400,6 +402,7 @@ describe('result and latency', () => {
     cooldownMs = 30_000,
     insightsStore = createTestInsightsStore(),
     networkMonitor = new FakeNetworkMonitor(),
+    historyStore?: HistoryStore,
   ) {
     const fake = createFakeEngine();
     const sessionStore = createSessionStore({
@@ -409,6 +412,7 @@ describe('result and latency', () => {
     await start('accepted', undefined, insightsStore, {
       sessionStore,
       networkMonitor,
+      historyStore,
     });
     fireEvent.press(await screen.findByRole('button', {name: 'Start'}));
     await screen.findByText('Finding nearest server…');
@@ -458,6 +462,25 @@ describe('result and latency', () => {
     await finishTest();
     fireEvent.press(screen.getByRole('button', {name: 'Back'}));
     expect(await screen.findByText('0:30')).toBeTruthy();
+  });
+
+  it('saves the result; History opens it and Back returns to the result', async () => {
+    await finishTest();
+    fireEvent.press(screen.getByRole('button', {name: 'History'}));
+    expect(await screen.findByText('Your past tests.')).toBeTruthy();
+    expect(screen.getByText('1 of 50 saved')).toBeTruthy();
+    // The header shows the IP too; the row adds the second.
+    expect(screen.getAllByText('203.0.113.7')).toHaveLength(2);
+    expect(pressBack()).toBe(true);
+    expect(await screen.findByText('Ready for 4K.')).toBeTruthy();
+  });
+
+  it('saves nothing while history is off', async () => {
+    const historyStore = await createTestHistoryStore([], false);
+    await finishTest(30_000, undefined, undefined, historyStore);
+    expect(historyStore.getState().entries).toEqual([]);
+    fireEvent.press(screen.getByRole('button', {name: 'History'}));
+    expect(await screen.findByText('No results yet.')).toBeTruthy();
   });
 
   it('Test again runs a new test once the cooldown is over', async () => {
@@ -532,5 +555,39 @@ describe('device screen', () => {
     );
     fireEvent.press(await screen.findByRole('button', {name: 'Back'}));
     expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+  });
+});
+
+describe('history screen', () => {
+  it('opens from home with its summary, and Back returns home', async () => {
+    const historyStore = await createTestHistoryStore([
+      historyEntry(Date.now()),
+    ]);
+    await start('accepted', undefined, undefined, {historyStore});
+    expect(await screen.findByText('1 saved result')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', {name: 'History'}));
+    expect(await screen.findByText('Your past tests.')).toBeTruthy();
+    expect(pressBack()).toBe(true);
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+  });
+
+  it('home shows Off while history is off', async () => {
+    const historyStore = await createTestHistoryStore([], false);
+    await start('accepted', undefined, undefined, {historyStore});
+    expect(await screen.findByText('Off')).toBeTruthy();
+  });
+
+  it('stays open with consent withdrawn', async () => {
+    const historyStore = await createTestHistoryStore([
+      historyEntry(Date.now()),
+    ]);
+    const {consentStore} = await start('accepted', undefined, undefined, {
+      historyStore,
+    });
+    await screen.findByText('Will your TV stream in 4K?');
+    act(() => consentStore.getState().withdraw());
+    fireEvent.press(screen.getByRole('button', {name: 'History'}));
+    expect(await screen.findByText('Your past tests.')).toBeTruthy();
+    expect(screen.getByText('1 of 50 saved')).toBeTruthy();
   });
 });

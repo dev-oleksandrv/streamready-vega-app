@@ -48,7 +48,8 @@ IPinfo Inc. (USA) and GeoJS handle requests under their own policies: ipinfo.io/
 - Your consent choice, saved so you are not asked again.
 - Device model, OS version and Wi‑Fi band, read to show on the Device screen. The app does not put them in its requests, but the Fire TV system may add basic device details to standard request headers. The app does not read your network name.
 - Whether a VPN is connected, read from the Fire TV system to show a VPN badge and to measure latency on your TV instead. It is never sent anywhere.
-- Test results and connection details, kept in memory only and cleared when you close the app. There is no test history.
+- Your test history, while it is on: for each of your last 50 tests, the date and time, the results (download, upload, ping, ping under load and grade), whether a VPN was on, and the public IP address and country the app showed at the time. It is saved on your TV, so it survives a restart, and it is never sent anywhere. History is on by default. Turn it off or clear it under Home → History.
+- The latest result and connection details, kept in memory and cleared when you close the app.
 
 I run no servers, so I never receive your data.
 
@@ -60,13 +61,14 @@ Amazon, as the Fire TV platform, may collect data such as app usage and crash re
 
 ## 08. Why, and on what basis
 
-Purpose: measure your connection, tell you whether it can stream 4K, and show your connection details.
+Purpose: measure your connection, tell you whether it can stream 4K, show your connection details, and keep a history of your results on your TV.
 
 Legal basis: your consent (GDPR Art. 6(1)(a)). Without consent, the app can't run tests or lookups. Nothing else changes.
 
 ## 09. Your choices and rights
 
-- Withdraw consent at any time: Home → Privacy Policy → Withdraw consent. The app stops sending data immediately. Data already sent stays with those services.
+- Withdraw consent at any time: Home → Privacy Policy → Withdraw consent. The app stops sending data immediately. Data already sent stays with those services. Your saved test history stays on your TV until you clear it.
+- Turn off or clear your test history at any time: Home → History. Turning it off stops saving new results; Clear history deletes the saved ones.
 - Uninstalling the app deletes everything it stored on your TV.
 - Depending on where you live (GDPR, UK GDPR, CCPA and others), you may have the right to access, correct, delete or restrict your data, or to object to its use. I hold no data about you, so send those requests to M-Lab, IPinfo or GeoJS directly.
 - You can complain to your local data protection authority.

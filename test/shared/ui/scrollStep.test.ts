@@ -1,4 +1,4 @@
-import {nextScrollOffset} from '~/modules/privacy/ui/components/scrollStep';
+import {nextScrollOffset} from '~/shared/ui/scrollStep';
 
 const base = {offset: 300, step: 100, max: 500};
 

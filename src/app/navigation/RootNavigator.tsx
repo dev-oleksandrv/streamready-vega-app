@@ -14,6 +14,7 @@ import {AppHeader} from '../layout/AppHeader';
 import {ExitDialog} from '../layout/ExitDialog';
 import {SplashScreen} from '../screens/SplashScreen';
 import {DeviceRoute} from './DeviceRoute';
+import {HistoryRoute} from './HistoryRoute';
 import {HomeRoute} from './HomeRoute';
 import {LatencyRoute} from './LatencyRoute';
 import {PrivacyRoute} from './PrivacyRoute';
@@ -62,6 +63,7 @@ export const RootNavigator = () => {
           <Stack.Screen name="Test" component={TestRoute} />
           <Stack.Screen name="Result" component={ResultRoute} />
           <Stack.Screen name="Latency" component={LatencyRoute} />
+          <Stack.Screen name="History" component={HistoryRoute} />
         </Stack.Navigator>
       </NavigationContainer>
       <AppHeader />

@@ -38,6 +38,7 @@ function setup(
     onTestAgain: jest.fn(),
     onBack: jest.fn(),
     onOpenLatency: jest.fn(),
+    onOpenHistory: jest.fn(),
     ...overrides,
   };
   render(<ResultScreen {...props} />);
@@ -105,9 +106,11 @@ describe('ResultScreen', () => {
     fireEvent.press(screen.getByRole('button', {name: 'Test again'}));
     fireEvent.press(screen.getByRole('button', {name: 'Back'}));
     fireEvent.press(screen.getByRole('button', {name: 'Why it lags'}));
+    fireEvent.press(screen.getByRole('button', {name: 'History'}));
     expect(props.onTestAgain).toHaveBeenCalledTimes(1);
     expect(props.onBack).toHaveBeenCalledTimes(1);
     expect(props.onOpenLatency).toHaveBeenCalledTimes(1);
+    expect(props.onOpenHistory).toHaveBeenCalledTimes(1);
   });
 
   it('cooldown shows the countdown and ignores presses', () => {

@@ -37,3 +37,4 @@ An ADR records one significant decision: the context, what was decided, and what
 - [0009 Vega SVG for in-house icons](0009-vega-svg-for-icons.md)
 - [0010 Changesets for versioning and release notes](0010-changesets-versioning.md)
 - [0011 VPN detection and device-side latency under VPN](0011-vpn-detection-and-device-latency.md)
+- [0012 Local test history](0012-local-test-history.md)

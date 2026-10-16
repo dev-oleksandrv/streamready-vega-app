@@ -6,7 +6,7 @@ export interface PolicySectionContent {
 
 // Mirrors what the code does: M-Lab locate + ndt7 (speedtest), ipinfo.io and
 // GeoJS (insights), the system VPN state (insights, on-device only), MMKV
-// consent (privacy). Update it with any change to those.
+// consent (privacy) and the MMKV test history (history). Update it with any change to those.
 export const POLICY_SECTIONS: readonly PolicySectionContent[] = [
   {
     n: '01',
@@ -36,7 +36,7 @@ export const POLICY_SECTIONS: readonly PolicySectionContent[] = [
   {
     n: '06',
     title: 'What stays on your TV',
-    body: '• Your consent choice, saved so you are not asked again.\n• Device model, OS version and Wi‑Fi band, read to show on the Device screen. The app does not put them in its requests, but the Fire TV system may add basic device details to standard request headers. The app does not read your network name.\n• Whether a VPN is connected, read from the Fire TV system to show a VPN badge and to measure latency on your TV instead. It is never sent anywhere.\n• Test results and connection details, kept in memory only and cleared when you close the app. There is no test history.\nI run no servers, so I never receive your data.',
+    body: '• Your consent choice, saved so you are not asked again.\n• Device model, OS version and Wi‑Fi band, read to show on the Device screen. The app does not put them in its requests, but the Fire TV system may add basic device details to standard request headers. The app does not read your network name.\n• Whether a VPN is connected, read from the Fire TV system to show a VPN badge and to measure latency on your TV instead. It is never sent anywhere.\n• Your test history, while it is on: for each of your last 50 tests, the date and time, the results (download, upload, ping, ping under load and grade), whether a VPN was on, and the public IP address and country the app showed at the time. It is saved on your TV, so it survives a restart, and it is never sent anywhere. History is on by default. Turn it off or clear it under Home → History.\n• The latest result and connection details, kept in memory and cleared when you close the app.\nI run no servers, so I never receive your data.',
   },
   {
     n: '07',
@@ -46,12 +46,12 @@ export const POLICY_SECTIONS: readonly PolicySectionContent[] = [
   {
     n: '08',
     title: 'Why, and on what basis',
-    body: "Purpose: measure your connection, tell you whether it can stream 4K, and show your connection details.\nLegal basis: your consent (GDPR Art. 6(1)(a)). Without consent, the app can't run tests or lookups. Nothing else changes.",
+    body: "Purpose: measure your connection, tell you whether it can stream 4K, show your connection details, and keep a history of your results on your TV.\nLegal basis: your consent (GDPR Art. 6(1)(a)). Without consent, the app can't run tests or lookups. Nothing else changes.",
   },
   {
     n: '09',
     title: 'Your choices and rights',
-    body: '• Withdraw consent at any time: Home → Privacy Policy → Withdraw consent. The app stops sending data immediately. Data already sent stays with those services.\n• Uninstalling the app deletes everything it stored on your TV.\n• Depending on where you live (GDPR, UK GDPR, CCPA and others), you may have the right to access, correct, delete or restrict your data, or to object to its use. I hold no data about you, so send those requests to M-Lab, IPinfo or GeoJS directly.\n• You can complain to your local data protection authority.',
+    body: '• Withdraw consent at any time: Home → Privacy Policy → Withdraw consent. The app stops sending data immediately. Data already sent stays with those services. Your saved test history stays on your TV until you clear it.\n• Turn off or clear your test history at any time: Home → History. Turning it off stops saving new results; Clear history deletes the saved ones.\n• Uninstalling the app deletes everything it stored on your TV.\n• Depending on where you live (GDPR, UK GDPR, CCPA and others), you may have the right to access, correct, delete or restrict your data, or to object to its use. I hold no data about you, so send those requests to M-Lab, IPinfo or GeoJS directly.\n• You can complain to your local data protection authority.',
   },
   {
     n: '10',

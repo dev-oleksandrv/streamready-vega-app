@@ -7,4 +7,5 @@ export type RootStackParamList = {
   Test: undefined;
   Result: undefined;
   Latency: undefined;
+  History: undefined;
 };

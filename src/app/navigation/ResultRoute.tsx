@@ -40,6 +40,10 @@ export const ResultRoute = ({
     () => navigation.navigate('Latency'),
     [navigation],
   );
+  const openHistory = useCallback(
+    () => navigation.navigate('History'),
+    [navigation],
+  );
 
   if (!result || !view) {
     return null;
@@ -55,6 +59,7 @@ export const ResultRoute = ({
       onTestAgain={testAgain}
       onBack={back}
       onOpenLatency={openLatency}
+      onOpenHistory={openHistory}
     />
   );
 };

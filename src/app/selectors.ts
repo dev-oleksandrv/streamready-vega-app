@@ -8,6 +8,7 @@ import {
   type NetworkStatus,
   type VpnStatus,
 } from '~/modules/insights';
+import type {HistoryEntry} from '~/modules/history';
 import {useConsent, type ConsentStatus} from '~/modules/privacy';
 import {
   canStartTest,
@@ -97,4 +98,36 @@ export function useResultVerdict(
       deviceLimitMbps: profile?.limitMbps,
     };
   }, [result, network, model]);
+}
+
+export interface HistoryInputs {
+  result: SpeedTestResult;
+  verdict: Verdict;
+  /** Already passed through selectVisibleInsights. */
+  connection?: ConnectionInfo;
+  vpn: VpnStatus;
+}
+
+/** A finished test as History saves it: the values and grade the Result screen showed. */
+export function selectHistoryEntry({
+  result,
+  verdict,
+  connection,
+  vpn,
+}: HistoryInputs): HistoryEntry {
+  const entry: HistoryEntry = {
+    finishedAt: result.finishedAt,
+    downloadBps: result.downloadBps,
+    uploadBps: result.uploadBps,
+    idleLatencyMs: result.idleLatencyMs,
+    loadedLatencyMs: result.loadedLatencyMs,
+    grade: verdict.grade,
+    vpn,
+  };
+  if (connection) {
+    entry.ip = connection.ip;
+    entry.countryCode = connection.countryCode;
+    entry.country = connection.country;
+  }
+  return entry;
 }

@@ -2,6 +2,7 @@ import {useIsFocused} from '@amazon-devices/react-navigation__native';
 import type {NativeStackScreenProps} from '@amazon-devices/react-navigation__native-stack';
 import React, {useCallback} from 'react';
 
+import {historySummary, useHistory} from '~/modules/history';
 import {HomeScreen} from '~/modules/home';
 import {deviceProfile, deviceSubtitle, useInsights} from '~/modules/insights';
 import {useConsent} from '~/modules/privacy';
@@ -22,6 +23,8 @@ export const HomeRoute = ({
   const network = useInsights((s) => s.network);
   const model = useInsights((s) => s.device?.model);
   const storedCooldown = useSession((s) => s.cooldownUntil);
+  const historyEnabled = useHistory((s) => s.enabled);
+  const historyCount = useHistory((s) => s.entries.length);
   // The stack keeps Home mounted under Device and the test; no ticking while hidden.
   const now = useCooldownClock(storedCooldown, useIsFocused());
   const cooldownUntil = boundedCooldown(storedCooldown, now);
@@ -35,15 +38,21 @@ export const HomeRoute = ({
     () => navigation.navigate('Privacy', {mode: 'view'}),
     [navigation],
   );
+  const openHistory = useCallback(
+    () => navigation.navigate('History'),
+    [navigation],
+  );
 
   return (
     <HomeScreen
       start={selectStartCheck({consent, network, cooldownUntil, now})}
       cooldownSeconds={cooldownSeconds(cooldownUntil, now)}
       deviceSubtitle={deviceSubtitle(network, deviceProfile(model))}
+      historySubtitle={historySummary(historyEnabled, historyCount)}
       onStart={start}
       onOpenDevice={openDevice}
       onOpenPrivacy={openPrivacy}
+      onOpenHistory={openHistory}
     />
   );
 };
