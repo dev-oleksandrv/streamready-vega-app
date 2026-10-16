@@ -43,5 +43,6 @@ export {
   useInsightsStore,
 } from './ui/InsightsProvider';
 export type {InsightsProviderProps} from './ui/InsightsProvider';
+export {VpnBadge} from './ui/components/VpnBadge';
 export {DeviceScreen} from './ui/screens/DeviceScreen';
 export type {DeviceScreenProps} from './ui/screens/DeviceScreen';

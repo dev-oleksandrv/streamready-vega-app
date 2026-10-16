@@ -2,6 +2,7 @@ import {
   selectStartCheck,
   selectVerdict,
   selectVisibleInsights,
+  selectVisibleVpn,
 } from '~/app/selectors';
 import {INITIAL_NETWORK} from '~/modules/insights';
 import {TEST_RESULT} from '../support/fakeEngine';
@@ -18,6 +19,17 @@ describe('selectVisibleInsights', () => {
 
   it('is undefined without a connection', () => {
     expect(selectVisibleInsights('accepted', undefined)).toBeUndefined();
+  });
+});
+
+describe('selectVisibleVpn', () => {
+  it.each([
+    ['insights', TEST_CONNECTION, 'on', true],
+    ['insights', TEST_CONNECTION, 'off', false],
+    ['insights', TEST_CONNECTION, 'unknown', false],
+    ['no insights', undefined, 'on', false],
+  ] as const)('%s + vpn %s → %p', (_l, connection, vpn, expected) => {
+    expect(selectVisibleVpn(connection, vpn)).toBe(expected);
   });
 });
 

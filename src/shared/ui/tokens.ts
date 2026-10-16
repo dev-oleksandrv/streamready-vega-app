@@ -20,6 +20,9 @@ export const colors = {
   lime: '#C8F560',
   onLime: '#0B0C0E',
   amber: '#FFC24B',
+  /** VPN badge fill and border: amber at 12% and 45%. */
+  amberSurface: 'rgba(255,194,75,0.12)',
+  amberBorder: 'rgba(255,194,75,0.45)',
   coral: '#FF7A66',
   /** Background of a failed stream check. */
   failSurface: '#2A1D1B',

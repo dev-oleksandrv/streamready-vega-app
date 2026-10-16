@@ -2,13 +2,14 @@ import {act, screen} from '@testing-library/react-native';
 import React from 'react';
 
 import {AppHeader} from '~/app/layout/AppHeader';
-import type {NetworkStatus} from '~/modules/insights';
+import type {NetworkStatus, VpnStatus} from '~/modules/insights';
 import type {ConsentStatus} from '~/modules/privacy';
 import {colors} from '~/shared/ui';
 import {createTestConsentStore} from '../../support/consent';
 import {
   createTestInsightsStore,
   FakeNetworkMonitor,
+  fakeVpnSource,
 } from '../../support/insights';
 import {renderWithProviders} from '../../support/renderWithProviders';
 import {flatStyle} from '../../support/style';
@@ -17,9 +18,11 @@ async function renderHeader(
   status: ConsentStatus,
   network?: NetworkStatus,
   withGeo = true,
+  vpn: VpnStatus = 'off',
 ) {
   const consentStore = await createTestConsentStore(status);
-  const insightsStore = createTestInsightsStore();
+  const insightsStore = createTestInsightsStore({vpn: fakeVpnSource(vpn)});
+  insightsStore.getState().refreshVpn();
   if (withGeo) {
     await insightsStore.getState().refreshConnection();
   }
@@ -69,6 +72,20 @@ describe('AppHeader', () => {
   ])('labels %o as %s', async (network, label) => {
     await renderHeader('accepted', network);
     expect(screen.getByText(label)).toBeTruthy();
+  });
+
+  it('shows the VPN badge with insights when the VPN is on', async () => {
+    await renderHeader('accepted', undefined, true, 'on');
+    expect(screen.getByText('VPN on')).toBeTruthy();
+  });
+
+  it.each([
+    ['vpn off', 'accepted', true, 'off'],
+    ['consent withdrawn', 'withdrawn', true, 'on'],
+    ['no geo', 'accepted', false, 'on'],
+  ] as const)('hides the VPN badge when %s', async (_l, consent, geo, vpn) => {
+    await renderHeader(consent, undefined, geo, vpn);
+    expect(screen.queryByText('VPN on')).toBeNull();
   });
 
   it('turns the dot red when the network drops', async () => {

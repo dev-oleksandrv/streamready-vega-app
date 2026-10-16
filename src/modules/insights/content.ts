@@ -2,6 +2,7 @@ export const insightsContent = {
   system: 'Vega OS',
   separator: ' · ',
   unknownValue: '—',
+  vpnOn: 'VPN on',
   network: {
     offline: 'Offline',
     wifi: 'Wi‑Fi',

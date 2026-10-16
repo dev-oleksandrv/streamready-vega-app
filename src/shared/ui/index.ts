@@ -14,4 +14,6 @@ export {Dialog} from './Dialog';
 export {ScreenLayout} from './ScreenLayout';
 export {CheckIcon} from './icons/CheckIcon';
 export type {IconProps} from './icons/CheckIcon';
+export {ShieldIcon} from './icons/ShieldIcon';
+export type {ShieldIconProps} from './icons/ShieldIcon';
 export {CrossIcon} from './icons/CrossIcon';

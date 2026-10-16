@@ -8,6 +8,7 @@ import {colors} from '~/shared/ui';
 
 import {useColdStartInsights} from '../hooks/useColdStartInsights';
 import {useNativeSplash} from '../hooks/useNativeSplash';
+import {useVpnRefresh} from '../hooks/useVpnRefresh';
 import {AppHeader} from '../layout/AppHeader';
 import {SplashScreen} from '../screens/SplashScreen';
 import {DeviceRoute} from './DeviceRoute';
@@ -30,6 +31,7 @@ export const RootNavigator = () => {
   const hydrated = useConsentHydrated();
   const status = useConsent((s) => s.status);
   const insightsSettled = useColdStartInsights(hydrated, status);
+  useVpnRefresh();
   const ready = hydrated && insightsSettled;
   useNativeSplash(ready);
 

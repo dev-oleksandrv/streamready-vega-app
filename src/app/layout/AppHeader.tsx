@@ -1,17 +1,18 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 
-import {connectionLabel, useInsights} from '~/modules/insights';
+import {connectionLabel, useInsights, VpnBadge} from '~/modules/insights';
 import {colors, radii, scale, Text} from '~/shared/ui';
 
 import {appContent} from '../content';
-import {useVisibleConnection} from '../selectors';
+import {useVisibleConnection, useVisibleVpn} from '../selectors';
 import {Wordmark} from './Wordmark';
 
 /** Global top band: brand left; visible insights and network status right. Never focusable. */
 export const AppHeader = () => {
   const connection = useVisibleConnection();
   const network = useInsights((s) => s.network);
+  const vpnOn = useVisibleVpn();
 
   return (
     <View style={styles.bar} pointerEvents="none">
@@ -22,6 +23,7 @@ export const AppHeader = () => {
       <View style={styles.status}>
         {connection ? (
           <>
+            {vpnOn ? <VpnBadge /> : null}
             <View style={styles.country}>
               <View style={styles.chip}>
                 <Text weight="semibold" style={styles.chipText}>
