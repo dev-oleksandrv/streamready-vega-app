@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useLayoutEffect, useState} from 'react';
 import {AppState, BackHandler, StyleSheet, View} from 'react-native';
 
 import {scale, ScreenLayout} from '~/shared/ui';
@@ -36,8 +36,10 @@ export const TestScreen = ({online, onExit, onDone}: TestScreenProps) => {
   const error = useSession((s) => s.error);
   const [confirming, setConfirming] = useState(false);
 
-  // Declared first so a mount while offline starts, then fails as connection lost.
-  useEffect(() => {
+  // A layout effect: its update lands before paint, so the first frame shows
+  // this run, not the previous one. Also runs before the effects below, so a
+  // mount while offline starts, then fails as connection lost.
+  useLayoutEffect(() => {
     store.getState().start();
     return () => store.getState().stop();
   }, [store]);
