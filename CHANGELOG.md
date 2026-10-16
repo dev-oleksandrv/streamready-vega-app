@@ -2,6 +2,12 @@
 
 User-facing changes in each store release. Entries come from the changesets merged since the previous release (see [CONTRIBUTING.md](CONTRIBUTING.md#changesets)).
 
+## 1.3.0
+
+### Minor Changes
+
+- 826903e: Adds History: your last 50 speed tests are saved on your TV with download, upload, ping, ping under load, grade, VPN state, IP address and country. Open it from the home screen or a result. Turn saving off or clear it at any time; the Privacy Policy explains what is kept.
+
 ## 1.2.0
 
 ### Minor Changes
