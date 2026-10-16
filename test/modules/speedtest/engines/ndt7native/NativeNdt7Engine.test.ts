@@ -14,9 +14,13 @@ import {
 
 const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
-function setup(body: unknown = locateResponse) {
+function setup(
+  body: unknown = locateResponse,
+  detectTunnel?: () => boolean,
+) {
   const fake = fakeNdt7Native();
   const engine = new NativeNdt7Engine({
+    detectTunnel,
     native: fake.native,
     events: fake.events,
     fetch: jest
@@ -44,6 +48,92 @@ const downloadDone = {
 };
 
 describe('NativeNdt7Engine', () => {
+  const runToEnd = async (s: ReturnType<typeof setup>) => {
+    s.fake.progress(s.run(0), {
+      bytes: 500_000,
+      elapsedMs: 500,
+      measurements: [measurement({MinRTT: 1_000, RTT: 1_000})],
+      client: {minRttUs: 30_000, rttUs: 40_000},
+    });
+    s.fake.done(s.run(0), {
+      ...downloadDone,
+      measurements: [measurement({MinRTT: 1_000, RTT: 1_000})],
+      client: {minRttUs: 28_000, rttUs: 50_000},
+    });
+    await flush();
+    s.fake.done(s.run(1), {
+      measurements: [
+        measurement({BytesReceived: 500_000, ElapsedTime: 1_000_000}),
+      ],
+    });
+    return s.promise;
+  };
+
+  it('uses the device rtt when a vpn is connected', async () => {
+    const s = setup(undefined, () => true);
+    await flush();
+    await expect(runToEnd(s)).resolves.toMatchObject({
+      idleLatencyMs: 28,
+      loadedLatencyMs: 45,
+      latencySource: 'device',
+    });
+    expect(s.events).toContainEqual({
+      type: 'latency',
+      idleMs: 30,
+      loadedMs: 40,
+    });
+  });
+
+  it('keeps server rtt without a vpn even when client samples arrive', async () => {
+    const s = setup(undefined, () => false);
+    await flush();
+    await expect(runToEnd(s)).resolves.toMatchObject({
+      idleLatencyMs: 1,
+      loadedLatencyMs: 1,
+      latencySource: 'server',
+    });
+  });
+
+  it('falls back to server rtt when a vpn run gets no client samples', async () => {
+    const s = setup(undefined, () => true);
+    await flush();
+    s.fake.done(s.run(0), downloadDone);
+    await flush();
+    s.fake.done(s.run(1), {
+      measurements: [
+        measurement({BytesReceived: 500_000, ElapsedTime: 1_000_000}),
+      ],
+    });
+    await expect(s.promise).resolves.toMatchObject({
+      idleLatencyMs: 10,
+      loadedLatencyMs: 40,
+      latencySource: 'server',
+    });
+  });
+
+  it('under a vpn, shows no server latency before the first device sample', async () => {
+    const s = setup(undefined, () => true);
+    await flush();
+    s.fake.progress(s.run(0), {
+      bytes: 100_000,
+      elapsedMs: 250,
+      measurements: [measurement({MinRTT: 1_000, RTT: 1_000})],
+    });
+    expect(s.events.filter((e) => e.type === 'latency')).toEqual([]);
+    await runToEnd(s);
+    expect(s.events).not.toContainEqual(
+      expect.objectContaining({type: 'latency', idleMs: 1}),
+    );
+  });
+
+  it('asks about the vpn once per run, at the start', async () => {
+    const detectTunnel = jest.fn(() => false);
+    const s = setup(undefined, detectTunnel);
+    await flush();
+    await runToEnd(s);
+    expect(detectTunnel).toHaveBeenCalledTimes(1);
+  });
+
   it('runs download then upload over plain ws urls and computes the result', async () => {
     const s = setup();
     await flush();
@@ -78,6 +168,7 @@ describe('NativeNdt7Engine', () => {
       uploadBps: 4_000_000,
       idleLatencyMs: 10,
       loadedLatencyMs: 30,
+      latencySource: 'server',
       server: {
         machine: 'mlab1-tst01.mlab-sandbox.measurement-lab.example',
         city: 'Testville 1',

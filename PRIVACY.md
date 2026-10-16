@@ -2,7 +2,7 @@
 
 This is the same policy the app shows on its Privacy Policy screen. Its history is in this file's git log.
 
-Last updated: 14 October 2026.
+Last updated: 16 October 2026.
 
 ## 01. In short
 
@@ -39,7 +39,7 @@ Full policy: measurementlab.net/privacy
 
 ## 05. Connection lookup
 
-After you accept, and each time the app starts, it asks ipinfo.io where your public IP address is located. If that fails, it asks GeoJS (geojs.io) instead. The service receives your IP address and standard request details. It returns your country, city and internet provider, which the app shows on screen. This location is approximate, at city level, not your address.
+After you accept, each time the app starts, and when you return to it after a VPN was switched on or off, it asks ipinfo.io where your public IP address is located. If that fails, it asks GeoJS (geojs.io) instead. The service receives your IP address and standard request details. It returns your country, city and internet provider, which the app shows on screen. This location is approximate, at city level, not your address.
 
 IPinfo Inc. (USA) and GeoJS handle requests under their own policies: ipinfo.io/privacy-policy and geojs.io/privacy
 
@@ -47,6 +47,7 @@ IPinfo Inc. (USA) and GeoJS handle requests under their own policies: ipinfo.io/
 
 - Your consent choice, saved so you are not asked again.
 - Device model, OS version and Wi‑Fi band, read to show on the Device screen. The app does not put them in its requests, but the Fire TV system may add basic device details to standard request headers. The app does not read your network name.
+- Whether a VPN is connected, read from the Fire TV system to show a VPN badge and to measure latency on your TV instead. It is never sent anywhere.
 - Test results and connection details, kept in memory only and cleared when you close the app. There is no test history.
 
 I run no servers, so I never receive your data.
@@ -78,4 +79,4 @@ StreamReady is not directed at children under 16, and I don't knowingly process 
 
 If what the app does with data changes, I will update this policy in the app. Every version is public in the source code.
 
-Last updated: 14 October 2026.
+Last updated: 16 October 2026.

@@ -38,7 +38,7 @@ src/
       ui/                  # screens/TestScreen, ResultScreen, LatencyScreen + components, liveText, resultText, toneColor
       content.ts           # Test screen copy
     verdict/               # pure: domain/thresholds, grade, evaluate; content.ts (copy)
-    insights/              # GeoIpProvider + providers, device adapters, insightsStore, DeviceScreen
+    insights/              # GeoIpProvider + providers, device adapters (incl. VPN state), insightsStore, DeviceScreen, VpnBadge
     home/                  # HomeScreen
   shared/
     ui/                    # tokens, scale(), Text, FocusButton, FocusCard, Dialog, ScreenLayout, icons (SVG, ADR 0009)
@@ -70,7 +70,7 @@ Zustand, one store per module.
 | Store | State | Persisted |
 |---|---|---|
 | `privacy/consentStore` | `status: 'pending' \| 'accepted' \| 'withdrawn'` | yes, in MMKV (only this key) |
-| `insights/insightsStore` | `connection?`, `device?`, `network: {online, transport: 'wifi' \| 'ethernet' \| 'other' \| 'none', band?}`, `status: 'idle' \| 'loading' \| 'ready' \| 'error'` | no |
+| `insights/insightsStore` | `connection?`, `device?`, `network: {online, transport: 'wifi' \| 'ethernet' \| 'other' \| 'none', band?}`, `status: 'idle' \| 'loading' \| 'ready' \| 'error'`, `vpn: 'unknown' \| 'off' \| 'on'` | no |
 | `speedtest/sessionStore` | `status: 'idle' \| 'running' \| 'done' \| 'failed'`, `phase?`, `server?`, `liveBps?`, `idleMs?`, `loadedMs?`, `progress` (Ping/Download/Upload, 0–1), `bars` (≤ 120), `peakBps`, `result?`, `error?` (UI variant), `cooldownUntil?` | no |
 
 Stores never import other modules' stores. Anything derived from several stores goes in `app/selectors.ts`.
@@ -97,7 +97,7 @@ Stores never import other modules' stores. Anything derived from several stores 
 
 ### 5.3 Insights visibility
 
-`selectVisibleInsights` returns the insights only when consent is `accepted`. It is the only way the UI reads insights.
+`selectVisibleInsights` returns the insights only when consent is `accepted`. It is the only way the UI reads insights. `useVisibleVpn` applies the same gate to the VPN badge (ADR 0011).
 
 If the geo fetch fails, geo insights are not rendered at all: the header shows no country and no IP, and the Device screen drops the Public IP, Country and Provider rows. Device-local rows always render.
 
@@ -183,8 +183,8 @@ The only engine is `NativeNdt7Engine` (ADR 0006): TypeScript runs Locate and com
 |---|---|
 | Download | Total bytes over total time, the same as the M-Lab reference client |
 | Upload | The last server measurement, `TCPInfo.BytesReceived / ElapsedTime` |
-| Idle latency | `MinRTT` |
-| Loaded latency | Median download `RTT` |
+| Idle latency | `MinRTT`; under a VPN, the TV's lowest `tcpi_min_rtt` (ADR 0011) |
+| Loaded latency | Median download `RTT`; under a VPN, the TV's median `tcpi_rtt` (ADR 0011) |
 
 The engine uses a single stream, as the ndt7 design intends. Protocol reference: https://github.com/m-lab/ndt-server/blob/main/spec/ndt7-protocol.md
 

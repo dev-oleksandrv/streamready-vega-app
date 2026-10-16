@@ -59,6 +59,11 @@ id = "com.amazon.network.service"
 [[wants.privilege]]
 id = "com.amazon.network.privilege.net-info"
 
+# VpnNative: IVpnManager.getVpnState() needs only this privilege; every VPN
+# control call needs net-vpn-ctrl, which the app never asks for. See ADR 0011.
+[[wants.privilege]]
+id = "com.amazon.network.privilege.network-access"
+
 [components]
 [[components.interactive]]
 id = "dev.voronkov.speedtest.main"

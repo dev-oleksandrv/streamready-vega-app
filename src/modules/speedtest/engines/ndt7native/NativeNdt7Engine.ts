@@ -24,6 +24,8 @@ export interface NativeNdt7EngineDeps {
   now: () => number;
   clientVersion: string;
   logger?: Logger;
+  /** True when a VPN is connected; read once per run (ADR 0011). */
+  detectTunnel?: () => boolean;
 }
 
 interface DownloadOutcome {
@@ -31,6 +33,7 @@ interface DownloadOutcome {
   bps: number;
   idleLatencyMs: number;
   loadedLatencyMs: number;
+  latencySource: 'server' | 'device';
 }
 
 /**
@@ -69,6 +72,7 @@ export class NativeNdt7Engine implements SpeedTestEngine {
     onEvent: (event: EngineEvent) => void,
   ): Promise<SpeedTestResult> {
     const {fetch: fetchFn, now, clientVersion} = this.deps;
+    const tunneled = this.deps.detectTunnel?.() ?? false;
     const enter = (phase: TestPhase) => {
       this.log.info('phase', phase);
       onEvent({type: 'phase', phase});
@@ -80,7 +84,13 @@ export class NativeNdt7Engine implements SpeedTestEngine {
     ).slice(0, MAX_SERVER_ATTEMPTS);
 
     enter('latency');
-    const download = await this.download(targets, signal, onEvent, enter);
+    const download = await this.download(
+      targets,
+      signal,
+      onEvent,
+      enter,
+      tunneled,
+    );
 
     enter('upload');
     const uploadBps = await this.upload(download.target, signal, onEvent);
@@ -90,6 +100,7 @@ export class NativeNdt7Engine implements SpeedTestEngine {
       uploadBps,
       idleLatencyMs: download.idleLatencyMs,
       loadedLatencyMs: download.loadedLatencyMs,
+      latencySource: download.latencySource,
       server: download.target.server,
       finishedAt: now(),
     };
@@ -101,9 +112,11 @@ export class NativeNdt7Engine implements SpeedTestEngine {
     signal: AbortSignal,
     onEvent: (event: EngineEvent) => void,
     enter: (phase: TestPhase) => void,
+    tunneled: boolean,
   ): Promise<DownloadOutcome> {
     for (const target of targets) {
       const latency = new DownloadLatency();
+      const device = new DownloadLatency();
       let connected = false;
       const connect = () => {
         if (!connected) {
@@ -113,10 +126,17 @@ export class NativeNdt7Engine implements SpeedTestEngine {
           enter('download');
         }
       };
-      const absorb = (event: NativeRunEvent) =>
+      const absorb = (event: NativeRunEvent) => {
         event.measurements.forEach((text) =>
           latency.add(parseMeasurement(text)),
         );
+        if (event.client) {
+          device.add(event.client);
+        }
+      };
+      // Under a VPN the server's TCPInfo measures its link to the VPN exit.
+      const deviceReady = () => tunneled && device.idleMs !== undefined;
+      const live = () => (deviceReady() ? device : latency);
       try {
         const done = await runNative(
           this.deps.native,
@@ -136,7 +156,9 @@ export class NativeNdt7Engine implements SpeedTestEngine {
                   elapsedMs: event.elapsedMs,
                 });
               }
-              const latencyEvent = latency.nextEvent();
+              // Under a VPN, server values (the VPN exit) are never shown live.
+              const latencyEvent =
+                tunneled && !deviceReady() ? undefined : live().nextEvent();
               if (latencyEvent) {
                 onEvent(latencyEvent);
               }
@@ -145,7 +167,11 @@ export class NativeNdt7Engine implements SpeedTestEngine {
         );
         connect();
         absorb(done);
-        const idleLatencyMs = latency.idleMs;
+        if (tunneled && !deviceReady()) {
+          this.log.warn('vpn run without device rtt; using server rtt');
+        }
+        const source = live();
+        const idleLatencyMs = source.idleMs;
         if (idleLatencyMs === undefined) {
           throw new SpeedTestError('protocol');
         }
@@ -157,7 +183,8 @@ export class NativeNdt7Engine implements SpeedTestEngine {
           target,
           bps: bitsPerSecond(done.bytes, done.elapsedMs),
           idleLatencyMs,
-          loadedLatencyMs: latency.loadedMs() ?? idleLatencyMs,
+          loadedLatencyMs: source.loadedMs() ?? idleLatencyMs,
+          latencySource: source === device ? 'device' : 'server',
         };
       } catch (error) {
         if (

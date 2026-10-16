@@ -28,6 +28,7 @@
     "release": "scripts/release.sh",
     "changeset": "changeset",
     "codegen:ndt7": "keplerscript-turbomodule-api codegen src/modules/speedtest/engines/ndt7native/NativeNdt7.ts -o kepler/turbo-modules/ -s Ndt7TurboModule -c Ndt7Native",
+    "codegen:vpn": "keplerscript-turbomodule-api codegen src/modules/insights/device/NativeVpn.ts -o kepler/turbo-modules/ -s VpnTurboModule -c VpnNative",
     "test:native": "scripts/test-native.sh"
   },
   "dependencies": {

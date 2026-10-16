@@ -23,10 +23,10 @@ Outcome runUpload(WsSession& session, RunSink& sink, const RunLimits& limits, Ca
     const int64_t start = monotonicMs();
     Throttle throttle(start, limits.emitIntervalMs);
     const auto finish = [&](ErrorCode error) {
-        return Outcome{error, {sent, monotonicMs() - start, session.takeMeasurements()}};
+        return Outcome{error, {sent, monotonicMs() - start, session.takeMeasurements(), std::nullopt}};
     };
 
-    sink.onProgress({0, 0, {}});
+    sink.onProgress({0, 0, {}, std::nullopt});
     while (monotonicMs() - start < limits.uploadDurationMs) {
         if (token.cancelled()) {
             return finish(ErrorCode::Aborted);
@@ -56,7 +56,7 @@ Outcome runUpload(WsSession& session, RunSink& sink, const RunLimits& limits, Ca
         }
         const int64_t now = monotonicMs();
         if (throttle.ready(now)) {
-            sink.onProgress({sent, now - start, session.takeMeasurements()});
+            sink.onProgress({sent, now - start, session.takeMeasurements(), std::nullopt});
         }
     }
 
@@ -64,7 +64,7 @@ Outcome runUpload(WsSession& session, RunSink& sink, const RunLimits& limits, Ca
     // Best effort: the server's last measurements arrive during the close handshake.
     session.sendClose(session.closeReceived() ? session.closeCode() : 1000);
     session.drainUntilEof(limits.closeWaitMs);
-    return Outcome{ErrorCode::None, {sent, elapsed, session.takeMeasurements()}};
+    return Outcome{ErrorCode::None, {sent, elapsed, session.takeMeasurements(), std::nullopt}};
 }
 
 }  // namespace ndt7

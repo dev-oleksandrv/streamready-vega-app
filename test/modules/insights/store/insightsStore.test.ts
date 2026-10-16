@@ -3,6 +3,7 @@ import {
   createTestInsightsStore,
   fakeDeviceSource,
   fakeGeo,
+  fakeVpnSource,
   TEST_CONNECTION,
 } from '../../../support/insights';
 
@@ -12,6 +13,29 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 
 describe('insightsStore', () => {
+  it('starts with an unknown vpn', () => {
+    expect(createTestInsightsStore().getState().vpn).toBe('unknown');
+  });
+
+  it('refreshVpn reads the source, stores and returns it', () => {
+    const vpn = fakeVpnSource('on');
+    const store = createTestInsightsStore({vpn});
+    expect(store.getState().refreshVpn()).toBe('on');
+    expect(store.getState().vpn).toBe('on');
+    vpn.status = 'off';
+    expect(store.getState().refreshVpn()).toBe('off');
+    expect(store.getState().vpn).toBe('off');
+  });
+
+  it('refreshVpn does not notify when the value is unchanged', () => {
+    const store = createTestInsightsStore({vpn: fakeVpnSource('on')});
+    store.getState().refreshVpn();
+    const listener = jest.fn();
+    store.subscribe(listener);
+    store.getState().refreshVpn();
+    expect(listener).not.toHaveBeenCalled();
+  });
+
   it('starts idle with the initial network', () => {
     const store = createTestInsightsStore();
     expect(store.getState()).toMatchObject({

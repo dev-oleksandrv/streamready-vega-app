@@ -43,6 +43,10 @@ private:
             texts.emplace_back(text);
         }
         object["measurements"] = std::move(texts);
+        if (progress.client) {
+            object["clientMinRttUs"] = static_cast<double>(progress.client->minRttUs);
+            object["clientRttUs"] = static_cast<double>(progress.client->rttUs);
+        }
         if (error != ndt7::ErrorCode::None) {
             object["error"] = std::string(ndt7::toString(error));
         }

@@ -18,6 +18,7 @@ namespace ndt7 {
 // the worker that owns the socket calls it; CancelToken is the only cross-thread path.
 class WsSession : private FrameHandler {
 public:
+    int fd() const { return fd_; }
     WsSession(int fd, CancelToken& token, const RunLimits& limits, Xorshift& rng);
 
     ErrorCode handshake(const WsUrl& url);

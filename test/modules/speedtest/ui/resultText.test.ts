@@ -7,6 +7,7 @@ const result = (city?: string): SpeedTestResult => ({
   uploadBps: 1,
   idleLatencyMs: 1,
   loadedLatencyMs: 1,
+  latencySource: 'server',
   server: {machine: 'mlab1-tst01.example', city},
   finishedAt,
 });

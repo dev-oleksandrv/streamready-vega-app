@@ -25,6 +25,7 @@ const platformEvents = (): NativeEventSource => new NativeEventEmitter();
 export function createSpeedTestEngine(
   native: Ndt7NativeSpec | null = platformNative,
   createEvents: () => NativeEventSource = platformEvents,
+  detectTunnel: () => boolean = () => false,
 ): SpeedTestEngine {
   if (!native) {
     return {
@@ -40,5 +41,6 @@ export function createSpeedTestEngine(
     fetch,
     now: Date.now,
     clientVersion: APP_VERSION,
+    detectTunnel,
   });
 }

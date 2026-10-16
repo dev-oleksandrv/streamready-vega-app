@@ -38,3 +38,7 @@ The SDK has no TLS library for apps on the device: OpenSSL is not in the sysroot
   - Host C++ tests (`pnpm run test:native`, in `check` and CI) for everything except the Turbo Module glue.
 - The manifest declares `com.amazon.networking`.
 - Jest tests the TypeScript side against a fake native module; there is no second engine to compare against.
+
+## Amendment (2026-10-16): latency under a VPN
+
+When a VPN is connected at test start, idle and loaded latency come from the TV's own `TCP_INFO` instead of the server's `TCPInfo`. The download run reports `tcpi_min_rtt` and `tcpi_rtt` with each progress event. See [0011](0011-vpn-detection-and-device-latency.md).

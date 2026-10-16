@@ -6,6 +6,7 @@ import {
   type ConnectionInfo,
   type DeviceProfile,
   type NetworkStatus,
+  type VpnStatus,
 } from '~/modules/insights';
 import {useConsent, type ConsentStatus} from '~/modules/privacy';
 import {
@@ -27,6 +28,20 @@ export function useVisibleConnection(): ConnectionInfo | undefined {
   const consent = useConsent((s) => s.status);
   const connection = useInsights((s) => s.connection);
   return selectVisibleInsights(consent, connection);
+}
+
+/** The VPN badge is part of the insights cluster: same consent and geo gate. */
+export function selectVisibleVpn(
+  connection: ConnectionInfo | undefined,
+  vpn: VpnStatus,
+): boolean {
+  return connection !== undefined && vpn === 'on';
+}
+
+export function useVisibleVpn(): boolean {
+  const connection = useVisibleConnection();
+  const vpn = useInsights((s) => s.vpn);
+  return selectVisibleVpn(connection, vpn);
 }
 
 export interface StartInputs {

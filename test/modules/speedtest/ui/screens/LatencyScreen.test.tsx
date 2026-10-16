@@ -12,6 +12,7 @@ function setup(idle: number, loaded: number) {
     uploadBps: 18.5e6,
     idleLatencyMs: idle,
     loadedLatencyMs: loaded,
+    latencySource: 'server',
     server: {machine: 'mlab1-tst01.example'},
     finishedAt: 0,
   };

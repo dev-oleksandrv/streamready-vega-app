@@ -4,6 +4,7 @@ import {
   createInsightsStore,
   createNetInfoMonitor,
   createVegaDeviceSource,
+  createVegaVpnSource,
   InsightsProvider,
   type InsightsStore,
   type NetworkMonitor,
@@ -52,6 +53,7 @@ export const AppProviders = ({
       createInsightsStore({
         geo: createGeoProvider(),
         device: createVegaDeviceSource(),
+        vpn: createVegaVpnSource(),
       }),
   );
   const [monitor] = useState(() => networkMonitor ?? createNetInfoMonitor());
@@ -59,7 +61,12 @@ export const AppProviders = ({
     () =>
       sessionStore ??
       createSessionStore({
-        createEngine: () => createSpeedTestEngine(),
+        createEngine: () =>
+          createSpeedTestEngine(
+            undefined,
+            undefined,
+            () => insights.getState().refreshVpn() === 'on',
+          ),
         now: Date.now,
         cooldownMs: COOLDOWN_MS,
       }),

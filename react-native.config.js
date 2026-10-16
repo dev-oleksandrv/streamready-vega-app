@@ -11,7 +11,7 @@ module.exports = {
             linkDynamic: true,
             provider: 'application',
             components: [],
-            turbomodules: ['Ndt7Native'],
+            turbomodules: ['Ndt7Native', 'VpnNative'],
           },
         },
       },
