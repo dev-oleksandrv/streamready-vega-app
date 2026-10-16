@@ -2,6 +2,7 @@ import {render, screen} from '@testing-library/react-native';
 import React from 'react';
 import {Animated} from 'react-native';
 
+import {CHART_SLOTS} from '~/modules/speedtest/store/sessionStore';
 import {ThroughputBars} from '~/modules/speedtest/ui/components/ThroughputBars';
 import {colors} from '~/shared/ui';
 import {flatStyle} from '../../../../support/style';
@@ -20,8 +21,8 @@ describe('ThroughputBars', () => {
       <ThroughputBars
         peakBps={100e6}
         bars={[
-          {direction: 'download', bps: 100e6},
-          {direction: 'upload', bps: 0},
+          {slot: 0, direction: 'download', bps: 100e6},
+          {slot: 40, direction: 'upload', bps: 0},
         ]}
       />,
     );
@@ -32,13 +33,13 @@ describe('ThroughputBars', () => {
     ]);
   });
 
-  it('draws one bar per sample, colored by direction', () => {
+  it('lays out every chart slot, with a bar colored by direction in each filled one', () => {
     render(
       <ThroughputBars
         peakBps={100e6}
         bars={[
-          {direction: 'download', bps: 100e6},
-          {direction: 'upload', bps: 0},
+          {slot: 2, direction: 'download', bps: 100e6},
+          {slot: 41, direction: 'upload', bps: 0},
         ]}
       />,
     );
@@ -46,5 +47,8 @@ describe('ThroughputBars', () => {
     expect(bars).toHaveLength(2);
     expect(bars[0].backgroundColor).toBe(colors.lime);
     expect(bars[1].backgroundColor).toBe(colors.chartMuted);
+    expect(screen.getAllByTestId('throughput-slot')).toHaveLength(
+      CHART_SLOTS - 2,
+    );
   });
 });

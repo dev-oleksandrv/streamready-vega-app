@@ -1,9 +1,9 @@
-import React, {memo, useEffect, useState} from 'react';
+import React, {memo, useEffect, useMemo, useState} from 'react';
 import {Animated, Easing, StyleSheet, View} from 'react-native';
 
 import {colors, scale} from '~/shared/ui';
 
-import type {ThroughputBar} from '../../store/sessionStore';
+import {CHART_SLOTS, type ThroughputBar} from '../../store/sessionStore';
 import {barFraction, chartTopBps} from '../chartScale';
 
 /** A new bar grows in, and a rescale glides, within one 250 ms flush. */
@@ -51,16 +51,30 @@ export const ThroughputBars = memo(function ThroughputBars({
   peakBps,
 }: ThroughputBarsProps) {
   const topBps = chartTopBps(peakBps);
+  const bySlot = useMemo(() => {
+    const slots = new Array<ThroughputBar | undefined>(CHART_SLOTS).fill(
+      undefined,
+    );
+    for (const bar of bars) {
+      slots[bar.slot] = bar;
+    }
+    return slots;
+  }, [bars]);
   return (
     <View style={styles.chart}>
-      {bars.map((bar, index) => (
-        <Bar
-          // Bars are append-only, so the index is a stable key.
-          key={index}
-          fraction={barFraction(bar.bps, topBps)}
-          color={bar.direction === 'download' ? colors.lime : colors.chartMuted}
-        />
-      ))}
+      {bySlot.map((bar, slot) =>
+        bar === undefined ? (
+          <View key={slot} testID="throughput-slot" style={styles.slot} />
+        ) : (
+          <Bar
+            key={slot}
+            fraction={barFraction(bar.bps, topBps)}
+            color={
+              bar.direction === 'download' ? colors.lime : colors.chartMuted
+            }
+          />
+        ),
+      )}
     </View>
   );
 });
@@ -75,10 +89,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: scale(2),
     borderBottomColor: colors.track,
   },
+  // Every slot takes its share of the width, filled or not, so the chart always spans it.
+  slot: {flex: 1},
   bar: {
     flex: 1,
     height: '100%',
-    maxWidth: scale(14),
     borderTopLeftRadius: scale(4),
     borderTopRightRadius: scale(4),
     transformOrigin: 'bottom',
