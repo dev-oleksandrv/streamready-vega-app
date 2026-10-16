@@ -73,8 +73,6 @@ fi
 
 # --- Release ---------------------------------------------------------------
 
-git show-ref --verify --quiet "refs/tags/$TAG" && die "$TAG is already tagged. To resubmit it, run with --rebuild"
-
 # A merged changeset means main holds work that is not in this version's changelog yet.
 PLAN=$(mktemp)
 trap 'rm -f "$PLAN"' EXIT
@@ -83,6 +81,8 @@ node -e '
   const plan = JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"));
   if (plan.releases.length > 0) process.exit(1);
 ' "$PLAN" || die "main has unreleased changesets: /ship the Version PR (changeset-release/main) first"
+
+git show-ref --verify --quiet "refs/tags/$TAG" && die "$TAG is already tagged. To resubmit it, run with --rebuild"
 
 echo "==> Releasing $VERSION (build $BUILD)"
 
