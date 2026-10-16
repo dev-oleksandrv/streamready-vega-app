@@ -93,7 +93,7 @@ Stores never import other modules' stores. Anything derived from several stores 
   - Insights are hidden but stay in the store.
   - Start is disabled with the hint "Privacy consent withdrawn".
 - **Give consent again:** cached insights show immediately and are refreshed in the background.
-- **Back key:** on the cold-start Privacy gate, Back falls through to the system and exits the app.
+- **Back key:** on the cold-start Privacy gate, Back opens the Exit dialog (see 5.5).
 
 ### 5.3 Insights visibility
 
@@ -124,9 +124,11 @@ The app uses a native stack (`@amazon-devices/react-navigation__native-stack`) w
 | Error overlay | Goes Home |
 | Result | Goes Home |
 | Latency | Returns to Result |
-| Privacy (gate) | Falls through to the system |
 | Other screens | Pops the stack |
-| Home | Falls through to the system |
+| Nothing left to pop (Home, Privacy gate) | Opens the Exit dialog |
+| Exit dialog | Closes it |
+
+The Exit dialog is app-level (`app/hooks/useExitConfirm.ts`). Its Back handler subscribes during the splash, before the navigator's, and handlers run newest first, so it only sees a press no screen and no route took. Exit calls `BackHandler.exitApp()`, the system default.
 
 ## 6. Speed test engines
 
@@ -334,6 +336,7 @@ The 6 design scenarios (`good`, `goodSingle4K`, `fastButLaggy`, `limited`, `poor
 | Privacy (pending) | Accept |
 | Privacy (decided) | Back |
 | Stop dialog | Keep testing |
+| Exit dialog | Stay |
 | Error overlay | Try again |
 
 - **Animations** use `Animated` with the native driver only (`transform`, `opacity`); RN 0.83 aborts when native and JS drivers mix on one view. The bar chart is `Animated.View` bars with no chart library: each scales from its bottom edge (`scaleY`) on a stepped scale (1/1.5/2/3/5/7.5 per decade, `speedtest/ui/chartScale.ts`), so rescales are rare and glide. Step fills glide with `scaleX`, and the live reading fades in on each phase change.

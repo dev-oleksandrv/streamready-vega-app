@@ -22,6 +22,9 @@ import type {ConnectionInfo} from '~/modules/insights';
 import {createFakeEngine} from '../../support/fakeEngine';
 import {emitAppState} from '../../support/fakeAppState';
 import {hideNativeSplash} from '../../support/fakeSplashScreen';
+import {fakeBackHandler} from '../../support/fakeBackHandler';
+
+const EXIT_TITLE = 'Leave StreamReady?';
 
 /** Fires the hardware Back key; true when the app handled it. */
 function pressBack(): boolean {
@@ -211,25 +214,83 @@ describe('back key', () => {
     expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
   });
 
-  it('falls through to the system on the gate', async () => {
+  it('asks before exiting on the gate', async () => {
     await start('pending');
     await screen.findByText('Before you start.');
-    expect(pressBack()).toBe(false);
+    expect(pressBack()).toBe(true);
+    expect(screen.getByText(EXIT_TITLE)).toBeTruthy();
   });
 
-  it('falls through to the system on home', async () => {
+  it('asks before exiting on home', async () => {
     await start('accepted');
     await screen.findByText('Will your TV stream in 4K?');
-    expect(pressBack()).toBe(false);
+    expect(pressBack()).toBe(true);
+    expect(screen.getByText(EXIT_TITLE)).toBeTruthy();
   });
 
-  it('falls through on home reached from the gate (no gate left in history)', async () => {
+  it('asks on home reached from the gate (no gate left in history)', async () => {
     await start('pending');
     fireEvent.press(
       await screen.findByRole('button', {name: 'Accept & continue'}),
     );
     await screen.findByText('Will your TV stream in 4K?');
+    expect(pressBack()).toBe(true);
+    expect(screen.getByText(EXIT_TITLE)).toBeTruthy();
+    expect(screen.getByText('Will your TV stream in 4K?')).toBeTruthy();
+  });
+
+  it('does not ask while a route can go back', async () => {
+    await start('accepted');
+    fireEvent.press(
+      await screen.findByRole('button', {name: 'Device & connection'}),
+    );
+    await screen.findByText("You're on Vega OS.");
+    expect(pressBack()).toBe(true);
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+    expect(screen.queryByText(EXIT_TITLE)).toBeNull();
+  });
+
+  it('keeps the system default during the splash', () => {
+    const storage: KeyValueStorage = {
+      ...createMemoryStorage(),
+      getItem: () => new Promise(() => {}),
+    };
+    renderWithProviders(<RootNavigator />, {
+      consentStore: createConsentStore(storage),
+    });
     expect(pressBack()).toBe(false);
+  });
+});
+
+describe('exit dialog', () => {
+  beforeEach(() => fakeBackHandler.exitApp.mockClear());
+
+  async function openExit() {
+    await start('accepted');
+    await screen.findByText('Will your TV stream in 4K?');
+    pressBack();
+    expect(screen.getByText(EXIT_TITLE)).toBeTruthy();
+  }
+
+  it('back closes it', async () => {
+    await openExit();
+    expect(pressBack()).toBe(true);
+    expect(screen.queryByText(EXIT_TITLE)).toBeNull();
+    expect(fakeBackHandler.exitApp).not.toHaveBeenCalled();
+  });
+
+  it('stay closes it', async () => {
+    await openExit();
+    fireEvent.press(screen.getByRole('button', {name: 'Stay'}));
+    expect(screen.queryByText(EXIT_TITLE)).toBeNull();
+    expect(fakeBackHandler.exitApp).not.toHaveBeenCalled();
+  });
+
+  it('exit closes it and leaves the app', async () => {
+    await openExit();
+    fireEvent.press(screen.getByRole('button', {name: 'Exit'}));
+    expect(fakeBackHandler.exitApp).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(EXIT_TITLE)).toBeNull();
   });
 });
 
@@ -422,8 +483,9 @@ describe('result and latency', () => {
     // Lost state: a new run clears the result while Result is shown.
     act(() => sessionStore.getState().start());
     expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
-    // Home stays mounted under the stack; Back falling through proves it is on top.
-    expect(pressBack()).toBe(false);
+    // Home stays mounted under the stack; the exit prompt proves it is on top.
+    expect(pressBack()).toBe(true);
+    expect(screen.getByText(EXIT_TITLE)).toBeTruthy();
     // No Test screen owns that run; end it so its flush timer stops.
     act(() => sessionStore.getState().stop());
   });
@@ -434,8 +496,9 @@ describe('result and latency', () => {
     await screen.findByText('Grade B. Smooth, even when busy.');
     act(() => sessionStore.getState().start());
     expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
-    // Home stays mounted under the stack; Back falling through proves it is on top.
-    expect(pressBack()).toBe(false);
+    // Home stays mounted under the stack; the exit prompt proves it is on top.
+    expect(pressBack()).toBe(true);
+    expect(screen.getByText(EXIT_TITLE)).toBeTruthy();
     act(() => sessionStore.getState().stop());
   });
 });
