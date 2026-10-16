@@ -18,7 +18,8 @@ pnpm run typecheck     # tsc --noEmit
 pnpm run format        # prettier
 pnpm run build:debug   # Vega debug build
 pnpm run build:release # Vega release build (build number 0: not uploadable)
-pnpm run release       # store release: version wizard, check, bump build number, build, verify, branch + commit + tag (--bump patch|minor|major|keep)
+pnpm changeset         # add a changeset (bump + user-facing summary) for the next release
+pnpm run release       # build + verify + tag the version main is at, print store notes (--rebuild: new build number, same version)
 ```
 
 ## Working agreement
@@ -38,6 +39,7 @@ The maintainer drives the process. Propose, then wait for a decision.
   - Scope (optional): `speedtest`, `ndt7`, `verdict`, `insights`, `privacy`, `home`, `app`, `shared`, `deps`.
   - Subject: imperative, lowercase, no trailing period, ≤ 72 chars. Breaking changes: `!` plus a `BREAKING CHANGE:` footer.
 - Claude may create branches and commit. Claude must **never push, force-push, rewrite history, or merge into `main`**, except when the maintainer invokes `/ship` (`.claude/skills/ship/`): it pushes the current branch, opens a PR, and merges it once CI is green.
+- Every user-facing change adds a changeset (`.changeset/*.md`) on its branch; no user-visible change → `pnpm changeset --empty`. CI fails app changes without one. Merges to `main` keep a Version PR (`changeset-release/main`) up to date; merging it is the release. See `docs/adr/0010-changesets-versioning.md`.
 - `docs/superpowers/` (working specs and plans) is gitignored. Only polished docs (`docs/ARCHITECTURE.md`, `docs/adr/`) are versioned. `docs/qa-checklist.md` is a local, gitignored device checklist.
 
 ## Open source: no secrets, no personal data

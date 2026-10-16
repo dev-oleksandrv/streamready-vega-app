@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/@changesets/config@4.0.1/schema.json",
+  "baseBranch": "main",
+  "changelog": "@changesets/cli/changelog",
+  "commit": false,
+  "access": "restricted",
+  "privatePackages": {"version": true, "tag": false},
+  "changedFilePatterns": [
+    "src/**",
+    "kepler/**",
+    "assets/**",
+    "CMakeLists.txt",
+    "manifest.toml"
+  ]
+}

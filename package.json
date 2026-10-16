@@ -26,6 +26,7 @@
     "build:app": "npm-run-all build:release",
     "build": "npm-run-all build:release",
     "release": "scripts/release.sh",
+    "changeset": "changeset",
     "codegen:ndt7": "keplerscript-turbomodule-api codegen src/modules/speedtest/engines/ndt7native/NativeNdt7.ts -o kepler/turbo-modules/ -s Ndt7TurboModule -c Ndt7Native",
     "test:native": "scripts/test-native.sh"
   },
@@ -50,6 +51,7 @@
   "devDependencies": {
     "@amazon-devices/eslint-plugin-kepler": "^0.1.4",
     "@amazon-devices/kepler-cli-platform": "^0",
+    "@changesets/cli": "3.0.3",
     "@react-native-community/cli": "20.0.0",
     "@react-native/babel-preset": "0.83.0",
     "@react-native/eslint-config": "0.83.0",

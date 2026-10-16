@@ -35,3 +35,4 @@ An ADR records one significant decision: the context, what was decided, and what
 - [0007 Vega device and network adapters](0007-vega-device-and-network-adapters.md)
 - [0008 MMKV for persisted consent](0008-mmkv-for-persisted-consent.md)
 - [0009 Vega SVG for in-house icons](0009-vega-svg-for-icons.md)
+- [0010 Changesets for versioning and release notes](0010-changesets-versioning.md)

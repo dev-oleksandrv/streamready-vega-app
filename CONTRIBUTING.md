@@ -31,9 +31,30 @@ Commits follow [Conventional Commits 1.0](https://www.conventionalcommits.org/en
 - **Subject:** imperative, lowercase, no trailing period, ≤ 72 characters.
 - **Breaking changes:** add `!` and a `BREAKING CHANGE:` footer.
 
+## Changesets
+
+Every change a TV user can notice needs a changeset: a small file that names the version bump and says what changed, in plain language. It becomes the `CHANGELOG.md` entry and the store's "What's new" text.
+
+```bash
+pnpm changeset          # pick patch / minor / major, write the summary
+pnpm changeset --empty  # app code changed, but nothing the user notices
+```
+
+CI fails a pull request that changes app files (`src/`, `kepler/`, `assets/`, `manifest.toml`, `CMakeLists.txt`) without one.
+
+## Releases
+
+1. Each merge to `main` updates the Version PR, **chore(app): release next version**. It bumps the version and build number, syncs `manifest.toml` and `APP_VERSION`, and writes `CHANGELOG.md`.
+2. Merging the Version PR is the release decision.
+3. On an up-to-date `main`, `pnpm run release` builds, verifies the VPKGs and tags `v<version>+<build>`. Push the tag and upload the VPKG with the printed release notes.
+4. If the store rejects an uploaded build, `pnpm run release --rebuild` opens a branch that only raises the build number.
+
+The Version workflow needs the `CHANGESETS_TOKEN` secret: a fine-grained personal access token for this repository with Contents and Pull requests read/write.
+
 ## Before opening a pull request
 
 - `pnpm run check` passes.
+- A changeset is included, if the change is user-facing.
 - New logic comes with tests in `test/`, mirroring the `src/` path (`src/modules/verdict/domain/evaluate.ts` → `test/modules/verdict/domain/evaluate.test.ts`).
 - No snapshot tests. Assert on behavior the user sees.
 - For UI changes, check the affected screens on a device: D-pad focus, Back key and the states the change touches.
