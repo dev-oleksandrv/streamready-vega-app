@@ -7,9 +7,11 @@ import {useConsent, useConsentHydrated} from '~/modules/privacy';
 import {colors} from '~/shared/ui';
 
 import {useColdStartInsights} from '../hooks/useColdStartInsights';
+import {useExitConfirm} from '../hooks/useExitConfirm';
 import {useNativeSplash} from '../hooks/useNativeSplash';
 import {useVpnRefresh} from '../hooks/useVpnRefresh';
 import {AppHeader} from '../layout/AppHeader';
+import {ExitDialog} from '../layout/ExitDialog';
 import {SplashScreen} from '../screens/SplashScreen';
 import {DeviceRoute} from './DeviceRoute';
 import {HomeRoute} from './HomeRoute';
@@ -34,6 +36,8 @@ export const RootNavigator = () => {
   useVpnRefresh();
   const ready = hydrated && insightsSettled;
   useNativeSplash(ready);
+  // Subscribes during the splash, before the navigator's own Back handler.
+  const exitConfirm = useExitConfirm(ready);
 
   if (!ready) {
     return <SplashScreen />;
@@ -61,6 +65,11 @@ export const RootNavigator = () => {
         </Stack.Navigator>
       </NavigationContainer>
       <AppHeader />
+      <ExitDialog
+        visible={exitConfirm.visible}
+        onStay={exitConfirm.stay}
+        onExit={exitConfirm.exit}
+      />
     </View>
   );
 };
