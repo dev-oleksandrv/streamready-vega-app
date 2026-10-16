@@ -30,6 +30,7 @@ set(NDT7_SOURCES
   kepler/ndt7/net/Entropy.cpp
   kepler/ndt7/net/Socket.cpp
   kepler/ndt7/net/Subtest.cpp
+  kepler/ndt7/net/TcpRtt.cpp
   kepler/ndt7/net/UploadRun.cpp
   kepler/ndt7/net/WsSession.cpp
 )

@@ -2,6 +2,7 @@
 
 #include "ndt7/core/Throttle.h"
 #include "ndt7/net/Clock.h"
+#include "ndt7/net/TcpRtt.h"
 
 namespace ndt7 {
 
@@ -10,11 +11,12 @@ Outcome runDownload(WsSession& session, RunSink& sink, const RunLimits& limits, 
     int64_t lastData = start;
     Throttle throttle(start, limits.emitIntervalMs);
     const auto finish = [&](ErrorCode error, int64_t elapsedMs) {
-        return Outcome{error, {session.binaryBytes(), elapsedMs, session.takeMeasurements()}};
+        return Outcome{error,
+                       {session.binaryBytes(), elapsedMs, session.takeMeasurements(), readClientRtt(session.fd())}};
     };
 
     // Tells JS the socket is open, which ends the "latency" phase.
-    sink.onProgress({0, 0, {}});
+    sink.onProgress({0, 0, {}, std::nullopt});
     while (true) {
         const int64_t now = monotonicMs();
         if (token.cancelled()) {
@@ -44,7 +46,8 @@ Outcome runDownload(WsSession& session, RunSink& sink, const RunLimits& limits, 
             return finish(ErrorCode::None, after - start);
         }
         if (throttle.ready(after)) {
-            sink.onProgress({session.binaryBytes(), after - start, session.takeMeasurements()});
+            sink.onProgress(
+                {session.binaryBytes(), after - start, session.takeMeasurements(), readClientRtt(session.fd())});
         }
     }
 }

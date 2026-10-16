@@ -54,6 +54,11 @@ TEST(download_counts_bytes_and_forwards_measurements) {
     CHECK_EQ(texts.size(), size_t{1});
     CHECK(close.ok && close.masked && close.opcode == opcode::kClose);
     CHECK_EQ(close.payload, closePayload(1000));
+    // A socketpair is not TCP: no client RTT may be invented.
+    for (const auto& p : sink.progress) {
+        CHECK(!p.client.has_value());
+    }
+    CHECK(!outcome.final.client.has_value());
 }
 
 TEST(download_close_before_data) {
