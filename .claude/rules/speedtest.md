@@ -35,7 +35,7 @@ paths:
 - TM methods run on the JS thread: never block in them. Workers call `emit()`; never `emitSync()` off the JS thread. Only exception: `VpnNative.getVpnState()`, one sync IPC call made on launch, foreground and test start (ADR 0011).
 - Never log, throw or emit the URL. Native logs carry direction, error code and byte counts only.
 - No third-party C++ libraries. Host tests: `pnpm run test:native` (in-repo harness, ASan/UBSan); add a test for every core or net change.
-- `kepler/turbo-modules/generated/` is codegen output: regenerate with `pnpm run codegen:ndt7`, never edit by hand.
+- `kepler/turbo-modules/generated/` is codegen output: regenerate with `pnpm run codegen:ndt7` or `pnpm run codegen:vpn`, never edit by hand.
 - Autolinking lives in `react-native.config.js` (the Vega CLI rejects it in `package.json`); keep `linkDynamic: true`.
 
 ## Verdict
