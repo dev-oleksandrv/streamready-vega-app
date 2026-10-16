@@ -1,5 +1,5 @@
 /** Written by scripts/version.sh together with package.json and manifest.toml; sent to M-Lab as client_version. */
-export const APP_VERSION = '1.1.0';
+export const APP_VERSION = '1.1.1';
 
 /** Starts after a successful test, or when the user stops one (Stop test, leaving the app). */
 export const COOLDOWN_MS = 30_000;
