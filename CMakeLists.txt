@@ -36,17 +36,34 @@ set(NDT7_SOURCES
 set(HEADERS
   kepler/turbo-modules/generated/Ndt7NativeSpec.h
   kepler/turbo-modules/Ndt7Native.h
+  kepler/turbo-modules/generated/VpnNativeSpec.h
+  kepler/turbo-modules/VpnNative.h
 )
 set(SOURCES
   ${NDT7_SOURCES}
   kepler/turbo-modules/generated/Ndt7NativeSpec.cpp
   kepler/turbo-modules/Ndt7Native.cpp
+  kepler/turbo-modules/generated/VpnNativeSpec.cpp
+  kepler/turbo-modules/VpnNative.cpp
   kepler/AutoLinkInit.cpp
 )
 
 find_package(turbomoduleAPI CONFIG REQUIRED)
 
+# VpnNative reads the system VPN state through IVpnManager (ADR 0011).
+find_package(Apmf REQUIRED)
+find_package(Kepler REQUIRED)
+find_package(KeplerNetworkManagerInterface REQUIRED)
+kepler_add_idl_import_library(
+  vpn_idl
+  PACKAGES
+  com.amazon.kepler.net.vpn.common
+  com.amazon.kepler.net.vpn.wireguard
+  com.amazon.kepler.net.vpn.vpnmanager
+)
+
 kepler_add_turbo_module_library(StreamReadyNdt7 SHARED ${HEADERS} ${SOURCES})
 target_include_directories(StreamReadyNdt7 PRIVATE kepler)
+target_link_libraries(StreamReadyNdt7 PRIVATE vpn_idl)
 
 install(TARGETS StreamReadyNdt7)
