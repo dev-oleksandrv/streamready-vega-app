@@ -2,6 +2,12 @@
 
 User-facing changes in each store release. Entries come from the changesets merged since the previous release (see [CONTRIBUTING.md](CONTRIBUTING.md#changesets)).
 
+## 1.2.0
+
+### Minor Changes
+
+- 865cb11: Back on the home screen now asks before leaving the app, so a stray press of the remote's Back button no longer closes StreamReady.
+
 ## 1.1.1
 
 ### Patch Changes
