@@ -2,7 +2,7 @@ schema-version = 1
 
 [package]
 title = "StreamReady"
-version = "1.0.0"
+version = "1.1.0"
 id = "dev.voronkov.speedtest"
 icon = "@image/app_icon.png"
 

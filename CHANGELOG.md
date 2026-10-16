@@ -2,6 +2,12 @@
 
 User-facing changes in each store release. Entries come from the changesets merged since the previous release (see [CONTRIBUTING.md](CONTRIBUTING.md#changesets)).
 
+## 1.1.0
+
+### Minor Changes
+
+- b5bfa70: Shows a "VPN on" badge in the header when a VPN is connected on the TV, since a VPN can slow streaming. Ping and lag under a VPN are now measured on the TV, instead of reading near 0 ms.
+
 ## 1.0.0
 
 ### Major Changes
