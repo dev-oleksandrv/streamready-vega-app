@@ -1,0 +1,38 @@
+name: Version
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: version
+  cancel-in-progress: false
+
+jobs:
+  version-pr:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The changelog links each entry to the commit that added its changeset.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      # Opens or updates the Version PR on changeset-release/main. It uses a fine-grained PAT
+      # (Contents + Pull requests: read/write on this repo only), because a PR opened with the
+      # default GITHUB_TOKEN does not trigger the CI workflow. Nothing is published: the build
+      # needs the Vega SDK, so scripts/release.sh runs locally after the PR is merged.
+      - uses: changesets/action@v2
+        with:
+          version-script: scripts/version.sh
+          commit-message: 'chore(app): release next version'
+          pr-title: 'chore(app): release next version'
+          github-token: ${{ secrets.CHANGESETS_TOKEN }}
