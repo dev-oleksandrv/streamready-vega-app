@@ -7,6 +7,8 @@ import {
   type GeoIpProvider,
   type NetworkMonitor,
   type NetworkStatus,
+  type VpnSource,
+  type VpnStatus,
 } from '~/modules/insights';
 
 export const TEST_CONNECTION: ConnectionInfo = {
@@ -58,11 +60,18 @@ export class FakeNetworkMonitor implements NetworkMonitor {
   }
 }
 
+/** `status` is mutable so a test can flip the VPN between reads. */
+export function fakeVpnSource(status: VpnStatus = 'off') {
+  const source = {status, read: (): VpnStatus => source.status};
+  return source satisfies VpnSource;
+}
+
 export function createTestInsightsStore(
-  deps: {geo?: GeoIpProvider; device?: DeviceSource} = {},
+  deps: {geo?: GeoIpProvider; device?: DeviceSource; vpn?: VpnSource} = {},
 ) {
   return createInsightsStore({
     geo: deps.geo ?? fakeGeo(),
     device: deps.device ?? fakeDeviceSource(),
+    vpn: deps.vpn ?? fakeVpnSource('unknown'),
   });
 }

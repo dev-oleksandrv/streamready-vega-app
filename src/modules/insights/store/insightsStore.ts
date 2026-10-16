@@ -9,6 +9,7 @@ import {
   sameNetwork,
   type NetworkStatus,
 } from '../domain/network';
+import {UNKNOWN_VPN, type VpnSource, type VpnStatus} from '../domain/vpn';
 
 export type InsightsStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -23,22 +24,32 @@ export interface InsightsState {
   /** Never rejects; a failure leaves `device` undefined. */
   loadDevice: () => Promise<void>;
   setNetwork: (network: NetworkStatus) => void;
+  /** Of the system VPN; refreshed on launch, foreground and test start. */
+  vpn: VpnStatus;
+  /** Reads the VPN state now; sets it only when it changed. Never throws. */
+  refreshVpn: () => VpnStatus;
 }
 
 export interface InsightsDeps {
   geo: GeoIpProvider;
   device: DeviceSource;
+  vpn?: VpnSource;
 }
 
 const log = createLogger('insights');
 
-export function createInsightsStore({geo, device}: InsightsDeps) {
+export function createInsightsStore({
+  geo,
+  device,
+  vpn = UNKNOWN_VPN,
+}: InsightsDeps) {
   let inFlight: Promise<void> | undefined;
   return createStore<InsightsState>()((set, get) => ({
     connection: undefined,
     device: undefined,
     network: INITIAL_NETWORK,
     status: 'idle',
+    vpn: 'unknown',
     refreshConnection: () => {
       if (!inFlight) {
         set({status: 'loading'});
@@ -72,6 +83,13 @@ export function createInsightsStore({geo, device}: InsightsDeps) {
       if (!sameNetwork(get().network, network)) {
         set({network});
       }
+    },
+    refreshVpn: () => {
+      const next = vpn.read();
+      if (next !== get().vpn) {
+        set({vpn: next});
+      }
+      return next;
     },
   }));
 }
