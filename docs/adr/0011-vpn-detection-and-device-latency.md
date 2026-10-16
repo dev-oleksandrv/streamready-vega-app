@@ -18,6 +18,7 @@ A spike on a Fire TV Stick 4K Select with NordVPN (2026-10-16) showed:
 
 - An in-app Turbo Module `VpnNative` returns the raw `VpnState`, or `-1` on any failure. Only `CONNECTED` counts as on; a missing module or a failure reads as unknown.
 - The state is read on launch, whenever the app becomes active, and when a test starts. It never leaves the device.
+- A switch between on and off seen when the app becomes active also refreshes geo insights (consent permitting), because the public IP changed with it.
 - The header shows a "VPN on" badge inside the insights cluster, so it follows the same consent and geo gate (ADR 0005).
 - If a VPN is connected when a test starts, idle latency is the TV's lowest `tcpi_min_rtt` and loaded latency is the median `tcpi_rtt`, both sampled with each download progress event. Otherwise the server values stay (ADR 0006). A VPN run without device samples falls back to server values. The result records `latencySource`.
 - The manifest declares `wants.privilege com.amazon.network.privilege.network-access`.

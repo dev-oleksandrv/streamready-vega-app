@@ -39,7 +39,7 @@ Full policy: measurementlab.net/privacy
 
 ## 05. Connection lookup
 
-After you accept, and each time the app starts, it asks ipinfo.io where your public IP address is located. If that fails, it asks GeoJS (geojs.io) instead. The service receives your IP address and standard request details. It returns your country, city and internet provider, which the app shows on screen. This location is approximate, at city level, not your address.
+After you accept, each time the app starts, and when you return to it after a VPN was switched on or off, it asks ipinfo.io where your public IP address is located. If that fails, it asks GeoJS (geojs.io) instead. The service receives your IP address and standard request details. It returns your country, city and internet provider, which the app shows on screen. This location is approximate, at city level, not your address.
 
 IPinfo Inc. (USA) and GeoJS handle requests under their own policies: ipinfo.io/privacy-policy and geojs.io/privacy
 
