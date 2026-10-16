@@ -26,4 +26,21 @@ describe('createVegaVpnSource', () => {
     });
     expect(source.read()).toBe('unknown');
   });
+
+  it('logs the module presence and raw state once, for device QA', () => {
+    const warn = jest.fn();
+    const log = {debug: jest.fn(), info: jest.fn(), warn, error: jest.fn()};
+    const source = createVegaVpnSource({getVpnState: () => 3}, log);
+    source.read();
+    source.read();
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith('vpn', 'module', 3);
+  });
+
+  it('logs a missing module once', () => {
+    const warn = jest.fn();
+    const log = {debug: jest.fn(), info: jest.fn(), warn, error: jest.fn()};
+    createVegaVpnSource(null, log).read();
+    expect(warn).toHaveBeenCalledWith('vpn', 'no module');
+  });
 });
