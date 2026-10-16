@@ -156,7 +156,9 @@ export class NativeNdt7Engine implements SpeedTestEngine {
                   elapsedMs: event.elapsedMs,
                 });
               }
-              const latencyEvent = live().nextEvent();
+              // Under a VPN, server values (the VPN exit) are never shown live.
+              const latencyEvent =
+                tunneled && !deviceReady() ? undefined : live().nextEvent();
               if (latencyEvent) {
                 onEvent(latencyEvent);
               }

@@ -30,6 +30,7 @@ describe('parseNativeEvent', () => {
     ['NaN', {clientMinRttUs: Number.NaN, clientRttUs: 1000}],
     ['string', {clientMinRttUs: '1', clientRttUs: 1000}],
     ['only one field', {clientRttUs: 1000}],
+    ['implausible (> 60 s)', {clientMinRttUs: 1000, clientRttUs: 4_294_967_295}],
   ])('drops malformed client rtt (%s) without failing', (_l, extra) => {
     expect(parseNativeEvent({...valid, ...extra})).toEqual(valid);
   });

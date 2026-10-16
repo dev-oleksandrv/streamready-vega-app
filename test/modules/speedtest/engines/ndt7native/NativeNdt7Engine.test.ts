@@ -111,6 +111,21 @@ describe('NativeNdt7Engine', () => {
     });
   });
 
+  it('under a vpn, shows no server latency before the first device sample', async () => {
+    const s = setup(undefined, () => true);
+    await flush();
+    s.fake.progress(s.run(0), {
+      bytes: 100_000,
+      elapsedMs: 250,
+      measurements: [measurement({MinRTT: 1_000, RTT: 1_000})],
+    });
+    expect(s.events.filter((e) => e.type === 'latency')).toEqual([]);
+    await runToEnd(s);
+    expect(s.events).not.toContainEqual(
+      expect.objectContaining({type: 'latency', idleMs: 1}),
+    );
+  });
+
   it('asks about the vpn once per run, at the start', async () => {
     const detectTunnel = jest.fn(() => false);
     const s = setup(undefined, detectTunnel);

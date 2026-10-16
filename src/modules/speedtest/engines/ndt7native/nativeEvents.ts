@@ -38,8 +38,14 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 const isCount = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0;
 
-const isPositive = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value) && value > 0;
+/** Above this a kernel RTT is a placeholder (e.g. ~0U before a sample), not a path. */
+const MAX_PLAUSIBLE_RTT_US = 60_000_000;
+
+const isPlausibleRtt = (value: unknown): value is number =>
+  typeof value === 'number' &&
+  Number.isFinite(value) &&
+  value > 0 &&
+  value <= MAX_PLAUSIBLE_RTT_US;
 
 const isNativeErrorCode = (value: unknown): value is NativeErrorCode =>
   typeof value === 'string' && NATIVE_ERROR_CODES.includes(value);
@@ -85,7 +91,7 @@ export function parseNativeEvent(payload: unknown): NativeRunEvent {
     event.error = error;
   }
   // Client RTT is advisory: a bad value drops the sample, never the run.
-  if (isPositive(clientMinRttUs) && isPositive(clientRttUs)) {
+  if (isPlausibleRtt(clientMinRttUs) && isPlausibleRtt(clientRttUs)) {
     event.client = {minRttMs: clientMinRttUs / 1000, rttMs: clientRttUs / 1000};
   }
   return event;
