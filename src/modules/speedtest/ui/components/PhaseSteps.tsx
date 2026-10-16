@@ -24,15 +24,24 @@ interface StepFillProps {
  * width could not. The leading edge is square: a scaled radius would distort.
  */
 const StepFill = ({fill}: StepFillProps) => {
-  const [scaleX] = useState(() => new Animated.Value(fill));
+  const [scaleX, setScaleX] = useState(() => new Animated.Value(fill));
+  const [shown, setShown] = useState(fill);
+  // A new run resets to 0: snap back instead of draining full bars. Done
+  // during render, so no frame paints the old fill. A fresh value, not
+  // setValue(): a stopped native glide reports its last value back to JS
+  // after the reset, and that re-commits the old fill.
+  if (fill !== shown) {
+    setShown(fill);
+    if (fill < shown) {
+      setScaleX(new Animated.Value(fill));
+    }
+  }
   const previous = useRef(fill);
 
   useEffect(() => {
-    const dropped = fill < previous.current;
+    const from = previous.current;
     previous.current = fill;
-    // A new run resets to 0: snap back instead of draining full bars.
-    if (dropped) {
-      scaleX.setValue(fill);
+    if (fill <= from) {
       return;
     }
     const glide = Animated.timing(scaleX, {
