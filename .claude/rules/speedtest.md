@@ -32,7 +32,7 @@ paths:
 ## Native engine (C++)
 
 - `kepler/ndt7/core` is pure C++17: no sockets, no Kepler headers. `kepler/ndt7/net` uses POSIX only. Only `kepler/turbo-modules/` and `kepler/AutoLinkInit.cpp` include Kepler headers.
-- TM methods run on the JS thread: never block in them. Workers call `emit()`; never `emitSync()` off the JS thread.
+- TM methods run on the JS thread: never block in them. Workers call `emit()`; never `emitSync()` off the JS thread. Only exception: `VpnNative.getVpnState()`, one sync IPC call made on launch, foreground and test start (ADR 0011).
 - Never log, throw or emit the URL. Native logs carry direction, error code and byte counts only.
 - No third-party C++ libraries. Host tests: `pnpm run test:native` (in-repo harness, ASan/UBSan); add a test for every core or net change.
 - `kepler/turbo-modules/generated/` is codegen output: regenerate with `pnpm run codegen:ndt7`, never edit by hand.
