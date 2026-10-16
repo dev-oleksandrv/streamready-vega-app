@@ -54,8 +54,11 @@ const styles = StyleSheet.create({
   card: {
     gap: scale(10),
     paddingVertical: scale(28),
-    paddingHorizontal: scale(36),
-    minWidth: scale(340),
+    paddingHorizontal: scale(32),
+    // Content-sized, then sharing the row's spare width: Home's three cards
+    // fit on one line each, and shrink (wrapping text) before overflowing.
+    flexGrow: 1,
+    flexShrink: 1,
     borderRadius: scale(radii.tile),
     borderWidth: scale(focus.borderWidth),
   },

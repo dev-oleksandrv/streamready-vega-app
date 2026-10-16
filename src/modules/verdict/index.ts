@@ -10,5 +10,5 @@ export type {
   VerdictInput,
 } from './domain/evaluate';
 export {lagGrade} from './domain/grade';
-export {LAG_GRADE_ORDER, STREAM_CHECKS} from './domain/thresholds';
+export {GRADE_TONE, LAG_GRADE_ORDER, STREAM_CHECKS} from './domain/thresholds';
 export {verdictContent} from './content';

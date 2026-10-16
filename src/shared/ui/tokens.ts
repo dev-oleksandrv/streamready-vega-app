@@ -33,6 +33,8 @@ export const colors = {
 /** Design px; pass through scale() at the use site. */
 export const radii = {
   chip: 6,
+  /** Grade tile in the history table. */
+  badge: 14,
   card: 20,
   tile: 24,
   panel: 28,

@@ -16,4 +16,7 @@ export const homeContent = {
     title: 'Privacy Policy',
     subtitle: 'What we collect · your choices',
   },
+  historyCard: {
+    title: 'History',
+  },
 } as const;

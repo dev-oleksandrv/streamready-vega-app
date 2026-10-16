@@ -56,6 +56,7 @@ export const testContent = {
     testAgainIn: (seconds: number) => `Test again in ${seconds}s`,
     back: 'Back',
     whyItLags: 'Why it lags',
+    history: 'History',
   },
   latency: {
     eyebrow: 'Latency under load',

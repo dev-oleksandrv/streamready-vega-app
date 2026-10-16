@@ -7,9 +7,11 @@ const props = (over: Partial<HomeScreenProps> = {}): HomeScreenProps => ({
   start: {ok: true},
   cooldownSeconds: 0,
   deviceSubtitle: 'Vega OS · Wi‑Fi 5',
+  historySubtitle: '12 saved results',
   onStart: jest.fn(),
   onOpenDevice: jest.fn(),
   onOpenPrivacy: jest.fn(),
+  onOpenHistory: jest.fn(),
   ...over,
 });
 
@@ -34,6 +36,14 @@ describe('HomeScreen', () => {
     render(<HomeScreen {...p} />);
     fireEvent.press(screen.getByRole('button', {name: 'Privacy Policy'}));
     expect(p.onOpenPrivacy).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows the history card with its subtitle and opens it', () => {
+    const p = props();
+    render(<HomeScreen {...p} />);
+    expect(screen.getByText('12 saved results')).toBeTruthy();
+    fireEvent.press(screen.getByRole('button', {name: 'History'}));
+    expect(p.onOpenHistory).toHaveBeenCalledTimes(1);
   });
 
   it('Start calls onStart when ready', () => {

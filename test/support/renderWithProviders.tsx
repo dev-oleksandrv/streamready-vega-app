@@ -2,9 +2,11 @@ import {render} from '@testing-library/react-native';
 import React, {type ReactElement} from 'react';
 
 import {AppProviders} from '~/app/providers/AppProviders';
+import {createHistoryStore, type HistoryStore} from '~/modules/history';
 import type {InsightsStore, NetworkMonitor} from '~/modules/insights';
 import type {ConsentStore} from '~/modules/privacy';
 import type {SessionStore} from '~/modules/speedtest';
+import {createMemoryStorage} from '~/shared/lib/storage';
 
 import {createTestInsightsStore, FakeNetworkMonitor} from './insights';
 
@@ -15,6 +17,8 @@ export interface ProviderOptions {
   /** Defaults to a FakeNetworkMonitor at INITIAL_NETWORK. */
   networkMonitor?: NetworkMonitor;
   sessionStore?: SessionStore;
+  /** Defaults to an empty, enabled history in memory. */
+  historyStore?: HistoryStore;
   onConsentAccepted?: () => Promise<void>;
 }
 
@@ -28,6 +32,9 @@ export function renderWithProviders(
       insightsStore={opts.insightsStore ?? createTestInsightsStore()}
       networkMonitor={opts.networkMonitor ?? new FakeNetworkMonitor()}
       sessionStore={opts.sessionStore}
+      historyStore={
+        opts.historyStore ?? createHistoryStore(createMemoryStorage())
+      }
       onConsentAccepted={opts.onConsentAccepted}>
       {ui}
     </AppProviders>,

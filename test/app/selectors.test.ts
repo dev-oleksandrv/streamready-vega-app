@@ -1,4 +1,5 @@
 import {
+  selectHistoryEntry,
   selectStartCheck,
   selectVerdict,
   selectVisibleInsights,
@@ -94,5 +95,44 @@ describe('selectVerdict', () => {
       selectVerdict(TEST_RESULT, {online: true, transport: 'ethernet'}, profile)
         .nearDeviceLimit,
     ).toBe(false);
+  });
+});
+
+describe('selectHistoryEntry', () => {
+  const verdict = selectVerdict(TEST_RESULT, INITIAL_NETWORK);
+
+  it('keeps the shown values, the grade, the VPN state and the geo insights', () => {
+    expect(
+      selectHistoryEntry({
+        result: {...TEST_RESULT, finishedAt: 1234},
+        verdict,
+        connection: TEST_CONNECTION,
+        vpn: 'on',
+      }),
+    ).toEqual({
+      finishedAt: 1234,
+      downloadBps: TEST_RESULT.downloadBps,
+      uploadBps: TEST_RESULT.uploadBps,
+      idleLatencyMs: TEST_RESULT.idleLatencyMs,
+      loadedLatencyMs: TEST_RESULT.loadedLatencyMs,
+      grade: verdict.grade,
+      vpn: 'on',
+      ip: TEST_CONNECTION.ip,
+      countryCode: TEST_CONNECTION.countryCode,
+      country: TEST_CONNECTION.country,
+    });
+  });
+
+  it('leaves geo fields out without visible insights', () => {
+    const entry = selectHistoryEntry({
+      result: TEST_RESULT,
+      verdict,
+      connection: undefined,
+      vpn: 'unknown',
+    });
+    expect(entry).not.toHaveProperty('ip');
+    expect(entry).not.toHaveProperty('countryCode');
+    expect(entry).not.toHaveProperty('country');
+    expect(entry.vpn).toBe('unknown');
   });
 });

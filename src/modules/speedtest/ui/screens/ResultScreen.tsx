@@ -30,6 +30,7 @@ export interface ResultScreenProps {
   /** Home; the Back key does the same via the stack. */
   onBack: () => void;
   onOpenLatency: () => void;
+  onOpenHistory: () => void;
 }
 
 export const ResultScreen = ({
@@ -42,6 +43,7 @@ export const ResultScreen = ({
   onTestAgain,
   onBack,
   onOpenLatency,
+  onOpenHistory,
 }: ResultScreenProps) => {
   const outcome = verdictContent.outcomes[verdict.outcome];
   // 2 × 2 grid, as in the design.
@@ -97,6 +99,7 @@ export const ResultScreen = ({
           />
           <FocusButton label={copy.back} compact onPress={onBack} />
           <FocusButton label={copy.whyItLags} compact onPress={onOpenLatency} />
+          <FocusButton label={copy.history} compact onPress={onOpenHistory} />
         </View>
       </View>
       <View style={styles.right}>

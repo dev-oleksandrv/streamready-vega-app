@@ -5,12 +5,13 @@
 StreamReady is an open-source Fire TV app for Vega OS. It answers the question "Will my TV stream in 4K?" by measuring download, upload, idle latency and latency under load. The result is shown as a plain-language streaming verdict, not just raw megabits.
 
 **In scope (v1):**
-- Screens: Splash, Privacy (consent modal and policy view), Home, Test (with the Stop dialog and the error overlay), Result, Latency ("Why it lags"), Device & connection.
+- Screens: Splash, Privacy (consent modal and policy view), Home, Test (with the Stop dialog and the error overlay), Result, Latency ("Why it lags"), Device & connection, History (with the Clear dialog).
 - Speed measurement with M-Lab ndt7, implemented in a C++ Turbo Module over plain `ws://`.
 - Connection insights (public IP, country, city, ISP) and device information.
-- English only. Single session, with no test history.
+- A local history of the 50 latest results (ADR 0012).
+- English only.
 
-**Out of scope (v1):** ads, Pro, IAP and the Tips screen, test history, stability test, QR sharing, commercial measurement backends, localization.
+**Out of scope (v1):** ads, Pro, IAP and the Tips screen, stability test, QR sharing, commercial measurement backends, localization.
 
 **Constraints:**
 - **Open source** (Apache-2.0): no secrets, tokens or personal data in the repo.
@@ -25,7 +26,7 @@ src/
     App.tsx
     navigation/            # RootNavigator, routes.ts (typed params), consent gate
     layout/                # AppHeader (composes insights + network status)
-    providers/             # dependency injection: engine, geo provider, storage
+    providers/             # dependency injection: engine, geo provider, storage, history recorder
     config/                # public endpoints, cooldown, timeouts
     selectors.ts           # cross-module selectors, e.g. selectVisibleInsights
   modules/
@@ -40,8 +41,9 @@ src/
     verdict/               # pure: domain/thresholds, grade, evaluate; content.ts (copy)
     insights/              # GeoIpProvider + providers, device adapters (incl. VPN state), insightsStore, DeviceScreen, VpnBadge
     home/                  # HomeScreen
+    history/               # HistoryEntry (domain), historyStore (persisted), HistoryScreen
   shared/
-    ui/                    # tokens, scale(), Text, FocusButton, FocusCard, Dialog, ScreenLayout, icons (SVG, ADR 0009)
+    ui/                    # tokens, scale(), Text, FocusButton, FocusCard, FocusSwitch, Dialog, ScreenLayout, useDpadScroll, icons (SVG, ADR 0009)
     lib/                   # http (timeout + AbortSignal), format, logger, storage adapter (MMKV, ADR 0008)
 test/                      # mirrors src/ 1:1
   support/                 # FakeNdt7Native, fixtures, renderWithProviders, store reset helpers
@@ -69,7 +71,8 @@ Zustand, one store per module.
 
 | Store | State | Persisted |
 |---|---|---|
-| `privacy/consentStore` | `status: 'pending' \| 'accepted' \| 'withdrawn'` | yes, in MMKV (only this key) |
+| `privacy/consentStore` | `status: 'pending' \| 'accepted' \| 'withdrawn'` | yes, in MMKV |
+| `history/historyStore` | `enabled`, `entries` (≤ 50, newest first) | yes, in MMKV (ADR 0012) |
 | `insights/insightsStore` | `connection?`, `device?`, `network: {online, transport: 'wifi' \| 'ethernet' \| 'other' \| 'none', band?}`, `status: 'idle' \| 'loading' \| 'ready' \| 'error'`, `vpn: 'unknown' \| 'off' \| 'on'` | no |
 | `speedtest/sessionStore` | `status: 'idle' \| 'running' \| 'done' \| 'failed'`, `phase?`, `server?`, `liveBps?`, `idleMs?`, `loadedMs?`, `progress` (Ping/Download/Upload, 0–1), `bars` (≤ 120), `peakBps`, `result?`, `error?` (UI variant), `cooldownUntil?` | no |
 
@@ -115,7 +118,7 @@ The cooldown is 30s. It starts after a successful test, and when the user stops 
 
 ### 5.5 Navigation and Back key
 
-The app uses a native stack (`@amazon-devices/react-navigation__native-stack`) with the screens Home, Test, Result, Latency, Device and Privacy. Privacy has two modes: `gate` (cold start, Accept only) and `view` (opened from Home). Accepting from the gate resets the stack to Home. A finished test replaces Test with Result, so the stack is Home → Result; Test again replaces Result with Test. Module screens take callbacks as props; route adapters in `app/navigation/` wire them to the stack.
+The app uses a native stack (`@amazon-devices/react-navigation__native-stack`) with the screens Home, Test, Result, Latency, Device, History and Privacy. Privacy has two modes: `gate` (cold start, Accept only) and `view` (opened from Home). Accepting from the gate resets the stack to Home. A finished test replaces Test with Result, so the stack is Home → Result; Test again replaces Result with Test. Module screens take callbacks as props; route adapters in `app/navigation/` wire them to the stack.
 
 | Where | Back does |
 |---|---|
@@ -124,6 +127,8 @@ The app uses a native stack (`@amazon-devices/react-navigation__native-stack`) w
 | Error overlay | Goes Home |
 | Result | Goes Home |
 | Latency | Returns to Result |
+| History | Returns to Home or Result, wherever it was opened |
+| Clear dialog | Closes it |
 | Other screens | Pops the stack |
 | Nothing left to pop (Home, Privacy gate) | Opens the Exit dialog |
 | Exit dialog | Closes it |
@@ -338,6 +343,8 @@ The 6 design scenarios (`good`, `goodSingle4K`, `fastButLaggy`, `limited`, `poor
 | Stop dialog | Keep testing |
 | Exit dialog | Stay |
 | Error overlay | Try again |
+| History | Save history |
+| Clear dialog | Keep history |
 
 - **Animations** use `Animated` with the native driver only (`transform`, `opacity`); RN 0.83 aborts when native and JS drivers mix on one view. The bar chart is `Animated.View` bars with no chart library: each scales from its bottom edge (`scaleY`) on a stepped scale (1/1.5/2/3/5/7.5 per decade, `speedtest/ui/chartScale.ts`), so rescales are rare and glide. Step fills glide with `scaleX`, and the live reading fades in on each phase change.
 - **Icons** are in-house SVG paths in `shared/ui/icons` (ADR 0009); Geist has no ✓ or ✕ glyph.
@@ -369,7 +376,24 @@ While the device is offline, `connectionLost` shows a disabled Try again and the
 - Fixtures use documentation IPs (`203.0.113.0/24`, `2001:db8::/32`), fake UUIDs, and no `access_token` values.
 - D-pad focus and real-device behavior are checked manually on a device.
 
-## 11. Decisions
+## 11. Test history
+
+ADR 0012. `app/providers/historyRecorder.ts` watches the session store and records each finished test into `history/historyStore`, unless history is off. Failed and stopped tests are not saved.
+
+| Field | Source |
+|---|---|
+| When | `result.finishedAt`; shown as "Today, 8:41 PM", "Yesterday, …" or "Oct 14, …" in local time |
+| Download, Upload, Idle ping, Loaded ping | The result, formatted like the Result screen |
+| Grade | `verdict.grade` at the time of the test, stored |
+| IP address, Country | `selectVisibleInsights` at the time; "—" and "Unknown" when the lookup had failed |
+| VPN | Insights `vpn`: On, Off, or "—" when unknown |
+
+- Only the 50 latest results are kept. "Save history" off stops saving and keeps saved results; "Clear history" asks first, then deletes all of them. With nothing saved, Clear is greyed out.
+- The table is not focusable: focus stays on the switch and Clear, and ▲/▼ scroll the rows (`useDpadScroll`, as on the Privacy screen). Rows are memoized.
+- Home's History card shows "Off", "No results yet" or "N saved results". Result has a History button after Why it lags.
+- Withdrawing consent doesn't hide or delete the history.
+
+## 12. Decisions
 
 - [0001 Modular domain architecture](adr/0001-modular-domain-architecture.md)
 - [0002 ndt7 as the first speed test engine](adr/0002-ndt7-first-speed-test-engine.md) (superseded by 0006)
@@ -380,3 +404,6 @@ While the device is offline, `connectionLost` shows a disabled Try again and the
 - [0007 Vega device and network adapters](adr/0007-vega-device-and-network-adapters.md)
 - [0008 MMKV for persisted consent](adr/0008-mmkv-for-persisted-consent.md)
 - [0009 Vega SVG for in-house icons](adr/0009-vega-svg-for-icons.md)
+- [0010 Changesets for versioning and release notes](adr/0010-changesets-versioning.md)
+- [0011 VPN detection and device-side latency under VPN](adr/0011-vpn-detection-and-device-latency.md)
+- [0012 Local test history](adr/0012-local-test-history.md)
