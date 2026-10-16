@@ -5,7 +5,8 @@ export interface PolicySectionContent {
 }
 
 // Mirrors what the code does: M-Lab locate + ndt7 (speedtest), ipinfo.io and
-// GeoJS (insights), MMKV consent (privacy). Update it with any change to those.
+// GeoJS (insights), the system VPN state (insights, on-device only), MMKV
+// consent (privacy). Update it with any change to those.
 export const POLICY_SECTIONS: readonly PolicySectionContent[] = [
   {
     n: '01',
@@ -35,7 +36,7 @@ export const POLICY_SECTIONS: readonly PolicySectionContent[] = [
   {
     n: '06',
     title: 'What stays on your TV',
-    body: '• Your consent choice, saved so you are not asked again.\n• Device model, OS version and Wi‑Fi band, read to show on the Device screen. The app does not put them in its requests, but the Fire TV system may add basic device details to standard request headers. The app does not read your network name.\n• Test results and connection details, kept in memory only and cleared when you close the app. There is no test history.\nI run no servers, so I never receive your data.',
+    body: '• Your consent choice, saved so you are not asked again.\n• Device model, OS version and Wi‑Fi band, read to show on the Device screen. The app does not put them in its requests, but the Fire TV system may add basic device details to standard request headers. The app does not read your network name.\n• Whether a VPN is connected, read from the Fire TV system to show a VPN badge and to measure latency on your TV instead. It is never sent anywhere.\n• Test results and connection details, kept in memory only and cleared when you close the app. There is no test history.\nI run no servers, so I never receive your data.',
   },
   {
     n: '07',
@@ -60,7 +61,7 @@ export const POLICY_SECTIONS: readonly PolicySectionContent[] = [
   {
     n: '11',
     title: 'Changes',
-    body: 'If what the app does with data changes, I will update this policy in the app. Every version is public in the source code.\nLast updated: 14 October 2026.',
+    body: 'If what the app does with data changes, I will update this policy in the app. Every version is public in the source code.\nLast updated: 16 October 2026.',
   },
 ];
 
