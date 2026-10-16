@@ -135,8 +135,8 @@ export class NativeNdt7Engine implements SpeedTestEngine {
         }
       };
       // Under a VPN the server's TCPInfo measures its link to the VPN exit.
-      const useDevice = () => tunneled && device.idleMs !== undefined;
-      const live = () => (useDevice() ? device : latency);
+      const deviceReady = () => tunneled && device.idleMs !== undefined;
+      const live = () => (deviceReady() ? device : latency);
       try {
         const done = await runNative(
           this.deps.native,
@@ -165,7 +165,7 @@ export class NativeNdt7Engine implements SpeedTestEngine {
         );
         connect();
         absorb(done);
-        if (tunneled && !useDevice()) {
+        if (tunneled && !deviceReady()) {
           this.log.warn('vpn run without device rtt; using server rtt');
         }
         const source = live();
