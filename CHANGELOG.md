@@ -2,6 +2,13 @@
 
 User-facing changes in each store release. Entries come from the changesets merged since the previous release (see [CONTRIBUTING.md](CONTRIBUTING.md#changesets)).
 
+## 1.1.1
+
+### Patch Changes
+
+- 555af5b: Fixes the Ping, Download and Upload bars showing as full at the start of a second test. They now start empty and fill as each step runs.
+- 75c70c7: Fixes the speed chart on the test screen ending short of the right edge. Download now fills the left half and upload the right half, so a finished test spans the full width.
+
 ## 1.1.0
 
 ### Minor Changes
