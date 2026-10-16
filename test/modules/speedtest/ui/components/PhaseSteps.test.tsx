@@ -42,4 +42,21 @@ describe('PhaseSteps', () => {
     view.rerender(<PhaseSteps progress={NO_PROGRESS} />);
     expect(timing).not.toHaveBeenCalled();
   });
+
+  // A stopped native glide reports its value back to JS after a setValue()
+  // reset and re-commits it, so the reset must not leave one in flight.
+  it('starts no glide on mount', () => {
+    const timing = jest.spyOn(Animated, 'timing');
+    render(<PhaseSteps progress={{ping: 1, download: 1, upload: 1}} />);
+    expect(timing).not.toHaveBeenCalled();
+  });
+
+  it('resets to a fresh value instead of setting the old one', () => {
+    const view = render(
+      <PhaseSteps progress={{ping: 1, download: 1, upload: 1}} />,
+    );
+    const setValue = jest.spyOn(Animated.Value.prototype, 'setValue');
+    view.rerender(<PhaseSteps progress={NO_PROGRESS} />);
+    expect(setValue).not.toHaveBeenCalled();
+  });
 });
