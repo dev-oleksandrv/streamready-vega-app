@@ -16,6 +16,7 @@ import {errorVariant, type TestErrorVariant} from '../domain/errorVariant';
 import {
   FULL_PROGRESS,
   NO_PROGRESS,
+  NOMINAL_SUBTEST_MS,
   progressForPhase,
   subtestFraction,
   type StepProgress,
@@ -23,16 +24,22 @@ import {
 
 /** ~4 Hz: React never sees engine events directly (1 GB stick). */
 export const FLUSH_INTERVAL_MS = 250;
-export const MAX_BARS = 120;
+/** One chart slot per 250 ms of a subtest: download fills the left half, upload the right. */
+const SLOT_MS = 250;
+export const SLOTS_PER_SUBTEST = NOMINAL_SUBTEST_MS / SLOT_MS;
+/** Fixed, so the chart spans its full width however many samples arrive. */
+export const CHART_SLOTS = 2 * SLOTS_PER_SUBTEST;
 /**
- * Flushes a value may repeat without a new sample (~1 s): covers upload's
- * batched samples, but a stall or the closing handshake draws no flat bars.
+ * Empty slots bridged between two samples (< 1 s apart): covers upload's
+ * batched samples, but a stall still shows as a gap.
  */
-const MAX_REPEAT_FLUSHES = 4;
+const MAX_FILL_SLOTS = 3;
 
 export type SessionStatus = 'idle' | 'running' | 'done' | 'failed';
 
 export interface ThroughputBar {
+  /** 0..CHART_SLOTS - 1, from the sample's subtest time. */
+  slot: number;
   direction: 'download' | 'upload';
   bps: number;
 }
@@ -99,6 +106,44 @@ const DEFAULT_DEPS: SessionDeps = {
   flushIntervalMs: FLUSH_INTERVAL_MS,
 };
 
+/** Puts a sample in its time slot; bars stay sorted by slot. */
+function placeSample(
+  bars: readonly ThroughputBar[],
+  direction: ThroughputBar['direction'],
+  bps: number,
+  elapsedMs: number,
+): readonly ThroughputBar[] {
+  const offset = direction === 'download' ? 0 : SLOTS_PER_SUBTEST;
+  // Samples past the nominal length (ndt7 runs a little over 10 s) land in the last slot.
+  const slot =
+    offset +
+    Math.min(
+      SLOTS_PER_SUBTEST - 1,
+      Math.max(0, Math.floor(elapsedMs / SLOT_MS)),
+    );
+  const prev = bars[bars.length - 1];
+  // Elapsed time only grows within a run; an older sample would unsort the bars.
+  if (prev !== undefined && prev.slot > slot) {
+    return bars;
+  }
+  // The newer value wins a shared slot.
+  const next = prev?.slot === slot ? bars.slice(0, -1) : bars.slice();
+  // The first sample of a subtest bridges nothing: a late start stays empty.
+  let first = slot;
+  if (
+    prev !== undefined &&
+    prev.direction === direction &&
+    prev.slot < slot &&
+    slot - prev.slot - 1 <= MAX_FILL_SLOTS
+  ) {
+    first = prev.slot + 1;
+  }
+  for (let s = first; s <= slot; s++) {
+    next.push({slot: s, direction, bps});
+  }
+  return next;
+}
+
 function applyEvent(run: RunValues, event: EngineEvent): RunValues {
   switch (event.type) {
     case 'phase':
@@ -116,6 +161,13 @@ function applyEvent(run: RunValues, event: EngineEvent): RunValues {
       return {
         ...run,
         liveBps: event.bps,
+        bars: placeSample(
+          run.bars,
+          event.direction,
+          event.bps,
+          event.elapsedMs,
+        ),
+        peakBps: Math.max(run.peakBps, event.bps),
         // Same object while unchanged, so the memoized step bars skip a render.
         progress:
           run.progress[event.direction] === fraction
@@ -142,7 +194,6 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
     let timer: ReturnType<typeof setInterval> | null = null;
     let pending: RunValues = EMPTY_RUN;
     let changed = false;
-    let flushesSinceSample = 0;
 
     const onEvent = (event: EngineEvent) => {
       // A late sample of the other direction would draw a wrong bar.
@@ -151,32 +202,9 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
       }
       pending = applyEvent(pending, event);
       changed = true;
-      if (event.type === 'throughput') {
-        flushesSinceSample = 0;
-      }
     };
 
-    /** `addBar` is false for the final flush of a run: it only applies values. */
-    const flush = (addBar = true) => {
-      const {phase, liveBps} = pending;
-      // One bar per flush, not per sample: upload samples arrive in batches
-      // between blocking sends, and the chart must show both subtests by time.
-      if (
-        addBar &&
-        (phase === 'download' || phase === 'upload') &&
-        liveBps !== undefined &&
-        pending.progress[phase] < 1 &&
-        flushesSinceSample < MAX_REPEAT_FLUSHES &&
-        pending.bars.length < MAX_BARS
-      ) {
-        pending = {
-          ...pending,
-          bars: [...pending.bars, {direction: phase, bps: liveBps}],
-          peakBps: Math.max(pending.peakBps, liveBps),
-        };
-        changed = true;
-      }
-      flushesSinceSample += 1;
+    const flush = () => {
       if (changed) {
         changed = false;
         set(pending);
@@ -196,7 +224,7 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
     };
 
     const finishFailed = (code: SpeedTestErrorCode) => {
-      flush(false);
+      flush();
       // stop() ends our own aborts before they settle; any other 'aborted' is a failure.
       set({status: 'failed', error: errorVariant(code) ?? 'interrupted'});
     };
@@ -218,7 +246,6 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
         controller = current;
         pending = EMPTY_RUN;
         changed = false;
-        flushesSinceSample = 0;
         set({
           ...EMPTY_RUN,
           status: 'running',
@@ -247,7 +274,7 @@ export function createSessionStore(overrides: Partial<SessionDeps> = {}) {
               return;
             }
             endRun();
-            flush(false);
+            flush();
             set({
               status: 'done',
               result,

@@ -1,5 +1,8 @@
 import {createSessionStore, type EngineEvent} from '~/modules/speedtest';
-import {MAX_BARS} from '~/modules/speedtest/store/sessionStore';
+import {
+  CHART_SLOTS,
+  SLOTS_PER_SUBTEST,
+} from '~/modules/speedtest/store/sessionStore';
 import {createFakeEngine, TEST_RESULT} from '../../../support/fakeEngine';
 
 const NOW = 1_000_000;
@@ -95,30 +98,30 @@ describe('sessionStore', () => {
     expect(updates).not.toHaveBeenCalled();
   });
 
-  it('adds one bar per flush while measuring, so the chart is time-based', () => {
+  it('puts each sample in the chart slot of its subtest time', () => {
     const {store, fake} = setup();
     store.getState().start();
     const run = fake.last();
     run.emit({type: 'phase', phase: 'download'});
     jest.advanceTimersByTime(250); // no value yet: no bar
-    run.emit(download(10e6, 250));
-    run.emit(download(30e6, 500));
+    run.emit(download(10e6, 100));
+    run.emit(download(30e6, 200)); // same slot: the newer value wins
+    run.emit(download(40e6, 300));
     jest.advanceTimersByTime(250);
-    jest.advanceTimersByTime(250); // no new sample: repeats the last value
+    jest.advanceTimersByTime(250); // no new sample: no new bar
     run.emit({type: 'phase', phase: 'upload'});
-    jest.advanceTimersByTime(250); // upload has no value yet: no bar
     run.emit(upload(5e6, 400));
     jest.advanceTimersByTime(250);
     const s = store.getState();
     expect(s.bars).toEqual([
-      {direction: 'download', bps: 30e6},
-      {direction: 'download', bps: 30e6},
-      {direction: 'upload', bps: 5e6},
+      {slot: 0, direction: 'download', bps: 30e6},
+      {slot: 1, direction: 'download', bps: 40e6},
+      {slot: SLOTS_PER_SUBTEST + 1, direction: 'upload', bps: 5e6},
     ]);
-    expect(s.peakBps).toBe(30e6);
+    expect(s.peakBps).toBe(40e6);
   });
 
-  it('gives a sparse upload as many bars as a dense download of the same length', () => {
+  it('fills batched upload samples like a dense download of the same length', () => {
     const {store, fake} = setup();
     store.getState().start();
     const run = fake.last();
@@ -135,11 +138,71 @@ describe('sessionStore', () => {
       }
       jest.advanceTimersByTime(250);
     }
-    const bars = store.getState().bars;
-    const count = (direction: string) =>
-      bars.filter((bar) => bar.direction === direction).length;
-    expect(count('download')).toBe(8);
-    expect(count('upload')).toBe(7);
+    const slots = (direction: string) =>
+      store
+        .getState()
+        .bars.filter((bar) => bar.direction === direction)
+        .map((bar) => bar.slot);
+    expect(slots('download')).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(slots('upload')).toEqual([42, 43, 44, 45, 46, 47, 48]);
+  });
+
+  it('fills the slots between samples up to a second apart with the newer value', () => {
+    const {store, fake} = setup();
+    store.getState().start();
+    const run = fake.last();
+    run.emit({type: 'phase', phase: 'download'});
+    run.emit(download(10e6, 100));
+    run.emit(download(20e6, 1_100));
+    jest.advanceTimersByTime(250);
+    expect(store.getState().bars).toEqual([
+      {slot: 0, direction: 'download', bps: 10e6},
+      {slot: 1, direction: 'download', bps: 20e6},
+      {slot: 2, direction: 'download', bps: 20e6},
+      {slot: 3, direction: 'download', bps: 20e6},
+      {slot: 4, direction: 'download', bps: 20e6},
+    ]);
+  });
+
+  it('leaves a gap where samples stalled for more than a second', () => {
+    const {store, fake} = setup();
+    store.getState().start();
+    const run = fake.last();
+    run.emit({type: 'phase', phase: 'download'});
+    run.emit(download(10e6, 100));
+    run.emit(download(20e6, 1_350));
+    jest.advanceTimersByTime(250);
+    expect(store.getState().bars.map((bar) => bar.slot)).toEqual([0, 5]);
+  });
+
+  it('leaves the slots before the first upload sample empty', () => {
+    const {store, fake} = setup();
+    store.getState().start();
+    const run = fake.last();
+    run.emit({type: 'phase', phase: 'download'});
+    run.emit(download(10e6, 9_900));
+    run.emit({type: 'phase', phase: 'upload'});
+    run.emit(upload(5e6, 1_000));
+    jest.advanceTimersByTime(250);
+    expect(store.getState().bars.map((bar) => bar.slot)).toEqual([
+      SLOTS_PER_SUBTEST - 1,
+      SLOTS_PER_SUBTEST + 4,
+    ]);
+  });
+
+  it('puts samples past the nominal length in the last slot', () => {
+    const {store, fake} = setup();
+    store.getState().start();
+    const run = fake.last();
+    run.emit({type: 'phase', phase: 'upload'});
+    run.emit(upload(10e6, 9_600));
+    run.emit(upload(12e6, 10_400));
+    run.emit(upload(14e6, 12_000));
+    jest.advanceTimersByTime(250 * 4); // closing handshake: no new data
+    expect(store.getState().bars).toEqual([
+      {slot: CHART_SLOTS - 2, direction: 'upload', bps: 10e6},
+      {slot: CHART_SLOTS - 1, direction: 'upload', bps: 14e6},
+    ]);
   });
 
   it('ignores a sample whose direction is not the current phase', () => {
@@ -169,26 +232,6 @@ describe('sessionStore', () => {
     });
   });
 
-  it('stops adding bars once the subtest has run its full length', () => {
-    const {store, fake} = setup();
-    store.getState().start();
-    const run = fake.last();
-    run.emit({type: 'phase', phase: 'upload'});
-    run.emit(upload(10e6, 10_000));
-    jest.advanceTimersByTime(250 * 4); // closing handshake: no new data
-    expect(store.getState().bars).toEqual([]);
-  });
-
-  it('stops repeating the last value after a second without samples', () => {
-    const {store, fake} = setup();
-    store.getState().start();
-    const run = fake.last();
-    run.emit({type: 'phase', phase: 'download'});
-    run.emit(download(10e6, 1_000));
-    jest.advanceTimersByTime(250 * 8);
-    expect(store.getState().bars).toHaveLength(4);
-  });
-
   it('settling does not add an extra bar', async () => {
     const {store, fake} = setup();
     store.getState().start();
@@ -199,18 +242,6 @@ describe('sessionStore', () => {
     run.resolve();
     await settle();
     expect(store.getState().bars).toHaveLength(1);
-  });
-
-  it(`caps the chart at ${MAX_BARS} bars`, () => {
-    const {store, fake} = setup();
-    store.getState().start();
-    const run = fake.last();
-    run.emit({type: 'phase', phase: 'download'});
-    for (let i = 0; i < MAX_BARS + 10; i++) {
-      run.emit(download(1e6 + i, 100));
-      jest.advanceTimersByTime(250);
-    }
-    expect(store.getState().bars).toHaveLength(MAX_BARS);
   });
 
   it('success: done, final values, full progress, cooldown, timer stopped', async () => {
@@ -229,7 +260,9 @@ describe('sessionStore', () => {
     expect(s.idleMs).toBe(TEST_RESULT.idleLatencyMs);
     expect(s.loadedMs).toBe(TEST_RESULT.loadedLatencyMs);
     expect(s.progress).toEqual({ping: 1, download: 1, upload: 1});
-    expect(s.bars).toEqual([{direction: 'upload', bps: 20e6}]);
+    expect(s.bars).toEqual([
+      {slot: SLOTS_PER_SUBTEST + 36, direction: 'upload', bps: 20e6},
+    ]);
     expect(s.cooldownUntil).toBe(NOW + 30_000);
     expect(jest.getTimerCount()).toBe(0);
   });
