@@ -56,7 +56,7 @@ export const FocusButton = ({
       style={[
         styles.base,
         compact && styles.compact,
-        minWidth !== undefined && {minWidth, justifyContent: 'center'},
+        minWidth !== undefined && [styles.fixedWidth, {minWidth}],
         {
           borderColor: look.borderColor,
           backgroundColor: look.backgroundColor,
@@ -85,6 +85,7 @@ const styles = StyleSheet.create({
     borderWidth: scale(focus.borderWidth),
   },
   compact: {paddingHorizontal: scale(32)},
+  fixedWidth: {justifyContent: 'center'},
   label: {
     fontSize: scale(28),
   },

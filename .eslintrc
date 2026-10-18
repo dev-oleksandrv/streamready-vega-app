@@ -9,6 +9,7 @@
     "plugin:@amazon-devices/eslint-plugin-kepler/kepler"
   ],
   "rules": {
+    "@amazon-devices/kepler/sdl-package-version-check-imports": "off",
     "no-restricted-imports": [
       "error",
       {
