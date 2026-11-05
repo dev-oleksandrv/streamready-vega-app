@@ -29,3 +29,19 @@ export {
   VIDEO_INTERVAL_MS,
 } from './domain/videoPolicy';
 export type {VideoPolicyInput} from './domain/videoPolicy';
+export {createTracker, BEACON_TIMEOUT_MS} from './data/tracker';
+export type {Tracker, TrackerDeps} from './data/tracker';
+export {
+  createVastClient,
+  HOP_TIMEOUT_MS,
+  MAX_VAST_CHARS,
+  MAX_WRAPPERS,
+  TOTAL_TIMEOUT_MS,
+} from './data/vastClient';
+export type {
+  FetchText,
+  VastClient,
+  VastClientDeps,
+  VastLoadResult,
+  VastRequest,
+} from './data/vastClient';

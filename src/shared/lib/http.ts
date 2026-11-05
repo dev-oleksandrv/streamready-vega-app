@@ -18,16 +18,26 @@ export class HttpError extends Error {
   }
 }
 
-export interface FetchJsonOptions {
+export interface FetchOptions {
   timeoutMs: number;
   signal?: AbortSignal;
   headers?: Record<string, string>;
   fetchFn?: typeof fetch;
 }
 
-export async function fetchJson<T>(
+export function fetchJson<T>(url: string, opts: FetchOptions): Promise<T> {
+  return request(url, opts, async (response) => (await response.json()) as T);
+}
+
+/** For non-JSON bodies such as VAST XML. Same timeout and abort semantics as fetchJson. */
+export function fetchText(url: string, opts: FetchOptions): Promise<string> {
+  return request(url, opts, (response) => response.text());
+}
+
+async function request<T>(
   url: string,
-  opts: FetchJsonOptions,
+  opts: FetchOptions,
+  readBody: (response: Response) => Promise<T>,
 ): Promise<T> {
   const {timeoutMs, signal, headers, fetchFn = fetch} = opts;
   if (signal?.aborted) {
@@ -60,7 +70,7 @@ export async function fetchJson<T>(
       throw new HttpError('status', response.status);
     }
     try {
-      return (await response.json()) as T;
+      return await readBody(response);
     } catch {
       // The body read is aborted by the same controller as the request.
       if (timedOut) {
