@@ -89,6 +89,8 @@ echo "==> Releasing $VERSION (build $BUILD)"
 pnpm run check
 
 echo "==> Building Release $VERSION (build $BUILD)"
+# Ad tags come from .env (ADR 0013); the summary shows which ad slots this build has.
+node scripts/ad-config.mjs
 pnpm exec react-native build-vega --build-type Release --build-version "$VERSION" --build-number "$BUILD"
 
 VPKGS=(build/*-release/*.vpkg)
