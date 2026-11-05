@@ -36,7 +36,7 @@ The maintainer drives the process. Propose, then wait for a decision.
 - Branch names: `<type>/<short-kebab-slug>`, e.g. `feat/ndt7-download`, `fix/consent-back-key`.
 - Commits follow **Conventional Commits 1.0**: `<type>(<scope>)!: <subject>`.
   - Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `style`, `build`, `ci`, `chore`, `revert`.
-  - Scope (optional): `speedtest`, `ndt7`, `verdict`, `insights`, `privacy`, `home`, `app`, `shared`, `deps`.
+  - Scope (optional): `speedtest`, `ndt7`, `verdict`, `insights`, `privacy`, `home`, `history`, `ads`, `app`, `shared`, `deps`.
   - Subject: imperative, lowercase, no trailing period, ≤ 72 chars. Breaking changes: `!` plus a `BREAKING CHANGE:` footer.
 - Claude may create branches and commit. Claude must **never push, force-push, rewrite history, or merge into `main`**, except when the maintainer invokes `/ship` (`.claude/skills/ship/`): it pushes the current branch, opens a PR, and merges it once CI is green.
 - Every user-facing change adds a changeset (`.changeset/*.md`) on its branch; no user-visible change → `pnpm changeset --empty`. CI fails app changes without one. Merges to `main` keep a Version PR (`changeset-release/main`) up to date; merging it is the release. See `docs/adr/0010-changesets-versioning.md`.
@@ -52,7 +52,7 @@ The maintainer drives the process. Propose, then wait for a decision.
 
 ```
 src/app/       composition root: navigation, providers (DI), header, cross-module selectors
-src/modules/   privacy · speedtest (engines/ndt7) · verdict · insights · home
+src/modules/   privacy · speedtest (engines/ndt7) · verdict · insights · home · history · ads
 src/shared/    ui (tokens, focus primitives), lib (http, format, logger, storage)
 test/          mirrors src/ 1:1; test/support/ holds fakes and fixtures
 ```
