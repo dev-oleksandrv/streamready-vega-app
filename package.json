@@ -44,6 +44,7 @@
     "@amazon-devices/react-native-svg": "~3.0.9000000001",
     "@amazon-devices/react-navigation__native": "~8.0.0",
     "@amazon-devices/react-navigation__native-stack": "~8.0.0",
+    "fast-xml-parser": "~5.12.0",
     "react": "19.2.0",
     "react-native": "0.83.0",
     "zustand": "5.0.15"
