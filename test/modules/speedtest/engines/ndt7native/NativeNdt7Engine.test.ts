@@ -14,10 +14,7 @@ import {
 
 const flush = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
-function setup(
-  body: unknown = locateResponse,
-  detectTunnel?: () => boolean,
-) {
+function setup(body: unknown = locateResponse, detectTunnel?: () => boolean) {
   const fake = fakeNdt7Native();
   const engine = new NativeNdt7Engine({
     detectTunnel,
@@ -124,6 +121,83 @@ describe('NativeNdt7Engine', () => {
     expect(s.events).not.toContainEqual(
       expect.objectContaining({type: 'latency', idleMs: 1}),
     );
+  });
+
+  describe('jitter', () => {
+    const finishUpload = async (s: ReturnType<typeof setup>) => {
+      await flush();
+      s.fake.done(s.run(1), {
+        measurements: [measurement({BytesReceived: 1, ElapsedTime: 1})],
+      });
+      return s.promise;
+    };
+
+    it('is computed from server rtt samples in elapsed order', async () => {
+      const s = setup();
+      await flush();
+      s.fake.progress(s.run(0), {
+        bytes: 1000,
+        elapsedMs: 250,
+        measurements: [
+          measurement({MinRTT: 5_000, RTT: 10_000, ElapsedTime: 300_000}),
+          measurement({RTT: 20_000, ElapsedTime: 100_000}),
+        ],
+      });
+      s.fake.done(s.run(0), {
+        ...downloadDone,
+        measurements: [measurement({RTT: 10_000, ElapsedTime: 200_000})],
+      });
+      const result = await finishUpload(s);
+      // time order: 20, 10, 10 -> (10 + 0) / 2
+      expect(result.jitterMs).toBe(5);
+      expect(s.events.map((e) => e.type)).not.toContain('jitter');
+    });
+
+    it('under a vpn uses device samples ordered by event elapsedMs', async () => {
+      const s = setup(undefined, () => true);
+      await flush();
+      const runId = s.run(0);
+      const progress = (seq: number, elapsedMs: number, rttUs: number) => ({
+        runId,
+        seq,
+        type: 'progress',
+        bytes: seq * 1000,
+        elapsedMs,
+        measurements: [measurement({MinRTT: 1_000, RTT: 1_000})],
+        clientMinRttUs: 10_000,
+        clientRttUs: rttUs,
+      });
+      s.fake.emitRaw(progress(2, 500, 10_000));
+      s.fake.emitRaw(progress(3, 750, 16_000));
+      // arrives late, but happened first
+      s.fake.emitRaw(progress(1, 250, 20_000));
+      s.fake.emitRaw({
+        runId,
+        seq: 4,
+        type: 'done',
+        bytes: 4000,
+        elapsedMs: 1000,
+        measurements: [],
+      });
+      const result = await finishUpload(s);
+      expect(result.latencySource).toBe('device');
+      // time order: 20, 10, 16 -> (10 + 6) / 2
+      expect(result.jitterMs).toBe(8);
+    });
+
+    it('is omitted with fewer than 3 samples', async () => {
+      const s = setup();
+      await flush();
+      s.fake.done(s.run(0), {
+        ...downloadDone,
+        measurements: [
+          measurement({MinRTT: 1_000, RTT: 1_000, ElapsedTime: 100_000}),
+          measurement({RTT: 2_000, ElapsedTime: 200_000}),
+        ],
+      });
+      const result = await finishUpload(s);
+      expect('jitterMs' in result).toBe(false);
+    });
   });
 
   it('asks about the vpn once per run, at the start', async () => {

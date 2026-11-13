@@ -15,7 +15,13 @@ import {
   type SpeedTestResult,
   type StartCheck,
 } from '~/modules/speedtest';
-import {evaluate, type Verdict} from '~/modules/verdict';
+import {
+  evaluate,
+  LAGGY_GRADES,
+  serviceVerdicts,
+  type ServiceVerdict,
+  type Verdict,
+} from '~/modules/verdict';
 
 /** The only way the UI reads geo insights: hidden unless consent is accepted. */
 export function selectVisibleInsights(
@@ -98,6 +104,23 @@ export function useResultVerdict(
       deviceLimitMbps: profile?.limitMbps,
     };
   }, [result, network, model]);
+}
+
+export interface ServicesView {
+  rows: readonly ServiceVerdict[];
+  /** Lag grade is D or F: speed may be enough while lag still stalls. */
+  laggy: boolean;
+}
+
+/** Rows depend on download only; the grade just adds the lag note. */
+export function selectServicesView(
+  result: SpeedTestResult,
+  verdict: Verdict,
+): ServicesView {
+  return {
+    rows: serviceVerdicts(result.downloadBps),
+    laggy: LAGGY_GRADES.includes(verdict.grade),
+  };
 }
 
 export interface HistoryInputs {

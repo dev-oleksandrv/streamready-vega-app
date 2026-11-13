@@ -24,6 +24,7 @@ paths:
 - Locate: `https://locate.measurementlab.net/v2/nearest/ndt/ndt7` with `client_name` and `client_version`. Try up to 3 servers.
 - Locate's `ws:///ndt/v7/download` and `ws:///ndt/v7/upload` URLs; WebSocket subprotocol `net.measurementlab.ndt.v7`.
 - Download: count bytes, never retain payloads. Idle latency = `TCPInfo.MinRTT`; loaded latency = median `TCPInfo.RTT` (every sample, including late events).
+- Jitter = mean absolute difference of consecutive download `RTT` samples in measurement order (server: `TCPInfo.ElapsedTime`; device under VPN: native event `elapsedMs`; ties keep arrival order), from the same source as loaded latency. `undefined` below 3 timed samples, and then left out of the result. Display only: never an input to `evaluate` or the grade.
 - Upload: 8 KiB → 1 MiB message scaling (double while size ≤ bytes sent / 16, as ndt7-client-go), one reused random buffer, blocking sends as backpressure. Throughput from server `TCPInfo.BytesReceived / ElapsedTime`.
 - Time-bounded: ~10 s per direction, 15 s safety timeout.
 - Signed URLs contain `access_token`: never log them.
@@ -43,3 +44,5 @@ paths:
 - `verdict` is pure functions plus a config table. Thresholds and copy are data, not branches scattered in UI.
 - Changing a threshold or copy: update `verdict` config/content and the table tests together.
 - The 6 design scenarios (`good`, `goodSingle4K`, `fastButLaggy`, `limited`, `poorHdOnly`, `poor`) must stay as test cases.
+- Service table (`verdict/domain/services.ts`, ADR 0014): an `official` figure needs a source comment with the service's own URL and the date checked; a `typical` figure reads `STREAM_CHECKS`, never a copied number. It is bundled, never fetched. Update the table, its comment and the table tests together.
+- Jitter levels (`JITTER_LEVELS`: Steady under 10 ms, Uneven under 30 ms) work on the shown whole-ms value; change them in the config and the table tests together.

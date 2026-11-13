@@ -1,11 +1,13 @@
 import {
   selectHistoryEntry,
+  selectServicesView,
   selectStartCheck,
   selectVerdict,
   selectVisibleInsights,
   selectVisibleVpn,
 } from '~/app/selectors';
 import {INITIAL_NETWORK} from '~/modules/insights';
+import type {LagGrade} from '~/modules/verdict';
 import {TEST_RESULT} from '../support/fakeEngine';
 import {TEST_CONNECTION} from '../support/insights';
 
@@ -134,5 +136,26 @@ describe('selectHistoryEntry', () => {
     expect(entry).not.toHaveProperty('countryCode');
     expect(entry).not.toHaveProperty('country');
     expect(entry.vpn).toBe('unknown');
+  });
+});
+
+describe('selectServicesView', () => {
+  const grades: readonly LagGrade[] = ['A', 'B', 'C', 'D', 'F'];
+  const withGrade = (grade: LagGrade) => ({
+    ...selectVerdict(TEST_RESULT, INITIAL_NETWORK),
+    grade,
+  });
+
+  test.each(grades)('grade %s: laggy only for D and F', (grade) => {
+    expect(selectServicesView(TEST_RESULT, withGrade(grade)).laggy).toBe(
+      grade === 'D' || grade === 'F',
+    );
+  });
+
+  it('rows depend on the download, never on the grade', () => {
+    const [first, ...rest] = grades.map(
+      (g) => selectServicesView(TEST_RESULT, withGrade(g)).rows,
+    );
+    rest.forEach((rows) => expect(rows).toEqual(first));
   });
 });

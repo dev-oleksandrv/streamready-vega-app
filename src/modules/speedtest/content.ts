@@ -54,7 +54,7 @@ export const testContent = {
       `Near your stick's Wi‑Fi limit (~${mbps} Mbps)`,
     testAgain: 'Test again',
     testAgainIn: (seconds: number) => `Test again in ${seconds}s`,
-    back: 'Back',
+    services: 'Services',
     whyItLags: 'Why it lags',
     history: 'History',
   },
@@ -65,6 +65,14 @@ export const testContent = {
     loaded: 'While downloading',
     smooth: 'Smooth',
     stalls: 'Frequent stalls',
+    back: 'Back to result',
+  },
+  services: {
+    eyebrow: 'By service',
+    headline: 'What each app can play.',
+    disclaimer:
+      "Figures are each service's published minimums, or typical values where none is published. StreamReady is not affiliated with these services.",
+    laggy: 'Speed is enough, but lag can still cause stalls.',
     back: 'Back to result',
   },
   retry: 'Try again',

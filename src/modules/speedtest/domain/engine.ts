@@ -25,6 +25,8 @@ export interface SpeedTestResult {
   loadedLatencyMs: number;
   /** 'device' when a VPN was connected: the server then measures the VPN exit, not the TV (ADR 0011). */
   latencySource: 'server' | 'device';
+  /** Mean change between consecutive RTT samples during download, ms; undefined with fewer than 3 samples. Same source as loaded latency. */
+  jitterMs?: number;
   server: ServerInfo;
   finishedAt: number;
 }

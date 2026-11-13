@@ -20,6 +20,7 @@ import {LatencyRoute} from './LatencyRoute';
 import {PrivacyRoute} from './PrivacyRoute';
 import {ResultRoute} from './ResultRoute';
 import type {RootStackParamList} from './routes';
+import {ServicesRoute} from './ServicesRoute';
 import {TestRoute} from './TestRoute';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -63,6 +64,7 @@ export const RootNavigator = () => {
           <Stack.Screen name="Test" component={TestRoute} />
           <Stack.Screen name="Result" component={ResultRoute} />
           <Stack.Screen name="Latency" component={LatencyRoute} />
+          <Stack.Screen name="Services" component={ServicesRoute} />
           <Stack.Screen name="History" component={HistoryRoute} />
         </Stack.Navigator>
       </NavigationContainer>

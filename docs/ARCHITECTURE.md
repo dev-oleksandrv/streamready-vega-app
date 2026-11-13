@@ -2,10 +2,10 @@
 
 ## 1. Overview
 
-StreamReady is an open-source Fire TV app for Vega OS. It answers the question "Will my TV stream in 4K?" by measuring download, upload, idle latency and latency under load. The result is shown as a plain-language streaming verdict, not just raw megabits.
+StreamReady is an open-source Fire TV app for Vega OS. It answers the question "Will my TV stream in 4K?" by measuring download, upload, idle latency, latency under load and jitter. The result is shown as a plain-language streaming verdict, not just raw megabits.
 
 **In scope (v1):**
-- Screens: Splash, Privacy (consent modal and policy view), Home, Test (with the Stop dialog and the error overlay), Result, Latency ("Why it lags"), Device & connection, History (with the Clear dialog).
+- Screens: Splash, Privacy (consent modal and policy view), Home, Test (with the Stop dialog and the error overlay), Result, Services (what each streaming app can play), Latency ("Why it lags", with jitter), Device & connection, History (with the Clear dialog).
 - Speed measurement with M-Lab ndt7, implemented in a C++ Turbo Module over plain `ws://`.
 - Connection insights (public IP, country, city, ISP) and device information.
 - A local history of the 50 latest results (ADR 0012).
@@ -36,9 +36,9 @@ src/
       engines/ndt7/        # locate.ts, protocol.ts, measurements.ts, stats.ts
       engines/ndt7native/  # NativeNdt7 (Turbo Module spec), nativeEvents, nativeRun, NativeNdt7Engine
       store/               # sessionStore
-      ui/                  # screens/TestScreen, ResultScreen, LatencyScreen + components, liveText, resultText, toneColor
+      ui/                  # screens/TestScreen, ResultScreen, ServicesScreen, LatencyScreen + components, liveText, resultText, toneColor
       content.ts           # Test screen copy
-    verdict/               # pure: domain/thresholds, grade, evaluate; content.ts (copy)
+    verdict/               # pure: domain/thresholds, grade, evaluate, shownMbps, services (table), serviceVerdicts, jitter; content.ts (copy)
     insights/              # GeoIpProvider + providers, device adapters (incl. VPN state), insightsStore, DeviceScreen, VpnBadge
     home/                  # HomeScreen
     history/               # HistoryEntry (domain), historyStore (persisted), HistoryScreen
@@ -118,7 +118,7 @@ The cooldown is 30s. It starts after a successful test, and when the user stops 
 
 ### 5.5 Navigation and Back key
 
-The app uses a native stack (`@amazon-devices/react-navigation__native-stack`) with the screens Home, Test, Result, Latency, Device, History and Privacy. Privacy has two modes: `gate` (cold start, Accept only) and `view` (opened from Home). Accepting from the gate resets the stack to Home. A finished test replaces Test with Result, so the stack is Home → Result; Test again replaces Result with Test. Module screens take callbacks as props; route adapters in `app/navigation/` wire them to the stack.
+The app uses a native stack (`@amazon-devices/react-navigation__native-stack`) with the screens Home, Test, Result, Services, Latency, Device, History and Privacy. Privacy has two modes: `gate` (cold start, Accept only) and `view` (opened from Home). Accepting from the gate resets the stack to Home. A finished test replaces Test with Result, so the stack is Home → Result (→ Services or Latency); Test again replaces Result with Test. Module screens take callbacks as props; route adapters in `app/navigation/` wire them to the stack.
 
 | Where | Back does |
 |---|---|
@@ -126,6 +126,7 @@ The app uses a native stack (`@amazon-devices/react-navigation__native-stack`) w
 | Stop dialog | Resumes the test |
 | Error overlay | Goes Home |
 | Result | Goes Home |
+| Services | Returns to Result |
 | Latency | Returns to Result |
 | History | Returns to Home or Result, wherever it was opened |
 | Clear dialog | Closes it |
@@ -156,6 +157,8 @@ interface SpeedTestResult {
   uploadBps: number;
   idleLatencyMs: number;
   loadedLatencyMs: number;
+  latencySource: 'server' | 'device'; // where the latency samples came from (ADR 0011)
+  jitterMs?: number; // mean change between consecutive download RTT samples; absent with fewer than 3
   server: ServerInfo;
   finishedAt: number;
 }
@@ -185,6 +188,7 @@ The only engine is `NativeNdt7Engine` (ADR 0006): TypeScript runs Locate and com
 4. **Download:** counts binary bytes without keeping them, answers pings, and ends at the server's close frame. The 15 s safety timeout gives `timeout`; 7 s without data gives `network_lost`.
 5. **Upload:** sends masked binary frames from one pre-filled 1 MiB random buffer. Sizes start at 8 KiB and double while the size is at most 1/16 of the bytes sent, up to 1 MiB. The blocking send is the backpressure. After 10 s the client sends a close frame and collects the final measurements.
 6. **Final values:** TypeScript parses measurements with `parseMeasurement` (`DownloadLatency`, `UploadRate`).
+7. **Jitter:** `DownloadLatency` also keeps each download RTT sample with its time as numbers only (never the measurement text). Server samples are ordered by `TCPInfo.ElapsedTime`, device samples (VPN) by the native event's `elapsedMs`; ties keep arrival order. Jitter is the mean of `|rtt[i] − rtt[i−1]|` over that order (`meanAbsDelta`). Samples without a time count for the loaded median but not for jitter. With fewer than 3 timed samples there is no jitter and `jitterMs` is left out of the result. It comes from the same source as loaded latency, with no fallback to idle, and no engine event carries it.
 
 | Value | Source |
 |---|---|
@@ -192,6 +196,7 @@ The only engine is `NativeNdt7Engine` (ADR 0006): TypeScript runs Locate and com
 | Upload | The last server measurement, `TCPInfo.BytesReceived / ElapsedTime` |
 | Idle latency | `MinRTT`; under a VPN, the TV's lowest `tcpi_min_rtt` (ADR 0011) |
 | Loaded latency | Median download `RTT`; under a VPN, the TV's median `tcpi_rtt` (ADR 0011) |
+| Jitter | Mean absolute difference of consecutive download `RTT` samples, same source as loaded latency; undefined below 3 samples |
 
 The engine uses a single stream, as the ndt7 design intends. Protocol reference: https://github.com/m-lab/ndt-server/blob/main/spec/ndt7-protocol.md
 
@@ -279,7 +284,17 @@ If the tier is `good` and the lag grade is D or F, the tier drops to `limited`.
 
 **Number format:** values ≥ 100 are rounded to whole numbers. Values below 100 show 1 decimal.
 
-### 8.2 Copy
+### 8.2 Services and jitter
+
+**Services** (`verdict/domain/services.ts`, `serviceVerdicts.ts`). A bundled table, never fetched (ADR 0014), gives each of Netflix, Prime Video, YouTube, Disney+, Apple TV and HBO Max a minimum Mbps for HD 720p, Full HD 1080p and 4K, in that order on screen. A figure is `official` (the service's published minimum, with its source URL and check date in a comment) or `typical` (the generic `STREAM_CHECKS` value, shown as "Typically needs N Mbps" instead of "Needs N Mbps").
+
+- `serviceVerdicts(downloadBps)` compares the shown download (`shownMbps`, the same rounding as `evaluate`) with each tier. `best` is the highest tier reached, `next` the tier above it (the lowest tier when none is reached, none at 4K).
+- It uses download only. The lag grade never changes a row. The Services screen shows the line "Speed is enough, but lag can still cause stalls." when the grade is in `LAGGY_GRADES` (D or F), via `selectServicesView` in `app/selectors.ts`.
+- The screen shows text names only and a line that the figures are published minimums or typical values and that StreamReady is not affiliated with the services.
+
+**Jitter** (`verdict/domain/jitter.ts`). `jitterLevel` maps the shown whole-ms value (`Math.round`) to a level and tone: under 10 ms Steady (good), under 30 ms Uneven (warn), otherwise Unstable (bad). The Latency screen shows jitter as a third card with the level label and one explanation line. These are starting values, to be confirmed in device QA. Jitter is display only: it does not enter `evaluate`, the grade or the history.
+
+### 8.3 Copy
 
 | Case | Headline | Sub |
 |---|---|---|
@@ -337,6 +352,7 @@ The 6 design scenarios (`good`, `goodSingle4K`, `fastButLaggy`, `limited`, `poor
 |---|---|
 | Home | Start |
 | Result | Test again |
+| Services | Back to result |
 | Latency | Back to result |
 | Privacy (pending) | Accept |
 | Privacy (decided) | Back |
@@ -390,7 +406,7 @@ ADR 0012. `app/providers/historyRecorder.ts` watches the session store and recor
 
 - Only the 50 latest results are kept. "Save history" off stops saving and keeps saved results; "Clear history" asks first, then deletes all of them. With nothing saved, Clear is greyed out.
 - The table is not focusable: focus stays on the switch and Clear, and ▲/▼ scroll the rows (`useDpadScroll`, as on the Privacy screen). Rows are memoized.
-- Home's History card shows "Off", "No results yet" or "N saved results". Result has a History button after Why it lags.
+- Home's History card shows "Off", "No results yet" or "N saved results". The Result actions are Test again, Services, Why it lags and History, in that order; there is no Back button (the Back key goes Home).
 - Withdrawing consent doesn't hide or delete the history.
 
 ## 12. Decisions
@@ -407,3 +423,4 @@ ADR 0012. `app/providers/historyRecorder.ts` watches the session store and recor
 - [0010 Changesets for versioning and release notes](adr/0010-changesets-versioning.md)
 - [0011 VPN detection and device-side latency under VPN](adr/0011-vpn-detection-and-device-latency.md)
 - [0012 Local test history](adr/0012-local-test-history.md)
+- [0014 Streaming figures per service](adr/0014-service-streaming-figures.md)
