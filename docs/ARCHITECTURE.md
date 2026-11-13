@@ -423,5 +423,4 @@ ADR 0012. `app/providers/historyRecorder.ts` watches the session store and recor
 - [0010 Changesets for versioning and release notes](adr/0010-changesets-versioning.md)
 - [0011 VPN detection and device-side latency under VPN](adr/0011-vpn-detection-and-device-latency.md)
 - [0012 Local test history](adr/0012-local-test-history.md)
-- [0013 Ads from a VAST ad server](adr/0013-vast-ads.md)
 - [0014 Streaming figures per service](adr/0014-service-streaming-figures.md)
