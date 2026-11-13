@@ -36,7 +36,7 @@ function setup(
     startCheck: {ok: true},
     cooldownSeconds: 0,
     onTestAgain: jest.fn(),
-    onBack: jest.fn(),
+    onOpenServices: jest.fn(),
     onOpenLatency: jest.fn(),
     onOpenHistory: jest.fn(),
     ...overrides,
@@ -104,13 +104,21 @@ describe('ResultScreen', () => {
   it('buttons call their handlers', () => {
     const props = setup();
     fireEvent.press(screen.getByRole('button', {name: 'Test again'}));
-    fireEvent.press(screen.getByRole('button', {name: 'Back'}));
+    fireEvent.press(screen.getByRole('button', {name: 'Services'}));
     fireEvent.press(screen.getByRole('button', {name: 'Why it lags'}));
     fireEvent.press(screen.getByRole('button', {name: 'History'}));
     expect(props.onTestAgain).toHaveBeenCalledTimes(1);
-    expect(props.onBack).toHaveBeenCalledTimes(1);
+    expect(props.onOpenServices).toHaveBeenCalledTimes(1);
     expect(props.onOpenLatency).toHaveBeenCalledTimes(1);
     expect(props.onOpenHistory).toHaveBeenCalledTimes(1);
+  });
+
+  it('has the buttons in order and no Back button', () => {
+    setup();
+    expect(
+      screen.getAllByRole('button').map((b) => b.props.accessibilityLabel),
+    ).toEqual(['Test again', 'Services', 'Why it lags', 'History']);
+    expect(screen.queryByRole('button', {name: 'Back'})).toBeNull();
   });
 
   it('cooldown shows the countdown and ignores presses', () => {

@@ -27,8 +27,7 @@ export interface ResultScreenProps {
   /** > 0 appends "in Ns" to Test again. */
   cooldownSeconds: number;
   onTestAgain: () => void;
-  /** Home; the Back key does the same via the stack. */
-  onBack: () => void;
+  onOpenServices: () => void;
   onOpenLatency: () => void;
   onOpenHistory: () => void;
 }
@@ -41,7 +40,7 @@ export const ResultScreen = ({
   startCheck,
   cooldownSeconds,
   onTestAgain,
-  onBack,
+  onOpenServices,
   onOpenLatency,
   onOpenHistory,
 }: ResultScreenProps) => {
@@ -97,7 +96,7 @@ export const ResultScreen = ({
             onPress={onTestAgain}
             hasTVPreferredFocus
           />
-          <FocusButton label={copy.back} compact onPress={onBack} />
+          <FocusButton label={copy.services} compact onPress={onOpenServices} />
           <FocusButton label={copy.whyItLags} compact onPress={onOpenLatency} />
           <FocusButton label={copy.history} compact onPress={onOpenHistory} />
         </View>
