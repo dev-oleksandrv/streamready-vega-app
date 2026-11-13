@@ -1,6 +1,6 @@
 import type {EngineEvent} from '../../domain/engine';
 import type {TcpSample} from './protocol';
-import {median} from './stats';
+import {meanAbsDelta, median} from './stats';
 
 type LatencyEvent = Extract<EngineEvent, {type: 'latency'}>;
 
@@ -14,10 +14,12 @@ export const bitsPerSecond = (bytes: number, elapsedMs: number) =>
 export class DownloadLatency {
   private minRtt: number | undefined;
   private readonly rtts: number[] = [];
+  private readonly timed: {rttMs: number; atMs: number; seq: number}[] = [];
   private emittedIdle: number | undefined;
   private emittedLoaded: number | undefined;
 
-  add(sample: TcpSample): void {
+  /** `atMs` is when the sample was taken; defaults to the server's own ElapsedTime. */
+  add(sample: TcpSample, atMs?: number): void {
     if (sample.minRttMs !== undefined) {
       this.minRtt =
         this.minRtt === undefined
@@ -26,7 +28,23 @@ export class DownloadLatency {
     }
     if (sample.rttMs !== undefined) {
       this.rtts.push(sample.rttMs);
+      const at = atMs ?? sample.elapsedMs;
+      if (at !== undefined) {
+        this.timed.push({
+          rttMs: sample.rttMs,
+          atMs: at,
+          seq: this.timed.length,
+        });
+      }
     }
+  }
+
+  /** Mean change between consecutive RTTs in time order (ties: arrival order). */
+  jitterMs(): number | undefined {
+    const ordered = [...this.timed].sort(
+      (a, b) => a.atMs - b.atMs || a.seq - b.seq,
+    );
+    return meanAbsDelta(ordered.map((s) => s.rttMs));
   }
 
   get idleMs(): number | undefined {

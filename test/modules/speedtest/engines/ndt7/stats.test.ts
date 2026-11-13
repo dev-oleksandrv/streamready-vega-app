@@ -1,4 +1,4 @@
-import {median} from '~/modules/speedtest/engines/ndt7/stats';
+import {meanAbsDelta, median} from '~/modules/speedtest/engines/ndt7/stats';
 
 describe('median', () => {
   test.each([
@@ -18,5 +18,17 @@ describe('median', () => {
 
   it('is NaN for an empty list', () => {
     expect(median([])).toBeNaN();
+  });
+});
+
+describe('meanAbsDelta', () => {
+  test.each([
+    [[], undefined],
+    [[5], undefined],
+    [[5, 9], undefined],
+    [[10, 20, 10], 10],
+    [[10, 12, 9, 15], (2 + 3 + 6) / 3],
+  ])('%j → %s', (values, expected) => {
+    expect(meanAbsDelta(values)).toBe(expected);
   });
 });
