@@ -18,4 +18,23 @@ describe('LatencyStatCard', () => {
     expect(screen.getByText('ms')).toBeTruthy();
     expect(flatStyle(screen.getByText('420')).color).toBe('#FF7A66');
   });
+
+  it('shows a tinted caption when given', () => {
+    render(
+      <LatencyStatCard
+        label="Jitter"
+        value="4"
+        unit="ms"
+        caption="Steady"
+        captionColor="#A3E635"
+      />,
+    );
+    expect(flatStyle(screen.getByText('Steady')).color).toBe('#A3E635');
+  });
+
+  it('renders no caption by default', () => {
+    render(<LatencyStatCard label="Idle" value="16" unit="ms" />);
+    expect(screen.queryByText('Steady')).toBeNull();
+    expect(screen.getAllByText(/./)).toHaveLength(3);
+  });
 });

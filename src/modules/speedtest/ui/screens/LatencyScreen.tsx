@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 
-import {verdictContent, type Verdict} from '~/modules/verdict';
+import {jitterLevel, verdictContent, type Verdict} from '~/modules/verdict';
 import {formatMs} from '~/shared/lib/format';
 import {colors, FocusButton, scale, ScreenLayout, Text} from '~/shared/ui';
 
@@ -26,6 +26,8 @@ export const LatencyScreen = ({
   onBack,
 }: LatencyScreenProps) => {
   const gradeColor = toneColor(verdict.gradeTone);
+  const jitter =
+    result.jitterMs === undefined ? undefined : jitterLevel(result.jitterMs);
   return (
     <ScreenLayout style={styles.grid}>
       <View style={styles.left}>
@@ -51,7 +53,25 @@ export const LatencyScreen = ({
             unit={testContent.units.ms}
             valueColor={gradeColor}
           />
+          <LatencyStatCard
+            label={verdictContent.jitter.label}
+            value={
+              result.jitterMs === undefined
+                ? testContent.empty
+                : formatMs(result.jitterMs)
+            }
+            unit={testContent.units.ms}
+            caption={
+              jitter === undefined
+                ? undefined
+                : verdictContent.jitter.levels[jitter.level]
+            }
+            captionColor={
+              jitter === undefined ? undefined : toneColor(jitter.tone)
+            }
+          />
         </View>
+        <Text style={styles.explain}>{verdictContent.jitter.explain}</Text>
         <GradeScale grade={verdict.grade} activeColor={gradeColor} />
       </View>
     </ScreenLayout>
@@ -79,4 +99,9 @@ const styles = StyleSheet.create({
   },
   right: {flex: 1, gap: scale(48)},
   cards: {flexDirection: 'row', gap: scale(16)},
+  explain: {
+    fontSize: scale(26),
+    lineHeight: scale(36),
+    color: colors.textTertiary,
+  },
 });
