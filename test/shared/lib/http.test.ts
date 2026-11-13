@@ -1,4 +1,4 @@
-import {fetchJson, fetchText, HttpError} from '~/shared/lib/http';
+import {fetchJson, HttpError} from '~/shared/lib/http';
 
 const URL = 'https://api.example.test/json';
 
@@ -147,79 +147,5 @@ describe('fetchJson', () => {
     await expect(
       fetchJson(URL, {timeoutMs: 1000, fetchFn}),
     ).rejects.toBeInstanceOf(HttpError);
-  });
-});
-
-const textResponse = (body: string, status = 200) =>
-  ({
-    ok: status >= 200 && status < 300,
-    status,
-    text: async () => body,
-  } as unknown as Response);
-
-describe('fetchText', () => {
-  it('resolves the body as text', async () => {
-    const fetchFn = jest.fn().mockResolvedValue(textResponse('<VAST/>'));
-    await expect(fetchText(URL, {timeoutMs: 1000, fetchFn})).resolves.toBe(
-      '<VAST/>',
-    );
-    expect(fetchFn).toHaveBeenCalledWith(
-      URL,
-      expect.objectContaining({signal: expect.anything()}),
-    );
-  });
-
-  it('rejects with status for non-2xx', async () => {
-    const fetchFn = jest.fn().mockResolvedValue(textResponse('', 503));
-    await expect(
-      fetchText(URL, {timeoutMs: 1000, fetchFn}),
-    ).rejects.toMatchObject({kind: 'status', status: 503});
-  });
-
-  it('rejects with network when fetch rejects', async () => {
-    const fetchFn = jest.fn().mockRejectedValue(new TypeError('offline'));
-    await expect(
-      fetchText(URL, {timeoutMs: 1000, fetchFn}),
-    ).rejects.toMatchObject({kind: 'network'});
-  });
-
-  it('rejects with timeout after timeoutMs', async () => {
-    jest.useFakeTimers();
-    const pending = fetchText(URL, {timeoutMs: 1500, fetchFn: hangingFetch});
-    jest.advanceTimersByTime(1500);
-    await expect(pending).rejects.toMatchObject({kind: 'timeout'});
-  });
-
-  it('rejects with aborted when the caller aborts', async () => {
-    const controller = new AbortController();
-    const pending = fetchText(URL, {
-      timeoutMs: 5000,
-      fetchFn: hangingFetch,
-      signal: controller.signal,
-    });
-    controller.abort();
-    await expect(pending).rejects.toMatchObject({kind: 'aborted'});
-  });
-
-  it('rejects with parse when the body cannot be read', async () => {
-    const fetchFn = jest.fn().mockResolvedValue({
-      ok: true,
-      status: 200,
-      text: async () => {
-        throw new TypeError('bad body');
-      },
-    });
-    await expect(
-      fetchText(URL, {timeoutMs: 1000, fetchFn}),
-    ).rejects.toMatchObject({kind: 'parse'});
-  });
-
-  it('never puts the URL in the error message', async () => {
-    const secret = 'https://ads.example/tag?account=12345';
-    const fetchFn = jest.fn().mockResolvedValue(textResponse('', 404));
-    const error = await fetchText(secret, {timeoutMs: 1000, fetchFn}).catch(
-      (e: unknown) => e,
-    );
-    expect(String(error)).not.toContain('ads.example');
   });
 });

@@ -28,8 +28,6 @@ docs/qa-checklist.md
 # Vega build output
 buildinfo.json
 
-# Ad tags (scripts/ad-config.mjs, ADR 0013): local secrets and the file generated from them
+# Local secrets: never commit
 .env
 .env.*
-!.env.example
-src/app/config/adConfig.generated.ts
