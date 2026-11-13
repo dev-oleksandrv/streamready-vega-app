@@ -22,7 +22,7 @@ export const ResultRoute = ({
   const consent = useConsent((s) => s.status);
   const network = useInsights((s) => s.network);
   const view = useResultVerdict(result);
-  // Latency stacks on top of Result; no ticking while hidden.
+  // Latency and Services stack on top of Result; no ticking while hidden.
   const now = useCooldownClock(storedCooldown, useIsFocused());
   const cooldownUntil = boundedCooldown(storedCooldown, now);
 
@@ -35,9 +35,12 @@ export const ResultRoute = ({
   }, [missing, navigation]);
 
   const testAgain = useCallback(() => navigation.replace('Test'), [navigation]);
-  const back = useCallback(() => navigation.popToTop(), [navigation]);
   const openLatency = useCallback(
     () => navigation.navigate('Latency'),
+    [navigation],
+  );
+  const openServices = useCallback(
+    () => navigation.navigate('Services'),
     [navigation],
   );
   const openHistory = useCallback(
@@ -57,7 +60,7 @@ export const ResultRoute = ({
       startCheck={selectStartCheck({consent, network, cooldownUntil, now})}
       cooldownSeconds={cooldownSeconds(cooldownUntil, now)}
       onTestAgain={testAgain}
-      onBack={back}
+      onOpenServices={openServices}
       onOpenLatency={openLatency}
       onOpenHistory={openHistory}
     />

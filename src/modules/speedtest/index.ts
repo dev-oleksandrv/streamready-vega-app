@@ -35,3 +35,5 @@ export {ResultScreen} from './ui/screens/ResultScreen';
 export type {ResultScreenProps} from './ui/screens/ResultScreen';
 export {LatencyScreen} from './ui/screens/LatencyScreen';
 export type {LatencyScreenProps} from './ui/screens/LatencyScreen';
+export {ServicesScreen} from './ui/screens/ServicesScreen';
+export type {ServicesScreenProps} from './ui/screens/ServicesScreen';
