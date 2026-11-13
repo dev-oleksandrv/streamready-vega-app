@@ -34,6 +34,7 @@ interface DownloadOutcome {
   idleLatencyMs: number;
   loadedLatencyMs: number;
   latencySource: 'server' | 'device';
+  jitterMs?: number;
 }
 
 /**
@@ -101,6 +102,7 @@ export class NativeNdt7Engine implements SpeedTestEngine {
       idleLatencyMs: download.idleLatencyMs,
       loadedLatencyMs: download.loadedLatencyMs,
       latencySource: download.latencySource,
+      ...(download.jitterMs !== undefined && {jitterMs: download.jitterMs}),
       server: download.target.server,
       finishedAt: now(),
     };
@@ -131,7 +133,7 @@ export class NativeNdt7Engine implements SpeedTestEngine {
           latency.add(parseMeasurement(text)),
         );
         if (event.client) {
-          device.add(event.client);
+          device.add(event.client, event.elapsedMs);
         }
       };
       // Under a VPN the server's TCPInfo measures its link to the VPN exit.
@@ -171,6 +173,7 @@ export class NativeNdt7Engine implements SpeedTestEngine {
           this.log.warn('vpn run without device rtt; using server rtt');
         }
         const source = live();
+        const jitterMs = source.jitterMs();
         const idleLatencyMs = source.idleMs;
         if (idleLatencyMs === undefined) {
           throw new SpeedTestError('protocol');
@@ -185,6 +188,7 @@ export class NativeNdt7Engine implements SpeedTestEngine {
           idleLatencyMs,
           loadedLatencyMs: source.loadedMs() ?? idleLatencyMs,
           latencySource: source === device ? 'device' : 'server',
+          ...(jitterMs !== undefined && {jitterMs}),
         };
       } catch (error) {
         if (
