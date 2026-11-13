@@ -458,9 +458,36 @@ describe('result and latency', () => {
     expect(await screen.findByText('Ready for 4K.')).toBeTruthy();
   });
 
-  it('Back button goes home with the cooldown', async () => {
+  it('Services opens from the result; the Back key returns to it', async () => {
     await finishTest();
-    fireEvent.press(screen.getByRole('button', {name: 'Back'}));
+    fireEvent.press(screen.getByRole('button', {name: 'Services'}));
+    expect(await screen.findByText('What each app can play.')).toBeTruthy();
+    for (const name of [
+      'Netflix',
+      'Prime Video',
+      'YouTube',
+      'Disney+',
+      'Apple TV',
+      'HBO Max',
+    ]) {
+      expect(screen.getByText(name)).toBeTruthy();
+    }
+    expect(pressBack()).toBe(true);
+    expect(await screen.findByText('Ready for 4K.')).toBeTruthy();
+  });
+
+  it('Back to result on Services returns to the result', async () => {
+    await finishTest();
+    fireEvent.press(screen.getByRole('button', {name: 'Services'}));
+    fireEvent.press(
+      await screen.findByRole('button', {name: 'Back to result'}),
+    );
+    expect(await screen.findByText('Ready for 4K.')).toBeTruthy();
+  });
+
+  it('the Back key on the result goes home with the cooldown', async () => {
+    await finishTest();
+    expect(pressBack()).toBe(true);
     expect(await screen.findByText('0:30')).toBeTruthy();
   });
 
@@ -492,7 +519,7 @@ describe('result and latency', () => {
 
   it('Home → Start after a result runs a new test', async () => {
     const {fake} = await finishTest(0);
-    fireEvent.press(screen.getByRole('button', {name: 'Back'}));
+    expect(pressBack()).toBe(true);
     fireEvent.press(await screen.findByRole('button', {name: 'Start'}));
     expect(await screen.findByText('Finding nearest server…')).toBeTruthy();
     expect(fake.createEngine).toHaveBeenCalledTimes(2);
@@ -510,6 +537,17 @@ describe('result and latency', () => {
     expect(pressBack()).toBe(true);
     expect(screen.getByText(EXIT_TITLE)).toBeTruthy();
     // No Test screen owns that run; end it so its flush timer stops.
+    act(() => sessionStore.getState().stop());
+  });
+
+  it('a missing result on services leaves for home', async () => {
+    const {sessionStore} = await finishTest(0);
+    fireEvent.press(screen.getByRole('button', {name: 'Services'}));
+    await screen.findByText('What each app can play.');
+    act(() => sessionStore.getState().start());
+    expect(await screen.findByText('Will your TV stream in 4K?')).toBeTruthy();
+    expect(pressBack()).toBe(true);
+    expect(screen.getByText(EXIT_TITLE)).toBeTruthy();
     act(() => sessionStore.getState().stop());
   });
 
