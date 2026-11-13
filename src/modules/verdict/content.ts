@@ -1,4 +1,6 @@
 import type {LagGrade, Outcome, StreamCheckId} from './domain/evaluate';
+import type {JitterLevel} from './domain/jitter';
+import type {ServiceId, ServiceTier, ServiceTierId} from './domain/services';
 
 // Non-breaking hyphen in "Wi‑Fi", as in the design.
 const WEAK_WIFI = 'Your Wi‑Fi is overloaded or too weak where the TV is.';
@@ -59,6 +61,34 @@ const LATENCY_LINE: Readonly<Record<LagGrade, string>> = {
   F: 'This is why it stalls.',
 };
 
+const serviceNames: Readonly<Record<ServiceId, string>> = {
+  netflix: 'Netflix',
+  primeVideo: 'Prime Video',
+  youtube: 'YouTube',
+  disneyPlus: 'Disney+',
+  appleTv: 'Apple TV',
+  hboMax: 'HBO Max',
+};
+
+const serviceTiers: Readonly<Record<ServiceTierId, string>> = {
+  hd: checks.hd,
+  fhd: checks.fhd,
+  uhd: checks.uhd,
+};
+
+const needs = (mbps: number) => `Needs ${mbps} Mbps`;
+
+const serviceNeed = (tier: ServiceTier) =>
+  tier.source === 'official'
+    ? needs(tier.minMbps)
+    : `Typically needs ${tier.minMbps} Mbps`;
+
+const jitterLevels: Readonly<Record<JitterLevel, string>> = {
+  steady: 'Steady',
+  uneven: 'Uneven',
+  unstable: 'Unstable',
+};
+
 export const verdictContent = {
   outcomes,
   outcomeSub: (outcome: Outcome, onWifi: boolean): string => {
@@ -66,7 +96,21 @@ export const verdictContent = {
     return onWifi ? copy.sub : copy.subWired ?? copy.sub;
   },
   checks,
-  needs: (mbps: number) => `Needs ${mbps} Mbps`,
+  needs,
   latencyHeadline: (grade: LagGrade) =>
     `Grade ${grade}. ${LATENCY_LINE[grade]}`,
+  services: {
+    names: serviceNames,
+    tiers: serviceTiers,
+    need: serviceNeed,
+    next: (tier: ServiceTier) =>
+      `${serviceTiers[tier.tier]} · ${serviceNeed(tier)}`,
+    none: 'Not enough for HD',
+  },
+  jitter: {
+    label: 'Jitter',
+    levels: jitterLevels,
+    explain:
+      'Jitter is how much the delay jumps from moment to moment. Low jitter keeps video and live streams smooth.',
+  },
 } as const;
