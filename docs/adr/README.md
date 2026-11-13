@@ -39,3 +39,4 @@ An ADR records one significant decision: the context, what was decided, and what
 - [0011 VPN detection and device-side latency under VPN](0011-vpn-detection-and-device-latency.md)
 - [0012 Local test history](0012-local-test-history.md)
 - [0013 Ads from a VAST ad server](0013-vast-ads.md)
+- [0014 Streaming figures per service](0014-service-streaming-figures.md)

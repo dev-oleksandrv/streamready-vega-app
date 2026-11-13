@@ -11,7 +11,9 @@ Pre-release, under active development.
 - **Download** and **upload** speed
 - **Idle latency** (ping)
 - **Latency under load** — graded A–F, the usual cause of buffering on a "fast" connection
+- **Jitter** — how much the delay jumps while downloading
 - **Streaming verdict** — HD 720p, Full HD 1080p, 4K, and two 4K TVs at once
+- **Per-service verdicts** — the best quality Netflix, Prime Video, YouTube, Disney+, Apple TV and HBO Max can play at your speed
 
 Measurements use the open [M-Lab ndt7](https://www.measurementlab.net/) protocol, implemented directly over WebSocket for Vega.
 
