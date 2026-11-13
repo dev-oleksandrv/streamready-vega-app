@@ -2,6 +2,12 @@
 
 User-facing changes in each store release. Entries come from the changesets merged since the previous release (see [CONTRIBUTING.md](CONTRIBUTING.md#changesets)).
 
+## 1.4.0
+
+### Minor Changes
+
+- 8fa2192: See which quality Netflix, Prime Video, YouTube, Disney+, Apple TV and HBO Max can play at your speed on the new Services screen. "Why it lags" now also shows jitter, how much the delay jumps while you download.
+
 ## 1.3.0
 
 ### Minor Changes
