@@ -13,6 +13,7 @@ export const TEST_RESULT: SpeedTestResult = {
   idleLatencyMs: 14,
   loadedLatencyMs: 52,
   latencySource: 'server',
+  jitterMs: 4,
   server: {machine: 'mlab1-tst01.example', city: 'Testville', country: 'ZZ'},
   finishedAt: 0,
 };

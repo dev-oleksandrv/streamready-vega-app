@@ -1,6 +1,5 @@
-import {roundMbps} from '~/shared/lib/format';
-
 import {lagGrade} from './grade';
+import {shownMbps} from './shownMbps';
 import {
   GRADE_TONE,
   HD_MBPS,
@@ -51,11 +50,6 @@ export interface Verdict {
   nearDeviceLimit: boolean;
   /** Picks the Wi‑Fi or the wired advice in the sub. */
   onWifi: boolean;
-}
-
-/** The download the user sees, so a shown "25.0" never fails the 25 Mbps check. */
-function shownMbps(bps: number): number {
-  return Number.isFinite(bps) && bps > 0 ? roundMbps(bps) : 0;
 }
 
 /** From whole-ms values, as shown; noisy RTT can put loaded under idle. */

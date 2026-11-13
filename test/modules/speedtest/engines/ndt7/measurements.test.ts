@@ -43,6 +43,58 @@ describe('DownloadLatency', () => {
   });
 });
 
+describe('DownloadLatency jitter', () => {
+  const timed = (rttMs: number, elapsedMs: number) => ({rttMs, elapsedMs});
+
+  it('orders samples by time, whatever the arrival order', () => {
+    const inOrder = new DownloadLatency();
+    [timed(10, 100), timed(20, 200), timed(10, 300), timed(16, 400)].forEach(
+      (s) => inOrder.add(s),
+    );
+    const shuffled = new DownloadLatency();
+    [timed(10, 300), timed(16, 400), timed(10, 100), timed(20, 200)].forEach(
+      (s) => shuffled.add(s),
+    );
+    expect(inOrder.jitterMs()).toBe((10 + 10 + 6) / 3);
+    expect(shuffled.jitterMs()).toBe(inOrder.jitterMs());
+  });
+
+  it('uses atMs over the sample time', () => {
+    const latency = new DownloadLatency();
+    latency.add({rttMs: 10, elapsedMs: 900}, 100);
+    latency.add({rttMs: 20, elapsedMs: 800}, 200);
+    latency.add({rttMs: 10, elapsedMs: 700}, 300);
+    expect(latency.jitterMs()).toBe(10);
+  });
+
+  it('keeps arrival order for equal times', () => {
+    const latency = new DownloadLatency();
+    latency.add(timed(10, 100));
+    latency.add(timed(30, 100));
+    latency.add(timed(10, 100));
+    expect(latency.jitterMs()).toBe(20);
+  });
+
+  it('leaves untimed samples out of jitter but not out of loadedMs', () => {
+    const latency = new DownloadLatency();
+    latency.add({rttMs: 100});
+    latency.add(timed(10, 100));
+    latency.add(timed(20, 200));
+    expect(latency.jitterMs()).toBeUndefined();
+    expect(latency.loadedMs()).toBe(20);
+    latency.add(timed(10, 300));
+    expect(latency.jitterMs()).toBe(10);
+  });
+
+  it('is undefined with fewer than 3 timed samples', () => {
+    const latency = new DownloadLatency();
+    expect(latency.jitterMs()).toBeUndefined();
+    latency.add(timed(10, 100));
+    latency.add(timed(20, 200));
+    expect(latency.jitterMs()).toBeUndefined();
+  });
+});
+
 describe('UploadRate', () => {
   it('derives bps from BytesReceived over ElapsedTime', () => {
     const rate = new UploadRate();
